@@ -264,15 +264,27 @@ app.get('/admin/board_settings', (req, res) => {
 
 // 매물 관리 페이지
 app.get('/listings', (req, res) => {
-    const query = "SELECT * FROM properties ORDER BY created_at DESC";
-    
-    db.all(query, [], (err, rows) => {
+    const category = req.query.category;
+    let query = "SELECT * FROM properties";
+    const params = [];
+
+    if (category) {
+        query += " WHERE category = ?";
+        params.push(category);
+    }
+
+    query += " ORDER BY created_at DESC";
+
+    db.all(query, params, (err, rows) => {
         if (err) {
             console.error('DB 조회 오류:', err.message);
-            res.status(500).send("매물 정보를 가져오는 데 실패했습니다.");
-            return;
+            return res.status(500).send("매물 정보를 가져오는 데 실패했습니다.");
         }
-        res.render('listings', { properties: rows, menus: res.locals.menus });
+        res.render('listings', { 
+            properties: rows, 
+            menus: res.locals.menus, 
+            currentCategory: category
+        });
     });
 });
 
