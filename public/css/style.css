@@ -1,0 +1,379 @@
+/* 기본 스타일 & 구글 폰트 */
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=Roboto:wght@500;700&display=swap');
+
+:root {
+    --primary-color: #0d2c54; /* 더 깊고 강한 네이비 */
+    --secondary-color: #d9a404; /* 톤 다운된 골드 */
+    --text-color: #212529;
+    --background-color: #ffffff;
+    --light-gray-bg: #f8f9fa;
+    --border-color: #e9ecef;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    font-family: 'Noto Sans KR', sans-serif;
+    margin: 0;
+    color: var(--text-color);
+    background-color: var(--background-color);
+    word-break: keep-all;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+/* --- 헤더 --- */
+header {
+    background: #fff;
+    border-bottom: 1px solid var(--border-color);
+    position: sticky;
+    top: 0;
+    z-index: 999;
+}
+.header-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    height: 75px;
+}
+.logo a {
+    font-family: 'Roboto', sans-serif;
+    font-size: 1.7rem;
+    font-weight: 700;
+    color: var(--primary-color);
+    text-decoration: none;
+}
+.logo a span { color: var(--secondary-color); }
+nav ul {
+    margin: 0; padding: 0; list-style: none; display: flex;
+}
+nav a {
+    font-family: 'Noto Sans KR', sans-serif;
+    font-weight: 500;
+    font-size: 1rem;
+    text-decoration: none;
+    color: var(--text-color);
+    padding: 28px 25px;
+    transition: color 0.2s, background-color 0.2s;
+}
+nav a:hover {
+    color: var(--primary-color);
+    background-color: var(--light-gray-bg);
+}
+.mobile-menu-btn { display: none; font-size: 1.8rem; cursor: pointer; }
+
+/* --- 히어로 섹션 --- */
+.hero {
+    height: 55vh;
+    background: url('https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?q=80&w=2070&auto=format&fit=crop') no-repeat center center/cover;
+    display: flex;
+    align-items: center;
+    text-align: left;
+    color: #fff;
+    position: relative;
+}
+.hero::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(13, 44, 84, 0.5);
+}
+.hero-content {
+    position: relative;
+    z-index: 1;
+}
+.hero h1 { font-size: 3.2rem; font-weight: 700; margin: 0 0 1rem 0; line-height: 1.3; }
+.hero p { font-size: 1.3rem; font-weight: 400; margin: 0; max-width: 600px; }
+
+/* --- 공통 섹션 스타일 --- */
+.section { padding: 90px 0; }
+.section-title { text-align: center; margin-bottom: 60px; }
+.section-title h2 { font-size: 2.2rem; font-weight: 700; margin: 0 0 10px 0; }
+.section-title p { font-size: 1.1rem; color: #6c757d; margin: 0; }
+
+/* --- 라이프스타일 제안 섹션 --- */
+.lifestyle-grid { display: grid; grid-template-columns: repeat(3, 1fr); }
+.lifestyle-card { position: relative; color: #fff; min-height: 450px; display: flex; flex-direction: column; justify-content: flex-end; padding: 30px; overflow: hidden; text-decoration: none; }
+.lifestyle-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0) 50%); z-index: 1; transition: background 0.3s; }
+.lifestyle-card:hover::before { background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.1) 60%); }
+.lifestyle-card img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: 0; transition: transform 0.4s ease; }
+.lifestyle-card:hover img { transform: scale(1.05); }
+.lifestyle-content { position: relative; z-index: 2; transform: translateY(20px); transition: transform 0.4s ease; }
+.lifestyle-card:hover .lifestyle-content { transform: translateY(0); }
+.lifestyle-content h3 { font-size: 1.7rem; margin: 0 0 5px 0; }
+.lifestyle-content p { margin: 0; font-size: 1rem; opacity: 0; transition: opacity 0.4s ease; }
+.lifestyle-card:hover .lifestyle-content p { opacity: 1; }
+
+/* --- 최신 등록 매물 섹션 (디자인 개선됨) --- */
+.listing-section {
+    background-color: var(--light-gray-bg);
+}
+.listing-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 30px;
+}
+.listing-card {
+    background: #fff;
+    text-decoration: none;
+    color: var(--text-color);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+    transition: all 0.3s ease-in-out;
+}
+.listing-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
+}
+.listing-card .image-wrapper {
+    position: relative;
+    height: 220px;
+    overflow: hidden;
+    background-color: #eee;
+}
+.listing-card img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.4s ease;
+}
+.listing-card:hover img {
+    transform: scale(1.08);
+}
+.listing-card .image-wrapper iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+}
+.listing-card .tag {
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    background: var(--primary-color);
+    color: #fff;
+    padding: 6px 14px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    z-index: 1;
+    border-radius: 50px;
+}
+.listing-info {
+    padding: 20px 25px 25px;
+}
+.listing-info h3 {
+    font-size: 1.2rem;
+    margin: 0 0 12px 0;
+    line-height: 1.4;
+    height: 3.36em; 
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+}
+.listing-info .details {
+    font-size: 0.9rem;
+    color: #868e96;
+    margin-bottom: 20px;
+}
+.listing-info .price {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--primary-color);
+    margin: 0;
+}
+
+/* --- 컨설팅 상담 신청 섹션 (새로운 디자인) --- */
+.consulting-section {
+    padding: 0; /* 섹션 자체의 상하 패딩은 제거합니다. */
+}
+
+.consulting-parallax-bg {
+    position: relative;
+    min-height: 450px; /* 이미지의 최소 높이를 지정합니다. */
+    background-attachment: fixed; /* 패럴랙스 효과의 핵심! */
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: cover;
+}
+
+.consulting-parallax-bg::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background-color: rgba(13, 44, 84, 0.3); /* primary-color 기반의 반투명 오버레이 */
+}
+
+.consulting-text-area {
+    padding: 90px 0;
+    background-color: var(--light-gray-bg);
+    text-align: center;
+}
+
+.consulting-text-area h3 {
+    font-size: 2.2rem;
+    font-weight: 700;
+    margin-top: 0;
+    margin-bottom: 2rem;
+    line-height: 1.5;
+}
+
+.consulting-text-area p {
+    max-width: 800px;
+    margin: 0 auto 2.5rem auto;
+    line-height: 1.8;
+    color: #495057;
+}
+
+.cta-button { 
+    display: inline-block; 
+    background: var(--primary-color); 
+    color: #fff; 
+    padding: 16px 40px; 
+    text-decoration: none; 
+    font-weight: 500; 
+    transition: background-color 0.3s; 
+}
+.cta-button:hover { background: #000; }
+
+/* --- 푸터 스타일 --- */
+footer {
+    background-color: #212529;
+    color: #adb5bd;
+    padding: 50px 0 40px 0;
+    font-size: 0.9rem;
+}
+.footer-info {
+    text-align: center;
+    margin-bottom: 30px;
+}
+.footer-info p {
+    margin: 0;
+    line-height: 1.8;
+    font-size: 0.85rem;
+}
+.footer-info span {
+    margin: 0 10px;
+    display: inline-block;
+}
+.footer-menu {
+    text-align: center;
+    margin-bottom: 30px;
+}
+.footer-menu a {
+    color: #ccc;
+    text-decoration: none;
+    font-size: 0.9rem;
+    margin: 0 15px;
+    transition: color 0.2s;
+}
+.footer-menu a:hover {
+    color: #fff;
+}
+.copyright {
+    text-align: center;
+    padding-top: 20px;
+    border-top: 1px solid #495057;
+    font-size: 0.8rem;
+    color: #888;
+}
+
+/* 바로가기 메뉴 스타일 (수정됨 - 표 형태) */
+.quick-menu {
+    position: fixed;
+    top: 50%;
+    right: 30px;
+    transform: translateY(-50%);
+    z-index: 900;
+    display: flex;
+    flex-direction: column;
+    gap: 0; 
+    border-radius: 8px; 
+    overflow: hidden; 
+    border: 1px solid var(--border-color); 
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1); 
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+.quick-menu.visible {
+    opacity: 1;
+    visibility: visible;
+}
+.quick-menu a {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100px;
+    height: 40px;
+    background-color: #ffffff;
+    color: var(--primary-color);
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: background-color 0.2s, color 0.2s;
+}
+.quick-menu a:not(:first-child) {
+    border-top: 1px solid var(--border-color);
+}
+.quick-menu a:hover {
+    background-color: var(--primary-color);
+    color: #ffffff;
+}
+
+/* --- 반응형 --- */
+@media (max-width: 1200px) {
+    .listing-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 992px) {
+    nav ul { display: none; }
+    .mobile-menu-btn { display: block; }
+    .hero h1 { font-size: 2.5rem; }
+    .hero p { font-size: 1.1rem; }
+    .lifestyle-grid { grid-template-columns: repeat(2, 1fr); }
+    .quick-menu { display: none; }
+    
+    nav.active ul {
+        display: flex;
+        flex-direction: column;
+        position: absolute;
+        top: 75px;
+        left: 0;
+        width: 100%;
+        background-color: #fff;
+        border-top: 1px solid var(--border-color);
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    }
+    nav.active a {
+        padding: 15px 25px;
+        width: 100%;
+        box-sizing: border-box;
+        text-align: left;
+        border-bottom: 1px solid var(--border-color);
+    }
+    
+    .consulting-parallax-bg {
+        background-attachment: scroll; /* 모바일에서 패럴랙스 효과 비활성화 */
+        min-height: 300px;
+    }
+    .consulting-text-area h3 {
+        font-size: 1.8rem;
+    }
+}
+@media (max-width: 768px) {
+    .lifestyle-grid, .listing-grid { grid-template-columns: 1fr; }
+    .footer-info span { display: block; margin: 5px 0; }
+    .footer-menu a {
+        display: inline-block;
+        margin: 5px 10px;
+    }
+}

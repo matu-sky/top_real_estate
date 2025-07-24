@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>매물 관리 | 관리자</title>
+    <link rel="stylesheet" href="/css/admin_style.css">
+</head>
+<body>
+    <div class="admin-container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h1><a href="/dashboard">탑 부동산<span>.</span></a></h1>
+            </div>
+            <ul class="sidebar-menu">
+                <% menus.forEach(menu => { %>
+                    <li class="<%= menu.url === '/listings' ? 'active' : '' %>"><a href="<%= menu.url %>"><%= menu.name %></a></li>
+                <% }); %>
+                <li><a href="/admin/menu">메뉴 관리</a></li>
+            </ul>
+            <div class="sidebar-footer">
+                <a href="/logout">로그아웃</a>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <header class="content-header">
+                <h2>매물 관리</h2>
+                <a href="#" class="btn">새 매물 추가</a>
+            </header>
+
+            <div class="card">
+                <div class="card-header"><h4>등록된 매물 목록</h4></div>
+                <div class="card-body">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>제목</th>
+                                <th>카테고리</th>
+                                <th>주소</th>
+                                <th>가격</th>
+                                <th>관리</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% properties.forEach(property => { %>
+                                <tr>
+                                    <td><%= property.id %></td>
+                                    <td><%= property.title %></td>
+                                    <td><%= property.category %></td>
+                                    <td><%= property.address %></td>
+                                    <td><%= property.price %></td>
+                                    <td>
+                                        <a href="/listings/edit/<%= property.id %>">수정</a>
+                                        <a href="/listings/delete/<%= property.id %>">삭제</a>
+                                    </td>
+                                </tr>
+                            <% }); %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+</body>
+</html>

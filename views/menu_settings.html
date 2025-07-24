@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>홈페이지 메뉴 관리 | 관리자</title>
+    <link rel="stylesheet" href="/css/admin_style.css">
+    <style>
+        .menu-item { display: flex; align-items: center; gap: 10px; margin-bottom: 15px; }
+        .menu-item input { flex-grow: 1; }
+        .menu-item .btn-danger { background-color: #dc3545; }
+    </style>
+</head>
+<body>
+    <div class="admin-container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h1><a href="/dashboard">탑 부동산<span>.</span></a></h1>
+            </div>
+            <ul class="sidebar-menu">
+                <% menus.forEach(menu => { %>
+                    <li class="<%= menu.url.startsWith('/admin/menu') ? 'active' : '' %>"><a href="<%= menu.url %>"><%= menu.name %></a></li>
+                <% }); %>
+            </ul>
+            <div class="sidebar-footer">
+                <a href="/logout">로그아웃</a>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <form action="/admin/menu/update" method="POST">
+                <header class="content-header">
+                    <h2>홈페이지 메뉴 관리</h2>
+                    <button type="submit" class="btn save">메뉴 저장하기</button>
+                </header>
+
+                <div class="card">
+                    <div class="card-header"><h4>메뉴 항목</h4></div>
+                    <div class="card-body" id="menu-list">
+                        <% content.header_nav_links.forEach((link, index) => { %>
+                            <div class="menu-item">
+                                <input type="text" name="links[<%= index %>][text]" value="<%= link.text %>" placeholder="메뉴 이름">
+                                <input type="text" name="links[<%= index %>][url]" value="<%= link.url %>" placeholder="연결 URL">
+                                <button type="button" class="btn btn-danger" onclick="removeItem(this)">삭제</button>
+                            </div>
+                        <% }); %>
+                    </div>
+                    <div class="card-footer" style="text-align: right;">
+                        <button type="button" class="btn" id="add-item-btn">새 항목 추가</button>
+                    </div>
+                </div>
+            </form>
+        </main>
+    </div>
+
+    <script>
+        const menuList = document.getElementById('menu-list');
+        const addItemBtn = document.getElementById('add-item-btn');
+        let menuIndex = <%= content.header_nav_links.length %>;
+
+        addItemBtn.addEventListener('click', () => {
+            const newItem = document.createElement('div');
+            newItem.className = 'menu-item';
+            newItem.innerHTML = `
+                <input type="text" name="links[${menuIndex}][text]" placeholder="메뉴 이름">
+                <input type="text" name="links[${menuIndex}][url]" placeholder="연결 URL">
+                <button type="button" class="btn btn-danger" onclick="removeItem(this)">삭제</button>
+            `;
+            menuList.appendChild(newItem);
+            menuIndex++;
+        });
+
+        function removeItem(button) {
+            button.closest('.menu-item').remove();
+        }
+    </script>
+</body>
+</html>

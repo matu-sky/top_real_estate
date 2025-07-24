@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= property.title %> - 탑부동산</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1><a href="/">탑부동산</a></h1>
+        </div>
+    </header>
+
+    <main class="container">
+        <div class="property-detail">
+            <h1><%= property.title %></h1>
+            <div class="property-meta">
+                <span>카테고리: <%= property.category %></span>
+                <span>가격: <%= property.price %></span>
+            </div>
+            <div class="property-content">
+                <% if (property.image_path) { %>
+                    <div class="property-images">
+                        <% property.image_path.split(',').forEach(function(img) { %>
+                            <img src="<%= img %>" alt="<%= property.title %>" style="max-width: 100%; margin-bottom: 15px;">
+                        <% }); %>
+                    </div>
+                <% } %>
+                <p><%= property.description %></p>
+                <% if (property.youtube_url) { %>
+                    <div class="youtube-video">
+                        <iframe width="560" height="315" src="https://www.youtube.com/embed/<%= property.youtube_url.split('v=')[1] %>" frameborder="0" allowfullscreen></iframe>
+                    </div>
+                <% } %>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2025 탑부동산. All Rights Reserved.</p>
+        </div>
+    </footer>
+</body>
+</html>

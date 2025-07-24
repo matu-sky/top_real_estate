@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>홈페이지 종합 관리 | 관리자</title>
+    <link rel="stylesheet" href="/css/admin_style.css">
+</head>
+<body>
+    <div class="admin-container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h1><a href="/dashboard">탑 부동산<span>.</span></a></h1>
+            </div>
+            <ul class="sidebar-menu">
+                <% menus.forEach(menu => { %>
+                    <li class="<%= menu.url === '/admin' ? 'active' : '' %>"><a href="<%= menu.url %>"><%= menu.name %></a></li>
+                <% }); %>
+                <li><a href="/admin/menu">메뉴 관리</a></li>
+            </ul>
+            <div class="sidebar-footer">
+                <a href="/logout">로그아웃</a>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <header class="content-header">
+                <h2>홈페이지 종합 관리</h2>
+                <button type="submit" form="homepage-content-form" class="btn save">전체 변경사항 저장</button>
+            </header>
+
+            <form id="homepage-content-form" action="/admin/update" method="POST">
+
+                <!-- 헤더 섹션 -->
+                <div class="card">
+                    <div class="card-header"><h4>헤더 영역</h4></div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label for="header_logo_text">로고 텍스트</label>
+                            <input type="text" id="header_logo_text" name="header_logo_text" value="<%= content.header_logo_text %>">
+                        </div>
+                        <!-- 네비게이션 링크는 메뉴 관리에서 처리 -->
+                    </div>
+                </div>
+
+                <!-- 히어로 섹션 -->
+                <div class="card">
+                    <div class="card-header"><h4>메인 비주얼 (히어로 섹션)</h4></div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label for="hero_title">메인 문구</label>
+                            <textarea id="hero_title" name="hero_title" rows="2"><%= content.hero_title %></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="hero_subtitle">서브 문구</label>
+                            <input type="text" id="hero_subtitle" name="hero_subtitle" value="<%= content.hero_subtitle %>">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 라이프스타일 섹션 -->
+                <div class="card">
+                    <div class="card-header"><h4>라이프스타일 섹션</h4></div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label for="lifestyle_section_title">섹션 제목</label>
+                            <input type="text" id="lifestyle_section_title" name="lifestyle_section_title" value="<%= content.lifestyle_section_title %>">
+                        </div>
+                        <div class="form-group">
+                            <label for="lifestyle_section_subtitle">섹션 부제목</label>
+                            <input type="text" id="lifestyle_section_subtitle" name="lifestyle_section_subtitle" value="<%= content.lifestyle_section_subtitle %>">
+                        </div>
+                        <hr>
+                        <h5>카드 1</h5>
+                        <div class="form-group">
+                            <label for="lifestyle_card1_title">카드1 제목</label>
+                            <input type="text" id="lifestyle_card1_title" name="lifestyle_card1_title" value="<%= content.lifestyle_card1_title %>">
+                        </div>
+                        <div class="form-group">
+                            <label for="lifestyle_card1_desc">카드1 설명</label>
+                            <input type="text" id="lifestyle_card1_desc" name="lifestyle_card1_desc" value="<%= content.lifestyle_card1_desc %>">
+                        </div>
+                        <hr>
+                        <h5>카드 2</h5>
+                        <div class="form-group">
+                            <label for="lifestyle_card2_title">카드2 제목</label>
+                            <input type="text" id="lifestyle_card2_title" name="lifestyle_card2_title" value="<%= content.lifestyle_card2_title %>">
+                        </div>
+                        <div class="form-group">
+                            <label for="lifestyle_card2_desc">카드2 설명</label>
+                            <input type="text" id="lifestyle_card2_desc" name="lifestyle_card2_desc" value="<%= content.lifestyle_card2_desc %>">
+                        </div>
+                        <hr>
+                        <h5>카드 3</h5>
+                        <div class="form-group">
+                            <label for="lifestyle_card3_title">카드3 제목</label>
+                            <input type="text" id="lifestyle_card3_title" name="lifestyle_card3_title" value="<%= content.lifestyle_card3_title %>">
+                        </div>
+                        <div class="form-group">
+                            <label for="lifestyle_card3_desc">카드3 설명</label>
+                            <input type="text" id="lifestyle_card3_desc" name="lifestyle_card3_desc" value="<%= content.lifestyle_card3_desc %>">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 최신 매물 섹션 -->
+                <div class="card">
+                    <div class="card-header"><h4>최신 매물 섹션</h4></div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label for="recent_listings_section_title">섹션 제목</label>
+                            <input type="text" id="recent_listings_section_title" name="recent_listings_section_title" value="<%= content.recent_listings_section_title %>">
+                        </div>
+                        <div class="form-group">
+                            <label for="recent_listings_section_subtitle">섹션 부제목</label>
+                            <input type="text" id="recent_listings_section_subtitle" name="recent_listings_section_subtitle" value="<%= content.recent_listings_section_subtitle %>">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 컨설팅 섹션 -->
+                <div class="card">
+                    <div class="card-header"><h4>컨설팅 섹션</h4></div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label for="consulting_section_title">섹션 제목</label>
+                            <textarea id="consulting_section_title" name="consulting_section_title" rows="2"><%= content.consulting_section_title %></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="consulting_section_desc">섹션 설명</label>
+                            <textarea id="consulting_section_desc" name="consulting_section_desc" rows="5"><%= content.consulting_section_desc %></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="consulting_button_text">버튼 텍스트</label>
+                            <input type="text" id="consulting_button_text" name="consulting_button_text" value="<%= content.consulting_button_text %>">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 오시는 길 섹션 -->
+                <div class="card">
+                    <div class="card-header"><h4>오시는 길 섹션</h4></div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label for="location_section_title">섹션 제목</label>
+                            <input type="text" id="location_section_title" name="location_section_title" value="<%= content.location_section_title %>">
+                        </div>
+                        <div class="form-group">
+                            <label for="location_section_address">주소</label>
+                            <input type="text" id="location_section_address" name="location_section_address" value="<%= content.location_section_address %>">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 푸터 섹션 -->
+                <div class="card">
+                    <div class="card-header"><h4>푸터 영역</h4></div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label for="footer_company_name">상호</label>
+                            <input type="text" id="footer_company_name" name="footer_company_name" value="<%= content.footer_company_name %>">
+                        </div>
+                        <div class="form-group">
+                            <label for="footer_ceo_name">대표자</label>
+                            <input type="text" id="footer_ceo_name" name="footer_ceo_name" value="<%= content.footer_ceo_name %>">
+                        </div>
+                        <div class="form-group">
+                            <label for="footer_address">주소</label>
+                            <input type="text" id="footer_address" name="footer_address" value="<%= content.footer_address %>">
+                        </div>
+                        <div class="form-group">
+                            <label for="footer_business_license">사업자등록번호</label>
+                            <input type="text" id="footer_business_license" name="footer_business_license" value="<%= content.footer_business_license %>">
+                        </div>
+                        <div class="form-group">
+                            <label for="footer_registration_number">중개업등록번호</label>
+                            <input type="text" id="footer_registration_number" name="footer_registration_number" value="<%= content.footer_registration_number %>">
+                        </div>
+                        <div class="form-group">
+                            <label for="footer_mail_order_license">통신판매업신고번호</label>
+                            <input type="text" id="footer_mail_order_license" name="footer_mail_order_license" value="<%= content.footer_mail_order_license %>">
+                        </div>
+                        <div class="form-group">
+                            <label for="footer_phone">전화번호</label>
+                            <input type="text" id="footer_phone" name="footer_phone" value="<%= content.footer_phone %>">
+                        </div>
+                        <div class="form-group">
+                            <label for="footer_copyright">카피라이트</label>
+                            <input type="text" id="footer_copyright" name="footer_copyright" value="<%= content.footer_copyright %>">
+                        </div>
+                    </div>
+                </div>
+
+            </form>
+        </main>
+    </div>
+</body>
+</html>

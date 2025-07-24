@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>게시판 설정 | 관리자</title>
+    <link rel="stylesheet" href="/css/admin_style.css">
+</head>
+<body>
+    <div class="admin-container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h1><a href="/dashboard">탑 부동산<span>.</span></a></h1>
+            </div>
+            <ul class="sidebar-menu">
+                <% menus.forEach(menu => { %>
+                    <li class="<%= menu.url === '/admin/board_settings' ? 'active' : '' %>"><a href="<%= menu.url %>"><%= menu.name %></a></li>
+                <% }); %>
+                <li><a href="/admin/menu">메뉴 관리</a></li>
+            </ul>
+            <div class="sidebar-footer">
+                <a href="/logout">로그아웃</a>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <header class="content-header">
+                <h2>게시판 설정</h2>
+            </header>
+
+            <div class="card">
+                <div class="card-header"><h4>게시판 기본 설정</h4></div>
+                <div class="card-body">
+                    <p>이곳에서 게시판 관련 설정을 관리할 수 있습니다.</p>
+                    <!-- 게시판 설정 폼이 들어갈 자리 -->
+                </div>
+            </div>
+        </main>
+    </div>
+</body>
+</html>
