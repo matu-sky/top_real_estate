@@ -33,9 +33,12 @@ const db = new sqlite3.Database(dbPath, (err) => {
             transaction_type TEXT,
             parking INTEGER,
             maintenance_fee INTEGER,
+            maintenance_fee_details TEXT, -- [신규] 관리비 상세
             power_supply TEXT, -- 공장/지산: 사용전력
             hoist TEXT, -- 공장/지산: 호이스트
             ceiling_height REAL, -- 공장/지산: 층고
+            permitted_business_types TEXT, -- [신규] 가능 업종
+            access_road_condition TEXT, -- [신규] 진입로 사정
             move_in_date TEXT,
             description TEXT,
             image_path TEXT, -- 다중 이미지 경로 (쉼표로 구분)
@@ -163,6 +166,7 @@ function requireLoginAndLoadMenus(req, res, next) {
 app.use('/admin', requireLoginAndLoadMenus);
 app.use('/dashboard', requireLoginAndLoadMenus);
 app.use('/listings', requireLoginAndLoadMenus);
+app.use('/add_property', requireLoginAndLoadMenus);
 
 // 홈페이지 관리 페이지
 app.get('/admin', (req, res) => {
@@ -272,6 +276,21 @@ app.get('/listings', (req, res) => {
     });
 });
 
+// 새 매물 등록 페이지
+app.get('/add_property', requireLoginAndLoadMenus, (req, res) => {
+    res.render('add_property', { menus: res.locals.menus });
+});
+
+// 새 상업용 매물 등록 페이지
+app.get('/add_commercial_property', requireLoginAndLoadMenus, (req, res) => {
+    res.render('add_commercial_property', { menus: res.locals.menus });
+});
+
+// 새 공장/지산 매물 등록 페이지
+app.get('/add_factory_property', requireLoginAndLoadMenus, (req, res) => {
+    res.render('add_factory_property', { menus: res.locals.menus });
+});
+
 // --- 홈페이지 메뉴 관리 ---
 app.get('/admin/menu', (req, res) => {
     const contentPath = path.join(__dirname, 'data', 'homepage_content.json');
@@ -313,14 +332,14 @@ app.post('/listings/add', upload.array('images', 10), (req, res) => { // 'images
     console.log('req.body:', req.body);   // 폼 데이터
 
     const image_paths = req.files ? req.files.map(file => 'uploads/' + file.filename).join(',') : null;
-    const { category, title, price, address, area, exclusive_area, approval_date, purpose, total_floors, floor, direction, direction_standard, transaction_type, parking, maintenance_fee, power_supply, hoist, ceiling_height, move_in_date, description, youtube_url } = req.body;
+    const { category, title, price, address, area, exclusive_area, approval_date, purpose, total_floors, floor, direction, direction_standard, transaction_type, parking, maintenance_fee, maintenance_fee_details, power_supply, hoist, ceiling_height, permitted_business_types, access_road_condition, move_in_date, description, youtube_url } = req.body;
 
     const query = `INSERT INTO properties (
-        category, title, price, address, area, exclusive_area, approval_date, purpose, total_floors, floor, direction, direction_standard, transaction_type, parking, maintenance_fee, power_supply, hoist, ceiling_height, move_in_date, description, image_path, youtube_url
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+        category, title, price, address, area, exclusive_area, approval_date, purpose, total_floors, floor, direction, direction_standard, transaction_type, parking, maintenance_fee, maintenance_fee_details, power_supply, hoist, ceiling_height, permitted_business_types, access_road_condition, move_in_date, description, image_path, youtube_url
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
     db.run(query, [
-        category, title, price, address, area, exclusive_area, approval_date, purpose, total_floors, floor, direction, direction_standard, transaction_type, parking, maintenance_fee, power_supply, hoist, ceiling_height, move_in_date, description, image_paths, youtube_url
+        category, title, price, address, area, exclusive_area, approval_date, purpose, total_floors, floor, direction, direction_standard, transaction_type, parking, maintenance_fee, maintenance_fee_details, power_supply, hoist, ceiling_height, permitted_business_types, access_road_condition, move_in_date, description, image_paths, youtube_url
     ], function(err) {
         if (err) {
             console.error('DB 삽입 오류:', err.message);
@@ -334,20 +353,20 @@ app.post('/listings/add', upload.array('images', 10), (req, res) => { // 'images
 // ✅ [신규] 매물 수정
 app.post('/listings/edit/:id', upload.array('images', 10), (req, res) => {
     const { id } = req.params;
-    const { category, title, price, address, area, exclusive_area, approval_date, purpose, total_floors, floor, direction, direction_standard, transaction_type, parking, maintenance_fee, power_supply, hoist, ceiling_height, move_in_date, description, youtube_url } = req.body;
+    const { category, title, price, address, area, exclusive_area, approval_date, purpose, total_floors, floor, direction, direction_standard, transaction_type, parking, maintenance_fee, maintenance_fee_details, power_supply, hoist, ceiling_height, permitted_business_types, access_road_condition, move_in_date, description, youtube_url } = req.body;
     
     let image_paths = req.body.existing_image_paths || '';
     if (req.files && req.files.length > 0) {
-        const new_image_paths = req.files.map(file => '/uploads/' + file.filename).join(',');
-        image_paths = image_paths ? image_paths + ',' + new_image_paths : new_image_paths;
+        const new_image_paths = req.files.map(file => 'uploads/' + file.filename).join(',');
+        image_paths = image_paths ? [image_paths, new_image_paths].filter(p => p).join(',') : new_image_paths;
     }
 
     const query = `UPDATE properties SET 
-        category = ?, title = ?, price = ?, address = ?, area = ?, exclusive_area = ?, approval_date = ?, purpose = ?, total_floors = ?, floor = ?, direction = ?, direction_standard = ?, transaction_type = ?, parking = ?, maintenance_fee = ?, power_supply = ?, hoist = ?, ceiling_height = ?, move_in_date = ?, description = ?, image_path = ?, youtube_url = ?
+        category = ?, title = ?, price = ?, address = ?, area = ?, exclusive_area = ?, approval_date = ?, purpose = ?, total_floors = ?, floor = ?, direction = ?, direction_standard = ?, transaction_type = ?, parking = ?, maintenance_fee = ?, maintenance_fee_details = ?, power_supply = ?, hoist = ?, ceiling_height = ?, permitted_business_types = ?, access_road_condition = ?, move_in_date = ?, description = ?, image_path = ?, youtube_url = ?
     WHERE id = ?`;
 
     db.run(query, [
-        category, title, price, address, area, exclusive_area, approval_date, purpose, total_floors, floor, direction, direction_standard, transaction_type, parking, maintenance_fee, power_supply, hoist, ceiling_height, move_in_date, description, image_paths, youtube_url, id
+        category, title, price, address, area, exclusive_area, approval_date, purpose, total_floors, floor, direction, direction_standard, transaction_type, parking, maintenance_fee, maintenance_fee_details, power_supply, hoist, ceiling_height, permitted_business_types, access_road_condition, move_in_date, description, image_paths, youtube_url, id
     ], function(err) {
         if (err) {
             console.error('DB 수정 오류:', err.message);
@@ -402,6 +421,25 @@ app.get('/property/:id', (req, res) => {
         }
         else {
             res.status(404).send("매물을 찾을 수 없습니다.");
+        }
+    });
+});
+
+// API: 특정 매물 정보 가져오기
+app.get('/api/property/:id', requireLoginAndLoadMenus, (req, res) => {
+    const { id } = req.params;
+    const query = "SELECT * FROM properties WHERE id = ?";
+
+    db.get(query, [id], (err, row) => {
+        if (err) {
+            console.error('API DB 조회 오류:', err.message);
+            return res.status(500).json({ error: '데이터베이스 오류' });
+        }
+        if (row) {
+            res.json(row);
+        }
+        else {
+            res.status(404).json({ error: '매물을 찾을 수 없습니다.' });
         }
     });
 });

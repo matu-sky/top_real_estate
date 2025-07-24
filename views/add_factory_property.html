@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>공장/지산 매물 신규등록</title>
+    <link rel="stylesheet" href="/css/admin_style.css">
+    <link rel="stylesheet" href="/css/add_property_form.css">
+</head>
+<body>
+    <div class="admin-container">
+        <%- include('partials/admin_sidebar.html') %>
+        <main class="main-content">
+            <div class="form-container">
+                <header class="content-header">
+                    <h2>공장/지산 매물 신규등록</h2>
+                </header>
+
+                <form id="add-property-form" action="/listings/add" method="POST" enctype="multipart/form-data">
+                    <div class="card">
+                        <div class="card-header"><h4>기본 정보</h4></div>
+                        <div class="card-body form-grid">
+                            <div class="form-group"><label for="title">제목</label><input type="text" id="title" name="title" placeholder="예) 군포 SK벤티움 지식산업센터" required></div>
+                            <div class="form-group"><label for="price">가격</label><input type="text" id="price" name="price" placeholder="예) 매매 12억"></div>
+                            <div class="form-group"><label for="category">구분</label><select id="category" name="category" required><option value="주거용">주거용</option><option value="상업용">상업용</option><option value="공장/지산" selected>공장/지산</option></select></div>
+                            <div class="form-group"><label for="area">평수</label><input type="number" id="area" name="area" placeholder="예) 80"></div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header"><h4>상세 정보</h4></div>
+                        <div class="card-body form-grid">
+                            <div class="form-group"><label for="address">소재지</label><input type="text" id="address" name="address" placeholder="예) 경기도 군포시 공단로"></div>
+                            <div class="form-group"><label for="area">분양면적(평)</label><input type="number" id="area" name="area" step="0.01" placeholder="예) 80"></div>
+                            <div class="form-group"><label for="exclusive_area">전용면적(평)</label><input type="number" id="exclusive_area" name="exclusive_area" step="0.01" placeholder="예) 50"></div>
+                            <div class="form-group"><label for="approval_date">사용승인일</label><input type="date" id="approval_date" name="approval_date"></div>
+                            <div class="form-group"><label for="purpose">물건의 용도</label><input type="text" id="purpose" name="purpose" placeholder="예) 공장, 사무실"></div>
+                            <div class="form-group"><label for="total_floors">총층</label><input type="number" id="total_floors" name="total_floors" placeholder="예) 20"></div>
+                            <div class="form-group"><label for="floor">해당층</label><input type="number" id="floor" name="floor" placeholder="예) 10"></div>
+                            <div class="form-group"><label for="direction">방향</label><input type="text" id="direction" name="direction" placeholder="예) 북서향"></div>
+                            <div class="form-group"><label for="direction_standard">향 기준</label><input type="text" id="direction_standard" name="direction_standard" placeholder="예) 주된 출입구"></div>
+                            <div class="form-group"><label for="transaction_type">거래 형태</label><input type="text" id="transaction_type" name="transaction_type" placeholder="예) 매매"></div>
+                            <div class="form-group"><label for="parking">주차대수</label><input type="number" id="parking" name="parking" placeholder="예) 300"></div>
+                            <div class="form-group"><label for="maintenance_fee">관리비</label><input type="number" id="maintenance_fee" name="maintenance_fee" placeholder="예) 500000"></div>
+                            <div class="form-group"><label for="maintenance_fee_details">관리비 상세</label><input type="text" id="maintenance_fee_details" name="maintenance_fee_details" placeholder="예) 전기, 수도 포함"></div>
+                            <div class="form-group"><label for="ceiling_height">층고(m)</label><input type="number" id="ceiling_height" name="ceiling_height" step="0.1" placeholder="예) 6.5"></div>
+                            <div class="form-group"><label for="permitted_business_types">가능업종</label><input type="text" id="permitted_business_types" name="permitted_business_types" placeholder="예) 제조업, IT, 사무실"></div>
+                            <div class="form-group"><label for="hoist">호이스트</label><input type="text" id="hoist" name="hoist" placeholder="예) 2.5톤, 2대"></div>
+                            <div class="form-group"><label for="power_supply">사용전력(kW)</label><input type="text" id="power_supply" name="power_supply" placeholder="예) 100kW"></div>
+                            <div class="form-group"><label for="access_road_condition">진입로 사정</label><input type="text" id="access_road_condition" name="access_road_condition" placeholder="예) 40피트 트레일러 진입 가능"></div>
+                            <div class="form-group full-width"><label for="description">물건 상세</label><textarea id="description" name="description" rows="8" placeholder="매물에 대한 상세한 설명을 입력하세요."></textarea></div>
+                            <div class="form-group full-width"><label for="images">파일 업로드</label><input type="file" id="images" name="images" multiple></div>
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn save">저장하기</button>
+                    </div>
+                </form>
+            </div>
+        </main>
+    </div>
+</body>
+</html>

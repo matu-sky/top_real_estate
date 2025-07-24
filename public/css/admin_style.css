@@ -1,21 +1,17 @@
-
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap');
-
 :root {
-    --primary-color: #0d2c54; /* 진한 남색 */
-    --secondary-color: #f8f9fa; /* 매우 밝은 회색 */
-    --accent-color: #d9a404; /* 금색/노란색 */
-    --text-color: #343a40; /* 기본 텍스트 색상 */
-    --light-text-color: #6c757d; /* 연한 텍스트 색상 */
-    --white-color: #ffffff;
-    --border-color: #dee2e6;
+    --primary-color: #3498db;
+    --secondary-color: #ecf0f1;
+    --dark-color: #2c3e50;
+    --light-text-color: #7f8c8d;
+    --white-color: #fff;
+    --border-color: #e0e0e0;
 }
 
-body, html {
-    height: 100%;
-    margin: 0;
+body {
     font-family: 'Noto Sans KR', sans-serif;
-    background-color: var(--secondary-color);
+    margin: 0;
+    background-color: #f4f7f6;
+    color: #333;
 }
 
 .admin-container {
@@ -23,35 +19,28 @@ body, html {
     min-height: 100vh;
 }
 
-/* --- 사이드바 --- */
 .sidebar {
     width: 250px;
-    background-color: var(--primary-color);
+    background-color: var(--dark-color);
     color: var(--white-color);
     display: flex;
     flex-direction: column;
-    flex-shrink: 0;
 }
 
 .sidebar-header {
     padding: 20px;
     text-align: center;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    border-bottom: 1px solid #34495e;
 }
 
-.sidebar-header h1 {
-    margin: 0;
-    font-size: 1.5rem;
-    font-weight: 700;
-}
-
-.sidebar-header a {
-    color: inherit;
+.sidebar-header h1 a {
+    color: var(--white-color);
     text-decoration: none;
+    font-size: 1.5rem;
 }
 
-.sidebar-header a span {
-    color: var(--accent-color);
+.sidebar-header h1 span {
+    color: var(--primary-color);
 }
 
 .sidebar-menu {
@@ -64,40 +53,32 @@ body, html {
 .sidebar-menu li a {
     display: block;
     padding: 15px 20px;
-    color: var(--secondary-color);
+    color: #bdc3c7;
     text-decoration: none;
-    font-weight: 500;
     transition: background-color 0.2s, color 0.2s;
 }
 
 .sidebar-menu li a:hover,
 .sidebar-menu li.active a {
-    background-color: rgba(255, 255, 255, 0.1);
+    background-color: #34495e;
     color: var(--white-color);
 }
 
 .sidebar-footer {
     padding: 20px;
-    text-align: center;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    border-top: 1px solid #34495e;
 }
 
 .sidebar-footer a {
-    color: var(--light-text-color);
+    display: block;
+    text-align: center;
+    color: #bdc3c7;
     text-decoration: none;
-    font-size: 0.9rem;
-    transition: color 0.2s;
 }
 
-.sidebar-footer a:hover {
-    color: var(--white-color);
-}
-
-/* --- 메인 콘텐츠 --- */
 .main-content {
     flex-grow: 1;
     padding: 30px;
-    overflow-y: auto;
 }
 
 .content-header {
@@ -109,72 +90,82 @@ body, html {
 
 .content-header h2 {
     margin: 0;
-    font-size: 2rem;
+    font-size: 1.8rem;
 }
 
 .card {
     background-color: var(--white-color);
-    border: 1px solid var(--border-color);
     border-radius: 8px;
-    margin-bottom: 30px;
     box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    margin-bottom: 20px;
 }
 
 .card-header {
-    padding: 20px 25px;
+    padding: 15px 20px;
     border-bottom: 1px solid var(--border-color);
 }
 
 .card-header h4 {
     margin: 0;
-    font-size: 1.2rem;
+    font-size: 1.1rem;
 }
 
 .card-body {
-    padding: 25px;
+    padding: 20px;
 }
 
-/* --- 폼 스타일 --- */
 .form-group {
-    margin-bottom: 20px;
+    margin-bottom: 15px;
 }
 
 .form-group label {
     display: block;
-    font-weight: 500;
-    margin-bottom: 8px;
+    margin-bottom: 5px;
+    font-weight: normal;
 }
 
 .form-group input[type="text"],
 .form-group input[type="number"],
-.form-group input[type="password"],
 .form-group input[type="date"],
 .form-group select,
 .form-group textarea {
     width: 100%;
-    padding: 12px;
-    border: 1px solid var(--border-color);
-    border-radius: 5px;
-    font-size: 1rem;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
     box-sizing: border-box;
 }
 
 .btn {
+    display: inline-block;
+    padding: 10px 20px;
     background-color: var(--primary-color);
     color: var(--white-color);
-    padding: 12px 20px;
+    text-decoration: none;
+    border-radius: 4px;
     border: none;
-    border-radius: 5px;
     cursor: pointer;
-    font-size: 1rem;
-    font-weight: 500;
-    transition: opacity 0.2s;
-}
-
-.btn:hover {
-    opacity: 0.85;
 }
 
 .btn.save {
-    background-color: #28a745;
+    background-color: #2ecc71;
+}
+
+.btn-delete {
+    background-color: #e74c3c;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+table th, table td {
+    padding: 12px 15px;
+    border-bottom: 1px solid var(--border-color);
+    text-align: left;
+}
+
+table th {
+    background-color: #f9f9f9;
 }

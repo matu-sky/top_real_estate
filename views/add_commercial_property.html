@@ -1,0 +1,116 @@
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>상업용 매물 신규등록</title>
+    <link rel="stylesheet" href="/css/admin_style.css">
+    <link rel="stylesheet" href="/css/add_property_form.css">
+</head>
+<body>
+    <div class="admin-container">
+        <%- include('partials/admin_sidebar.html') %>
+        <main class="main-content">
+            <div class="form-container">
+                <header class="content-header">
+                    <h2>상업용매물 신규등록</h2>
+                </header>
+
+                <form id="add-property-form" action="/listings/add" method="POST" enctype="multipart/form-data">
+                    <div class="card">
+                        <div class="card-header"><h4>기본 정보</h4></div>
+                        <div class="card-body form-grid">
+                            <div class="form-group">
+                                <label for="title">제목</label>
+                                <input type="text" id="title" name="title" placeholder="예) 군포역 초역세권 상가" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="price">가격</label>
+                                <input type="text" id="price" name="price" placeholder="예) 10억">
+                            </div>
+                            <div class="form-group">
+                                <label for="category">매물 구분</label>
+                                <select id="category" name="category" required>
+                                    <option value="주거용">주거용</option>
+                                    <option value="상업용" selected>상업용</option>
+                                    <option value="공장/지산">공장/지산</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="area">평수</label>
+                                <input type="number" id="area" name="area" placeholder="예) 50">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header"><h4>상세 정보</h4></div>
+                        <div class="card-body form-grid">
+                            <div class="form-group">
+                                <label for="address">소재지</label>
+                                <input type="text" id="address" name="address" placeholder="예) 경기도 군포시 당동">
+                            </div>
+                            <div class="form-group">
+                                <label for="exclusive_area">면적(m²)</label>
+                                <input type="number" id="exclusive_area" name="exclusive_area" step="0.01" placeholder="예) 165.29">
+                            </div>
+                            <div class="form-group">
+                                <label for="approval_date">사용승인일</label>
+                                <input type="date" id="approval_date" name="approval_date">
+                            </div>
+                            <div class="form-group">
+                                <label for="purpose">물건의 용도</label>
+                                <input type="text" id="purpose" name="purpose" placeholder="예) 근린생활시설">
+                            </div>
+                            <div class="form-group">
+                                <label for="total_floors">총층</label>
+                                <input type="number" id="total_floors" name="total_floors" placeholder="예) 5">
+                            </div>
+                            <div class="form-group">
+                                <label for="floor">해당층</label>
+                                <input type="number" id="floor" name="floor" placeholder="예) 1">
+                            </div>
+                            <div class="form-group">
+                                <label for="direction">방향</label>
+                                <input type="text" id="direction" name="direction" placeholder="예) 남향">
+                            </div>
+                            <div class="form-group">
+                                <label for="direction_standard">향 기준</label>
+                                <input type="text" id="direction_standard" name="direction_standard" placeholder="예) 주 출입구">
+                            </div>
+                            <div class="form-group">
+                                <label for="transaction_type">거래 형태</label>
+                                <input type="text" id="transaction_type" name="transaction_type" placeholder="예) 임대">
+                            </div>
+                            <div class="form-group">
+                                <label for="parking">주차대수</label>
+                                <input type="number" id="parking" name="parking" placeholder="예) 10">
+                            </div>
+                            <div class="form-group">
+                                <label for="maintenance_fee">관리비</label>
+                                <input type="number" id="maintenance_fee" name="maintenance_fee" placeholder="예) 300000">
+                            </div>
+                            <div class="form-group">
+                                <label for="move_in_date">입주가능일</label>
+                                <input type="date" id="move_in_date" name="move_in_date">
+                            </div>
+                            <div class="form-group full-width">
+                                <label for="description">물건 설명</label>
+                                <textarea id="description" name="description" rows="10" placeholder="매물에 대한 상세한 설명을 입력하세요."></textarea>
+                            </div>
+                            <div class="form-group full-width">
+                                <label for="images">대표 이미지 (다중 선택 가능)</label>
+                                <input type="file" id="images" name="images" multiple>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn save">저장하기</button>
+                    </div>
+                </form>
+            </div>
+        </main>
+    </div>
+</body>
+</html>
