@@ -232,7 +232,25 @@ app.get('/logout', (req, res) => {
 
 // 대시보드 페이지
 app.get('/dashboard', (req, res) => {
-    res.render('dashboard', { menus: res.locals.menus });
+    const queries = {
+        totalProperties: "SELECT COUNT(*) as count FROM properties",
+        propertiesByCategory: "SELECT category, COUNT(*) as count FROM properties GROUP BY category"
+    };
+
+    db.get(queries.totalProperties, [], (err, total) => {
+        if (err) return res.status(500).send("데이터베이스 오류");
+        db.all(queries.propertiesByCategory, [], (err, categories) => {
+            if (err) return res.status(500).send("데이터베이스 오류");
+
+            res.render('dashboard', { 
+                menus: res.locals.menus, 
+                stats: {
+                    total: total.count,
+                    byCategory: categories
+                }
+            });
+        });
+    });
 });
 
 // 게시판 설정 페이지
