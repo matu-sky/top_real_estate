@@ -308,7 +308,11 @@ app.post('/admin/menu/update', (req, res) => {
 
 // ✅ [신규] 새 매물 추가: 폼에서 전송된 데이터를 DB에 저장
 app.post('/listings/add', upload.array('images', 10), (req, res) => { // 'images' 필드에서 최대 10개 파일
-    const image_paths = req.files ? req.files.map(file => '/uploads/' + file.filename).join(',') : null;
+    console.log('--- [Debug] /listings/add --- ');
+    console.log('req.files:', req.files); // 업로드된 파일 정보
+    console.log('req.body:', req.body);   // 폼 데이터
+
+    const image_paths = req.files ? req.files.map(file => 'uploads/' + file.filename).join(',') : null;
     const { category, title, price, address, area, exclusive_area, approval_date, purpose, total_floors, floor, direction, direction_standard, transaction_type, parking, maintenance_fee, power_supply, hoist, ceiling_height, move_in_date, description, youtube_url } = req.body;
 
     const query = `INSERT INTO properties (
