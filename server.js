@@ -194,14 +194,29 @@ app.get('/admin', (req, res) => {
 // 홈페이지 관리 정보 업데이트
 app.post('/admin/update', requireLoginAndLoadMenus, (req, res) => {
     const contentPath = path.join(__dirname, 'data', 'homepage_content.json');
-    const updatedContent = req.body;
 
-    fs.writeFile(contentPath, JSON.stringify(updatedContent, null, 2), 'utf8', (err) => {
+    fs.readFile(contentPath, 'utf8', (err, data) => {
         if (err) {
-            console.error('파일 쓰기 오류:', err);
-            return res.status(500).send('콘텐츠 업데이트에 실패했습니다.');
+            console.error('파일 읽기 오류:', err);
+            return res.status(500).send('콘텐츠 파일을 읽는 데 실패했습니다.');
         }
-        res.redirect('/admin');
+
+        let content = JSON.parse(data);
+
+        // 외과수술식 업데이트: 폼에서 넘어온 데이터 키만 정확히 업데이트합니다.
+        for (const key in req.body) {
+            if (Object.prototype.hasOwnProperty.call(content, key)) {
+                content[key] = req.body[key];
+            }
+        }
+
+        fs.writeFile(contentPath, JSON.stringify(content, null, 2), 'utf8', (writeErr) => {
+            if (writeErr) {
+                console.error('파일 쓰기 오류:', writeErr);
+                return res.status(500).send('콘텐츠 업데이트에 실패했습니다.');
+            }
+            res.redirect('/admin');
+        });
     });
 });
 
