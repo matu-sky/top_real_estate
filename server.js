@@ -122,10 +122,27 @@ app.get('/', (req, res) => {
         db.all(query, [], (err, rows) => {
             if (err) {
                 console.error('DB 조회 오류:', err.message);
-                // 오류가 발생해도 페이지는 렌더링하도록 rows를 빈 배열로 설정
                 return res.render('index', { content: content, properties: [] });
             }
-            res.render('index', { content: content, properties: rows });
+            
+            const processedRows = rows.map(row => {
+                if (row.address) {
+                    const addressParts = row.address.split(' ');
+                    let shortAddress = addressParts[0]; // 기본적으로 첫 번째 부분 (e.g., 경기도)
+                    if (addressParts.length > 1) {
+                        shortAddress += ' ' + addressParts[1]; // 두 번째 부분 추가 (e.g., 군포시)
+                    }
+                    if (addressParts.length > 2 && (addressParts[2].endsWith('동') || addressParts[2].endsWith('읍') || addressParts[2].endsWith('면'))) {
+                        shortAddress += ' ' + addressParts[2]; // 세 번째 부분이 동/읍/면이면 추가
+                    }
+                    row.short_address = shortAddress;
+                } else {
+                    row.short_address = '주소 정보 없음';
+                }
+                return row;
+            });
+
+            res.render('index', { content: content, properties: processedRows });
         });
     });
 });
@@ -421,19 +438,30 @@ app.post('/listings/delete/:id', (req, res) => {
 // 매물 상세 페이지
 app.get('/property/:id', (req, res) => {
     const { id } = req.params;
-    const query = "SELECT * FROM properties WHERE id = ?";
+    const contentPath = path.join(__dirname, 'data', 'homepage_content.json');
 
-    db.get(query, [id], (err, row) => {
-        if (err) {
-            console.error('DB 조회 오류:', err.message);
-            return res.status(500).send("매물 정보를 가져오는 데 실패했습니다.");
+    fs.readFile(contentPath, 'utf8', (err, data) => {
+        let content = {};
+        if (!err) {
+            content = JSON.parse(data);
         }
-        if (row) {
-            res.render('property_detail', { property: row });
-        }
-        else {
-            res.status(404).send("매물을 찾을 수 없습니다.");
-        }
+
+        const query = "SELECT * FROM properties WHERE id = ?";
+        db.get(query, [id], (err, row) => {
+            if (err) {
+                console.error('DB 조회 오류:', err.message);
+                return res.status(500).send("매물 정보를 가져오는 데 실패했습니다.");
+            }
+            if (row) {
+                if (row.address) {
+                    const addressParts = row.address.split(' ');
+                    row.short_address = addressParts.slice(0, 3).join(' '); // ㅇㅇ시 ㅇㅇ구 ㅇㅇ동
+                }
+                res.render('property_detail', { property: row, content: content });
+            } else {
+                res.status(404).send("매물을 찾을 수 없습니다.");
+            }
+        });
     });
 });
 

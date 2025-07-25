@@ -7,41 +7,168 @@
     <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
-    <header>
-        <div class="container">
-            <h1><a href="/">탑부동산</a></h1>
+    <header id="header">
+        <div class="container header-container">
+            <div class="logo">
+                <a href="/"><%= content.header_logo_text %></a>
+            </div>
+            <nav>
+                <ul>
+                    <% content.header_nav_links.forEach(link => { %>
+                        <li><a href="<%= link.url %>"><%= link.text %></a></li>
+                    <% }); %>
+                </ul>
+            </nav>
+            <div class="mobile-menu-btn">☰</div>
         </div>
     </header>
 
-    <main class="container">
-        <div class="property-detail">
+    <main class="container property-detail-container-v2">
+        <div class="property-detail-header">
             <h1><%= property.title %></h1>
-            <div class="property-meta">
-                <span>카테고리: <%= property.category %></span>
-                <span>가격: <%= property.price %></span>
-            </div>
-            <div class="property-content">
-                <% if (property.image_path) { %>
-                    <div class="property-images">
-                        <% property.image_path.split(',').forEach(function(img) { %>
-                            <img src="<%= img %>" alt="<%= property.title %>" style="max-width: 100%; margin-bottom: 15px;">
-                        <% }); %>
-                    </div>
-                <% } %>
-                <p><%= property.description %></p>
-                <% if (property.youtube_url) { %>
-                    <div class="youtube-video">
-                        <iframe width="560" height="315" src="https://www.youtube.com/embed/<%= property.youtube_url.split('v=')[1] %>" frameborder="0" allowfullscreen></iframe>
-                    </div>
-                <% } %>
-            </div>
+            <p class="property-address"><%= property.short_address %></p>
         </div>
+
+        <!-- 1. 이미지 갤러리 -->
+        <div class="property-gallery">
+            <% if (property.image_path && property.image_path.length > 0) { %>
+                <div class="main-image">
+                    <img src="/<%= property.image_path.split(',')[0] %>" alt="<%= property.title %>" id="main-property-image">
+                </div>
+                <div class="thumbnail-images">
+                    <% property.image_path.split(',').forEach(function(img) { %>
+                        <img src="/<%= img %>" alt="<%= property.title %>" class="thumbnail">
+                    <% }); %>
+                </div>
+            <% } else { %>
+                <div class="main-image">
+                    <img src="/images/default_property.jpg" alt="기본 이미지" id="main-property-image">
+                </div>
+            <% } %>
+        </div>
+
+        <!-- 2. 통합 매물 정보 -->
+        <div class="property-info-section">
+            <h2>매물 상세 정보</h2>
+            <table class="property-info-table-unified">
+                <tr>
+                    <th>카테고리</th>
+                    <td><%= property.category %></td>
+                    <th>가격</th>
+                    <td class="price"><%= property.price %></td>
+                </tr>
+                <tr>
+                    <th>거래유형</th>
+                    <td><%= property.transaction_type %></td>
+                    <th>면적(공급)</th>
+                    <td><%= property.area %> m²</td>
+                </tr>
+                <tr>
+                    <% if (property.exclusive_area) { %>
+                        <th>면적(전용)</th>
+                        <td><%= property.exclusive_area %> m²</td>
+                    <% } else { %>
+                        <th></th><td></td>
+                    <% } %>
+                    <th>층/총층</th>
+                    <td><%= property.floor %> / <%= property.total_floors %></td>
+                </tr>
+                <tr>
+                    <th>방향</th>
+                    <td><%= property.direction %> (<%= property.direction_standard %> 기준)</td>
+                    <th>주차</th>
+                    <td><%= property.parking ? property.parking + ' 대' : '정보 없음' %></td>
+                </tr>
+                <tr>
+                    <th>관리비</th>
+                    <td colspan="3"><%= property.maintenance_fee ? property.maintenance_fee + ' 원' : '정보 없음' %></td>
+                </tr>
+                 <% if (property.maintenance_fee_details) { %>
+                <tr>
+                    <th>관리비 상세</th>
+                    <td colspan="3"><%= property.maintenance_fee_details %></td>
+                </tr>
+                <% } %>
+                <% if (property.purpose) { %>
+                <tr>
+                    <th>용도</th>
+                    <td><%= property.purpose %></td>
+                    <th>사용승인일</th>
+                    <td><%= property.approval_date %></td>
+                </tr>
+                <% } %>
+                <% if (property.power_supply || property.hoist) { %>
+                <tr>
+                    <th>사용전력</th>
+                    <td><%= property.power_supply %></td>
+                    <th>호이스트</th>
+                    <td><%= property.hoist %></td>
+                </tr>
+                <% } %>
+                <% if (property.ceiling_height || property.access_road_condition) { %>
+                <tr>
+                    <th>층고</th>
+                    <td><%= property.ceiling_height %> m</td>
+                    <th>진입로 사정</th>
+                    <td><%= property.access_road_condition %></td>
+                </tr>
+                <% } %>
+                <% if (property.permitted_business_types) { %>
+                <tr>
+                    <th>가능 업종</th>
+                    <td colspan="3"><%= property.permitted_business_types %></td>
+                </tr>
+                <% } %>
+                <tr>
+                    <th>입주가능일</th>
+                    <td colspan="3"><%= property.move_in_date %></td>
+                </tr>
+                <tr>
+                    <th>상세 설명</th>
+                    <td colspan="3" class="description-cell">
+                        <%- property.description ? property.description.replace(/\n/g, '<br>') : '' %>
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- 3. 유튜브 영상 -->
+        <% if (property.youtube_url) { %>
+            <div class="property-video">
+                <h2>소개 영상</h2>
+                <div class="youtube-wrapper">
+                    <iframe src="https://www.youtube.com/embed/<%= property.youtube_url.split('v=')[1] %>" frameborder="0" allowfullscreen></iframe>
+                </div>
+            </div>
+        <% } %>
     </main>
 
     <footer>
         <div class="container">
-            <p>&copy; 2025 탑부동산. All Rights Reserved.</p>
+            <div class="footer-info">
+                <p>
+                    <strong>상호:</strong> <%= content.footer_company_name %><span>|</span>
+                    <strong>대표자:</strong> <%= content.footer_ceo_name %><span>|</span>
+                    <strong>주소:</strong> <%= content.footer_address %><br>
+                    <strong>사업자등록번호:</strong> <%= content.footer_business_license %><span>|</span>
+                    <strong>중개업등록번호:</strong> <%= content.footer_registration_number %><span>|</span>
+                    <strong>통신판매업신고번호:</strong> <%= content.footer_mail_order_license %><span>|</span>
+                    <strong>전화번호:</strong> <%= content.footer_phone %>
+                </p>
+            </div>
+            
+            <div class="footer-menu">
+                <% content.footer_links.forEach(link => { %>
+                    <a href="<%= link.url %>"><%= link.text %></a>
+                <% }); %>
+                <a href="/login">관리자</a>
+            </div>
+
+            <div class="copyright">
+                <p><%= content.footer_copyright %></p>
+            </div>
         </div>
     </footer>
+    <script src="/js/main.js"></script>
 </body>
 </html>
