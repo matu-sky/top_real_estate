@@ -13,53 +13,29 @@ const app = express();
 // 프로젝트 루트를 기준으로 경로를 재설정해야 합니다.
 const projectRoot = path.resolve(__dirname, '..');
 
+const { Pool } = require('pg');
+
 // --- 데이터베이스 연결 ---
-// 중요: Netlify의 파일 시스템은 일시적입니다. 
-// 배포 시마다 데이터베이스 파일이 초기화될 수 있으며, 런타임 중 쓰기 작업은 영구 저장되지 않습니다.
-// 프로덕션 환경에서는 클라우드 기반 데이터베이스(예: PlanetScale, Supabase) 사용을 강력히 권장합니다.
-const dbPath = path.join(projectRoot, 'data', 'database.db');
-const db = new sqlite3.Database(dbPath, (err) => {
-    if (err) {
-        console.error('데이터베이스 연결 실패:', err.message);
-    } else {
-        console.log('데이터베이스에 성공적으로 연결되었습니다.');
-        // properties 테이블 생성 (모든 컬럼 포함)
-        db.run(`CREATE TABLE IF NOT EXISTS properties (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            category TEXT NOT NULL,
-            title TEXT NOT NULL,
-            price TEXT,
-            address TEXT,
-            area REAL, -- 주거용: 면적, 공장/지산: 분양면적
-            exclusive_area REAL, -- 공장/지산: 전용면적
-            approval_date TEXT,
-            purpose TEXT,
-            total_floors INTEGER,
-            floor INTEGER,
-            direction TEXT,
-            direction_standard TEXT,
-            transaction_type TEXT,
-            parking INTEGER,
-            maintenance_fee INTEGER,
-            maintenance_fee_details TEXT, -- [신규] 관리비 상세
-            power_supply TEXT, -- 공장/지산: 사용전력
-            hoist TEXT, -- 공장/지산: 호이스트
-            ceiling_height REAL, -- 공장/지산: 층고
-            permitted_business_types TEXT, -- [신규] 가능 업종
-            access_road_condition TEXT, -- [신규] 진입로 사정
-            move_in_date TEXT,
-            description TEXT,
-            image_path TEXT, -- 다중 이미지 경로 (쉼표로 구분)
-            youtube_url TEXT,
-            status TEXT DEFAULT '게시중',
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-        )`, (err) => {
-            if (err) {
-                console.error('테이블 생성 실패:', err.message);
-            }
-        });
+// Supabase 연결 정보를 Netlify 환경 변수에서 가져옵니다.
+// 로컬 테스트 시에는 .env 파일(git에 포함되지 않음)을 통해 환경 변수를 로드할 수 있습니다.
+const connectionString = process.env.DATABASE_URL;
+const pool = new Pool({
+    connectionString,
+    ssl: {
+        rejectUnauthorized: false
     }
 });
+
+pool.connect((err, client, release) => {
+    if (err) {
+        return console.error('데이터베이스 연결 오류', err.stack);
+    }
+    console.log('Supabase 데이터베이스에 성공적으로 연결되었습니다.');
+    client.release();
+});
+
+// 기존 properties 테이블 생성 로직은 SQL 파일이나 Supabase 대시보드에서 직접 관리하는 것이 좋습니다.
+// 여기서는 앱 실행 시마다 확인하지 않습니다.
 
 // --- 메뉴 데이터 로더 ---
 const menuFilePath = path.join(projectRoot, 'data', 'menu_settings.json');
@@ -130,41 +106,40 @@ app.engine('html', require('ejs').renderFile);
 const router = express.Router();
 
 // 메인 페이지
-router.get('/', (req, res) => {
+router.get('/', async (req, res) => {
     const contentPath = path.join(projectRoot, 'data', 'homepage_content.json');
-    fs.readFile(contentPath, 'utf8', (err, data) => {
-        let content = {};
-        if (!err) {
-            content = JSON.parse(data);
-        }
+    let content = {};
+    try {
+        const data = fs.readFileSync(contentPath, 'utf8');
+        content = JSON.parse(data);
+    } catch (err) {
+        console.error('콘텐츠 파일 읽기 오류:', err);
+    }
 
+    try {
         const query = "SELECT * FROM properties ORDER BY created_at DESC LIMIT 4";
-        db.all(query, [], (err, rows) => {
-            if (err) {
-                console.error('DB 조회 오류:', err.message);
-                return res.render('index', { content: content, properties: [] });
-            }
-            
-            const processedRows = rows.map(row => {
-                if (row.address) {
-                    const addressParts = row.address.split(' ');
-                    let shortAddress = addressParts[0];
-                    if (addressParts.length > 1) {
-                        shortAddress += ' ' + addressParts[1];
-                    }
-                    if (addressParts.length > 2 && (addressParts[2].endsWith('동') || addressParts[2].endsWith('읍') || addressParts[2].endsWith('면'))) {
-                        shortAddress += ' ' + addressParts[2];
-                    }
-                    row.short_address = shortAddress;
-                } else {
-                    row.short_address = '주소 정보 없음';
+        const result = await pool.query(query);
+        const properties = result.rows.map(row => {
+            if (row.address) {
+                const addressParts = row.address.split(' ');
+                let shortAddress = addressParts[0];
+                if (addressParts.length > 1) {
+                    shortAddress += ' ' + addressParts[1];
                 }
-                return row;
-            });
-
-            res.render('index', { content: content, properties: processedRows });
+                if (addressParts.length > 2 && (addressParts[2].endsWith('동') || addressParts[2].endsWith('읍') || addressParts[2].endsWith('면'))) {
+                    shortAddress += ' ' + addressParts[2];
+                }
+                row.short_address = shortAddress;
+            } else {
+                row.short_address = '주소 정보 없음';
+            }
+            return row;
         });
-    });
+        res.render('index', { content, properties });
+    } catch (err) {
+        console.error('DB 조회 오류:', err.stack);
+        res.render('index', { content, properties: [] });
+    }
 });
 
 // 로그인 페이지 렌더링
@@ -277,26 +252,25 @@ router.get('/logout', (req, res) => {
 });
 
 // 대시보드 페이지
-router.get('/dashboard', (req, res) => {
-    const queries = {
-        totalProperties: "SELECT COUNT(*) as count FROM properties",
-        propertiesByCategory: "SELECT category, COUNT(*) as count FROM properties GROUP BY category"
-    };
+router.get('/dashboard', async (req, res) => {
+    try {
+        const totalQuery = "SELECT COUNT(*) AS count FROM properties";
+        const categoryQuery = "SELECT category, COUNT(*) AS count FROM properties GROUP BY category";
 
-    db.get(queries.totalProperties, [], (err, total) => {
-        if (err) return res.status(500).send("데이터베이스 오류");
-        db.all(queries.propertiesByCategory, [], (err, categories) => {
-            if (err) return res.status(500).send("데이터베이스 오류");
+        const totalResult = await pool.query(totalQuery);
+        const categoryResult = await pool.query(categoryQuery);
 
-            res.render('dashboard', { 
-                menus: res.locals.menus, 
-                stats: {
-                    total: total.count,
-                    byCategory: categories
-                }
-            });
+        res.render('dashboard', { 
+            menus: res.locals.menus, 
+            stats: {
+                total: totalResult.rows[0].count,
+                byCategory: categoryResult.rows
+            }
         });
-    });
+    } catch (err) {
+        console.error('대시보드 데이터 조회 오류:', err.stack);
+        res.status(500).send("데이터베이스 오류");
+    }
 });
 
 // 게시판 설정 페이지
@@ -305,29 +279,29 @@ router.get('/admin/board_settings', (req, res) => {
 });
 
 // 매물 관리 페이지
-router.get('/listings', (req, res) => {
+router.get('/listings', async (req, res) => {
     const category = req.query.category;
     let query = "SELECT * FROM properties";
     const params = [];
 
     if (category) {
-        query += " WHERE category = ?";
+        query += " WHERE category = $1";
         params.push(category);
     }
 
     query += " ORDER BY created_at DESC";
 
-    db.all(query, params, (err, rows) => {
-        if (err) {
-            console.error('DB 조회 오류:', err.message);
-            return res.status(500).send("매물 정보를 가져오는 데 실패했습니다.");
-        }
+    try {
+        const result = await pool.query(query, params);
         res.render('listings', { 
-            properties: rows, 
+            properties: result.rows, 
             menus: res.locals.menus, 
             currentCategory: category
         });
-    });
+    } catch (err) {
+        console.error('DB 조회 오류:', err.stack);
+        res.status(500).send("매물 정보를 가져오는 데 실패했습니다.");
+    }
 });
 
 // 새 매물 등록 페이지
@@ -378,31 +352,29 @@ router.post('/admin/menu/update', (req, res) => {
 
 
 // ✅ [신규] 새 매물 추가: 폼에서 전송된 데이터를 DB에 저장
-router.post('/listings/add', upload.array('images', 10), (req, res) => {
-    // 중요: Netlify에서는 /tmp에 저장된 파일은 영구적이지 않으며,
-    // 'uploads/' 경로로 직접 접근할 수 없습니다.
-    // 이 로직은 외부 스토리지(S3 등)와 연동해야 정상 작동합니다.
+router.post('/listings/add', upload.array('images', 10), async (req, res) => {
     const image_paths = req.files ? req.files.map(file => file.path).join(',') : null;
     const { category, title, price, address, area, exclusive_area, approval_date, purpose, total_floors, floor, direction, direction_standard, transaction_type, parking, maintenance_fee, maintenance_fee_details, power_supply, hoist, ceiling_height, permitted_business_types, access_road_condition, move_in_date, description, youtube_url } = req.body;
 
     const query = `INSERT INTO properties (
         category, title, price, address, area, exclusive_area, approval_date, purpose, total_floors, floor, direction, direction_standard, transaction_type, parking, maintenance_fee, maintenance_fee_details, power_supply, hoist, ceiling_height, permitted_business_types, access_road_condition, move_in_date, description, image_path, youtube_url
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25)`;
 
-    db.run(query, [
+    const params = [
         category, title, price, address, area, exclusive_area, approval_date, purpose, total_floors, floor, direction, direction_standard, transaction_type, parking, maintenance_fee, maintenance_fee_details, power_supply, hoist, ceiling_height, permitted_business_types, access_road_condition, move_in_date, description, image_paths, youtube_url
-    ], function(err) {
-        if (err) {
-            console.error('DB 삽입 오류:', err.message);
-            res.status(500).send("매물 등록에 실패했습니다.");
-            return;
-        }
+    ];
+
+    try {
+        await pool.query(query, params);
         res.redirect('/listings');
-    });
+    } catch (err) {
+        console.error('DB 삽입 오류:', err.stack);
+        res.status(500).send("매물 등록에 실패했습니다.");
+    }
 });
 
 // ✅ [신규] 매물 수정
-router.post('/listings/edit/:id', upload.array('images', 10), (req, res) => {
+router.post('/listings/edit/:id', upload.array('images', 10), async (req, res) => {
     const { id } = req.params;
     const { category, title, price, address, area, exclusive_area, approval_date, purpose, total_floors, floor, direction, direction_standard, transaction_type, parking, maintenance_fee, maintenance_fee_details, power_supply, hoist, ceiling_height, permitted_business_types, access_road_condition, move_in_date, description, youtube_url } = req.body;
     
@@ -413,99 +385,85 @@ router.post('/listings/edit/:id', upload.array('images', 10), (req, res) => {
     }
 
     const query = `UPDATE properties SET 
-        category = ?, title = ?, price = ?, address = ?, area = ?, exclusive_area = ?, approval_date = ?, purpose = ?, total_floors = ?, floor = ?, direction = ?, direction_standard = ?, transaction_type = ?, parking = ?, maintenance_fee = ?, maintenance_fee_details = ?, power_supply = ?, hoist = ?, ceiling_height = ?, permitted_business_types = ?, access_road_condition = ?, move_in_date = ?, description = ?, image_path = ?, youtube_url = ?
-    WHERE id = ?`;
+        category = $1, title = $2, price = $3, address = $4, area = $5, exclusive_area = $6, approval_date = $7, purpose = $8, total_floors = $9, floor = $10, direction = $11, direction_standard = $12, transaction_type = $13, parking = $14, maintenance_fee = $15, maintenance_fee_details = $16, power_supply = $17, hoist = $18, ceiling_height = $19, permitted_business_types = $20, access_road_condition = $21, move_in_date = $22, description = $23, image_path = $24, youtube_url = $25
+    WHERE id = $26`;
 
-    db.run(query, [
+    const params = [
         category, title, price, address, area, exclusive_area, approval_date, purpose, total_floors, floor, direction, direction_standard, transaction_type, parking, maintenance_fee, maintenance_fee_details, power_supply, hoist, ceiling_height, permitted_business_types, access_road_condition, move_in_date, description, image_paths, youtube_url, id
-    ], function(err) {
-        if (err) {
-            console.error('DB 수정 오류:', err.message);
-            res.status(500).send("매물 수정에 실패했습니다.");
-            return;
-        }
+    ];
+
+    try {
+        await pool.query(query, params);
         res.redirect('/listings');
-    });
+    } catch (err) {
+        console.error('DB 수정 오류:', err.stack);
+        res.status(500).send("매물 수정에 실패했습니다.");
+    }
 });
 
 // ✅ [신규] 매물 삭제
-router.post('/listings/delete/:id', (req, res) => {
+router.post('/listings/delete/:id', async (req, res) => {
     const { id } = req.params;
+    const query = "DELETE FROM properties WHERE id = $1";
 
-    db.get("SELECT image_path FROM properties WHERE id = ?", [id], (err, row) => {
-        if (err) {
-            return res.status(500).send("오류가 발생했습니다.");
-        }
-
-        const query = "DELETE FROM properties WHERE id = ?";
-        db.run(query, id, function(err) {
-            if (err) {
-                console.error('DB 삭제 오류:', err.message);
-                res.status(500).send("매물 삭제에 실패했습니다.");
-                return;
-            }
-            // 중요: Netlify 환경에서는 이 로직이 예상대로 동작하지 않을 수 있습니다.
-            if (row && row.image_path) {
-                 const images = row.image_path.split(',');
-                 images.forEach(p => {
-                    fs.unlink(p, (err) => {
-                        if (err) console.error('이미지 파일 삭제 실패:', err);
-                    });
-                 });
-            }
-            res.redirect('/listings');
-        });
-    });
+    try {
+        await pool.query(query, [id]);
+        res.redirect('/listings');
+    } catch (err) {
+        console.error('DB 삭제 오류:', err.stack);
+        res.status(500).send("매물 삭제에 실패했습니다.");
+    }
 });
 
 
 // 매물 상세 페이지
-router.get('/property/:id', (req, res) => {
+router.get('/property/:id', async (req, res) => {
     const { id } = req.params;
     const contentPath = path.join(projectRoot, 'data', 'homepage_content.json');
+    let content = {};
+    try {
+        const data = fs.readFileSync(contentPath, 'utf8');
+        content = JSON.parse(data);
+    } catch (err) {
+        console.error('콘텐츠 파일 읽기 오류:', err);
+    }
 
-    fs.readFile(contentPath, 'utf8', (err, data) => {
-        let content = {};
-        if (!err) {
-            content = JSON.parse(data);
+    try {
+        const query = "SELECT * FROM properties WHERE id = $1";
+        const result = await pool.query(query, [id]);
+        const property = result.rows[0];
+
+        if (property) {
+            if (property.address) {
+                const addressParts = property.address.split(' ');
+                property.short_address = addressParts.slice(0, 3).join(' ');
+            }
+            res.render('property_detail', { property, content });
+        } else {
+            res.status(404).send("매물을 찾을 수 없습니다.");
         }
-
-        const query = "SELECT * FROM properties WHERE id = ?";
-        db.get(query, [id], (err, row) => {
-            if (err) {
-                console.error('DB 조회 오류:', err.message);
-                return res.status(500).send("매물 정보를 가져오는 데 실패했습니다.");
-            }
-            if (row) {
-                if (row.address) {
-                    const addressParts = row.address.split(' ');
-                    row.short_address = addressParts.slice(0, 3).join(' ');
-                }
-                res.render('property_detail', { property: row, content: content });
-            } else {
-                res.status(404).send("매물을 찾을 수 없습니다.");
-            }
-        });
-    });
+    } catch (err) {
+        console.error('DB 조회 오류:', err.stack);
+        res.status(500).send("매물 정보를 가져오는 데 실패했습니다.");
+    }
 });
 
 // API: 특정 매물 정보 가져오기
-router.get('/api/property/:id', requireLoginAndLoadMenus, (req, res) => {
+router.get('/api/property/:id', requireLoginAndLoadMenus, async (req, res) => {
     const { id } = req.params;
-    const query = "SELECT * FROM properties WHERE id = ?";
+    const query = "SELECT * FROM properties WHERE id = $1";
 
-    db.get(query, [id], (err, row) => {
-        if (err) {
-            console.error('API DB 조회 오류:', err.message);
-            return res.status(500).json({ error: '데이터베이스 오류' });
-        }
-        if (row) {
-            res.json(row);
-        }
-        else {
+    try {
+        const result = await pool.query(query, [id]);
+        if (result.rows.length > 0) {
+            res.json(result.rows[0]);
+        } else {
             res.status(404).json({ error: '매물을 찾을 수 없습니다.' });
         }
-    });
+    } catch (err) {
+        console.error('API DB 조회 오류:', err.stack);
+        res.status(500).json({ error: '데이터베이스 오류' });
+    }
 });
 
 // Express 앱에 라우터 마운트
