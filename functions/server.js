@@ -507,3 +507,12 @@ app.use('/', router);
 
 // --- 서버리스 핸들러 ---
 module.exports.handler = serverless(app);
+
+// 로컬 테스트 환경을 위한 서버 실행 코드
+// 이 코드는 Netlify 배포 시에는 실행되지 않습니다.
+if (require.main === module) {
+  const PORT = process.env.PORT || 8080;
+  app.listen(PORT, () => {
+    console.log(`로컬 서버가 http://localhost:${PORT} 에서 실행 중입니다.`);
+  });
+}
