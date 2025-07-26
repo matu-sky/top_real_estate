@@ -62,21 +62,15 @@ function saveMenus(menus, callback) {
 }
 
 
-// --- 파일 업로드 설정 ---
-// 중요: Netlify 함수 환경의 파일 시스템은 읽기 전용입니다 (예외: /tmp).
-// public/uploads/ 에 직접 파일을 저장할 수 없습니다.
-// 이미지 같은 사용자 업로드 파일은 Cloudinary, AWS S3 같은 외부 스토리지 서비스에 저장해야 합니다.
-const uploadDir = '/tmp/uploads';
-fs.mkdirSync(uploadDir, { recursive: true }); // 임시 업로드 디렉토리 생성
+const { createClient } = require('@supabase/supabase-js');
 
-const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-        cb(null, uploadDir);
-    },
-    filename: function (req, file, cb) {
-        cb(null, Date.now() + path.extname(file.originalname));
-    }
-});
+// --- Supabase 클라이언트 초기화 ---
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+// --- 파일 업로드 설정 (메모리 스토리지 사용) ---
+const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
 // --- 미들웨어 설정 ---
@@ -363,7 +357,29 @@ router.post('/admin/menu/update', (req, res) => {
 
 // ✅ [신규] 새 매물 추가: 폼에서 전송된 데이터를 DB에 저장
 router.post('/listings/add', upload.array('images', 10), async (req, res) => {
-    const image_paths = req.files ? req.files.map(file => file.path).join(',') : null;
+    let imageUrls = [];
+    if (req.files) {
+        for (const file of req.files) {
+            const newFileName = `${Date.now()}_${file.originalname}`;
+            const { data, error } = await supabase.storage
+                .from('property-images')
+                .upload(newFileName, file.buffer, {
+                    contentType: file.mimetype,
+                });
+
+            if (error) {
+                console.error('Supabase 스토리지 업로드 오류:', error);
+                return res.status(500).send('이미지 업로드에 실패했습니다.');
+            }
+
+            const { data: { publicUrl } } = supabase.storage
+                .from('property-images')
+                .getPublicUrl(newFileName);
+            imageUrls.push(publicUrl);
+        }
+    }
+
+    const image_paths = imageUrls.join(',');
     const { category, title, price, address, area, exclusive_area, approval_date, purpose, total_floors, floor, direction, direction_standard, transaction_type, parking, maintenance_fee, maintenance_fee_details, power_supply, hoist, ceiling_height, permitted_business_types, access_road_condition, move_in_date, description, youtube_url } = req.body;
 
     const query = `INSERT INTO properties (
@@ -389,13 +405,32 @@ router.post('/listings/add', upload.array('images', 10), async (req, res) => {
 // ✅ [신규] 매물 수정
 router.post('/listings/edit/:id', upload.array('images', 10), async (req, res) => {
     const { id } = req.params;
-    const { category, title, price, address, area, exclusive_area, approval_date, purpose, total_floors, floor, direction, direction_standard, transaction_type, parking, maintenance_fee, maintenance_fee_details, power_supply, hoist, ceiling_height, permitted_business_types, access_road_condition, move_in_date, description, youtube_url } = req.body;
     
-    let image_paths = req.body.existing_image_paths || '';
-    if (req.files && req.files.length > 0) {
-        const new_image_paths = req.files.map(file => file.path).join(',');
-        image_paths = image_paths ? [image_paths, new_image_paths].filter(p => p).join(',') : new_image_paths;
+    let imageUrls = req.body.existing_image_paths ? req.body.existing_image_paths.split(',') : [];
+
+    if (req.files) {
+        for (const file of req.files) {
+            const newFileName = `${Date.now()}_${file.originalname}`;
+            const { data, error } = await supabase.storage
+                .from('property-images')
+                .upload(newFileName, file.buffer, {
+                    contentType: file.mimetype,
+                });
+
+            if (error) {
+                console.error('Supabase 스토리지 업로드 오류:', error);
+                return res.status(500).send('이미지 업로드에 실패했습니다.');
+            }
+
+            const { data: { publicUrl } } = supabase.storage
+                .from('property-images')
+                .getPublicUrl(newFileName);
+            imageUrls.push(publicUrl);
+        }
     }
+
+    const image_paths = imageUrls.join(',');
+    const { category, title, price, address, area, exclusive_area, approval_date, purpose, total_floors, floor, direction, direction_standard, transaction_type, parking, maintenance_fee, maintenance_fee_details, power_supply, hoist, ceiling_height, permitted_business_types, access_road_condition, move_in_date, description, youtube_url } = req.body;
 
     const query = `UPDATE properties SET 
         category = $1, title = $2, price = $3, address = $4, area = $5, exclusive_area = $6, approval_date = $7, purpose = $8, total_floors = $9, floor = $10, direction = $11, direction_standard = $12, transaction_type = $13, parking = $14, maintenance_fee = $15, maintenance_fee_details = $16, power_supply = $17, hoist = $18, ceiling_height = $19, permitted_business_types = $20, access_road_condition = $21, move_in_date = $22, description = $23, image_path = $24, youtube_url = $25
