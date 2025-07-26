@@ -172,7 +172,7 @@ router.get('/login', (req, res) => {
 });
 
 // 로그인 처리
-router.post('/login', express.urlencoded({ extended: true }), (req, res) => {
+router.post('/login', (req, res) => {
     const { username, password } = req.body;
 
     if (username === 'as123' && password === 'asd123') {
