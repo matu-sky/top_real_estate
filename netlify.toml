@@ -7,3 +7,8 @@
   command = "node functions/server.js"
   targetPort = 8080
   publish = "public"
+
+[[redirects]]
+  from = "/*"
+  to = "/.netlify/functions/server"
+  status = 200
