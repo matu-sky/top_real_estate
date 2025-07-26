@@ -1,4 +1,5 @@
 const express = require('express');
+console.log('--- All Environment Variables --- ', process.env);
 const path = require('path');
 
 const session = require('express-session');
