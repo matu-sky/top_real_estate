@@ -3,6 +3,9 @@
   publish = "public"
   functions = "functions"
 
+[functions]
+  included_files = ["views/**", "data/**"]
+
 [dev]
   command = "node functions/server.js"
   targetPort = 8080
