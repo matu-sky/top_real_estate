@@ -1,4 +1,5 @@
 const express = require('express');
+console.log('All available environment variables:', process.env); // 모든 환경 변수 출력
 const path = require('path');
 
 const session = require('express-session');
