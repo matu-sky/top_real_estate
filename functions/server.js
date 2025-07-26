@@ -5,6 +5,7 @@ const session = require('express-session');
 const fs = require('fs');
 const multer = require('multer');
 const serverless = require('serverless-http'); // serverless-http 추가
+const querystring = require('querystring');
 
 const app = express();
 
@@ -173,8 +174,15 @@ router.get('/login', (req, res) => {
 
 // 로그인 처리
 router.post('/login', (req, res) => {
-    console.log('Login attempt with body:', req.body);
-    const { username, password } = req.body;
+    // Netlify 환경에서 Buffer로 들어오는 body를 파싱
+    let body = {};
+    if (req.body instanceof Buffer) {
+        body = querystring.parse(req.body.toString());
+    } else {
+        body = req.body;
+    }
+    console.log('Login attempt with parsed body:', body); // 디버깅 로그 수정
+    const { username, password } = body;
 
     if (username === 'as123' && password === 'asd123') {
         req.session.loggedin = true;
