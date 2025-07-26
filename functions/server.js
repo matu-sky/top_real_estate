@@ -173,6 +173,7 @@ router.get('/login', (req, res) => {
 
 // 로그인 처리
 router.post('/login', (req, res) => {
+    console.log('Login attempt with body:', req.body);
     const { username, password } = req.body;
 
     if (username === 'as123' && password === 'asd123') {
