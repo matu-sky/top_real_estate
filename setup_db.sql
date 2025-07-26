@@ -1,0 +1,41 @@
+CREATE TABLE public.properties (
+    id BIGSERIAL PRIMARY KEY,
+    category TEXT NOT NULL,
+    title TEXT NOT NULL,
+    price TEXT,
+    address TEXT,
+    area REAL,
+    exclusive_area REAL,
+    approval_date TEXT,
+    purpose TEXT,
+    total_floors INTEGER,
+    floor INTEGER,
+    direction TEXT,
+    direction_standard TEXT,
+    transaction_type TEXT,
+    parking INTEGER,
+    maintenance_fee INTEGER,
+    maintenance_fee_details TEXT,
+    power_supply TEXT,
+    hoist TEXT,
+    ceiling_height REAL,
+    permitted_business_types TEXT,
+    access_road_condition TEXT,
+    move_in_date TEXT,
+    description TEXT,
+    image_path TEXT,
+    youtube_url TEXT,
+    status TEXT DEFAULT '게시중',
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);
+
+ALTER TABLE public.properties ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Allow public read access" ON public.properties
+    FOR SELECT
+    USING (true);
+
+CREATE POLICY "Allow all access for now" ON public.properties
+    FOR ALL
+    USING (true)
+    WITH CHECK (true);
