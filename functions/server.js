@@ -117,9 +117,10 @@ router.get('/', async (req, res) => {
         console.error('콘텐츠 파일 읽기 오류:', err);
     }
 
+    const client = await pool.connect();
     try {
         const query = "SELECT * FROM properties ORDER BY created_at DESC LIMIT 4";
-        const result = await pool.query(query);
+        const result = await client.query(query);
         const properties = result.rows.map(row => {
             if (row.address) {
                 const addressParts = row.address.split(' ');
@@ -140,6 +141,8 @@ router.get('/', async (req, res) => {
     } catch (err) {
         console.error('DB 조회 오류:', err.stack);
         res.render('index', { content, properties: [] });
+    } finally {
+        client.release();
     }
 });
 
@@ -254,12 +257,13 @@ router.get('/logout', (req, res) => {
 
 // 대시보드 페이지
 router.get('/dashboard', async (req, res) => {
+    const client = await pool.connect();
     try {
         const totalQuery = "SELECT COUNT(*) AS count FROM properties";
         const categoryQuery = "SELECT category, COUNT(*) AS count FROM properties GROUP BY category";
 
-        const totalResult = await pool.query(totalQuery);
-        const categoryResult = await pool.query(categoryQuery);
+        const totalResult = await client.query(totalQuery);
+        const categoryResult = await client.query(categoryQuery);
 
         res.render('dashboard', { 
             menus: res.locals.menus, 
@@ -271,6 +275,8 @@ router.get('/dashboard', async (req, res) => {
     } catch (err) {
         console.error('대시보드 데이터 조회 오류:', err.stack);
         res.status(500).send("데이터베이스 오류");
+    } finally {
+        client.release();
     }
 });
 
@@ -292,8 +298,9 @@ router.get('/listings', async (req, res) => {
 
     query += " ORDER BY created_at DESC";
 
+    const client = await pool.connect();
     try {
-        const result = await pool.query(query, params);
+        const result = await client.query(query, params);
         res.render('listings', { 
             properties: result.rows, 
             menus: res.locals.menus, 
@@ -302,6 +309,8 @@ router.get('/listings', async (req, res) => {
     } catch (err) {
         console.error('DB 조회 오류:', err.stack);
         res.status(500).send("매물 정보를 가져오는 데 실패했습니다.");
+    } finally {
+        client.release();
     }
 });
 
@@ -365,12 +374,15 @@ router.post('/listings/add', upload.array('images', 10), async (req, res) => {
         category, title, price, address, area, exclusive_area, approval_date, purpose, total_floors, floor, direction, direction_standard, transaction_type, parking, maintenance_fee, maintenance_fee_details, power_supply, hoist, ceiling_height, permitted_business_types, access_road_condition, move_in_date, description, image_paths, youtube_url
     ];
 
+    const client = await pool.connect();
     try {
-        await pool.query(query, params);
+        await client.query(query, params);
         res.redirect('/listings');
     } catch (err) {
         console.error('DB 삽입 오류:', err.stack);
         res.status(500).send("매물 등록에 실패했습니다.");
+    } finally {
+        client.release();
     }
 });
 
@@ -393,12 +405,15 @@ router.post('/listings/edit/:id', upload.array('images', 10), async (req, res) =
         category, title, price, address, area, exclusive_area, approval_date, purpose, total_floors, floor, direction, direction_standard, transaction_type, parking, maintenance_fee, maintenance_fee_details, power_supply, hoist, ceiling_height, permitted_business_types, access_road_condition, move_in_date, description, image_paths, youtube_url, id
     ];
 
+    const client = await pool.connect();
     try {
-        await pool.query(query, params);
+        await client.query(query, params);
         res.redirect('/listings');
     } catch (err) {
         console.error('DB 수정 오류:', err.stack);
         res.status(500).send("매물 수정에 실패했습니다.");
+    } finally {
+        client.release();
     }
 });
 
@@ -407,12 +422,15 @@ router.post('/listings/delete/:id', async (req, res) => {
     const { id } = req.params;
     const query = "DELETE FROM properties WHERE id = $1";
 
+    const client = await pool.connect();
     try {
-        await pool.query(query, [id]);
+        await client.query(query, [id]);
         res.redirect('/listings');
     } catch (err) {
         console.error('DB 삭제 오류:', err.stack);
         res.status(500).send("매물 삭제에 실패했습니다.");
+    } finally {
+        client.release();
     }
 });
 
@@ -429,9 +447,10 @@ router.get('/property/:id', async (req, res) => {
         console.error('콘텐츠 파일 읽기 오류:', err);
     }
 
+    const client = await pool.connect();
     try {
         const query = "SELECT * FROM properties WHERE id = $1";
-        const result = await pool.query(query, [id]);
+        const result = await client.query(query, [id]);
         const property = result.rows[0];
 
         if (property) {
@@ -446,6 +465,8 @@ router.get('/property/:id', async (req, res) => {
     } catch (err) {
         console.error('DB 조회 오류:', err.stack);
         res.status(500).send("매물 정보를 가져오는 데 실패했습니다.");
+    } finally {
+        client.release();
     }
 });
 
@@ -454,8 +475,9 @@ router.get('/api/property/:id', requireLoginAndLoadMenus, async (req, res) => {
     const { id } = req.params;
     const query = "SELECT * FROM properties WHERE id = $1";
 
+    const client = await pool.connect();
     try {
-        const result = await pool.query(query, [id]);
+        const result = await client.query(query, [id]);
         if (result.rows.length > 0) {
             res.json(result.rows[0]);
         } else {
@@ -464,6 +486,8 @@ router.get('/api/property/:id', requireLoginAndLoadMenus, async (req, res) => {
     } catch (err) {
         console.error('API DB 조회 오류:', err.stack);
         res.status(500).json({ error: '데이터베이스 오류' });
+    } finally {
+        client.release();
     }
 });
 
