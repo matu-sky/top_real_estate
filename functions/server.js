@@ -1,6 +1,6 @@
 const express = require('express');
 const path = require('path');
-const sqlite3 = require('sqlite3').verbose();
+
 const session = require('express-session');
 const fs = require('fs');
 const multer = require('multer');
