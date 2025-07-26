@@ -500,10 +500,8 @@ router.get('/api/property/:id', requireLoginAndLoadMenus, (req, res) => {
 });
 
 // Express 앱에 라우터 마운트
-// Netlify에서는 모든 요청이 /.netlify/functions/server 로 라우팅되므로,
-// Express 앱이 모든 하위 경로를 처리하도록 해야 합니다.
-// '/.netlify/functions/server' 와 같은 기본 경로를 설정할 수 있습니다.
-app.use('/.netlify/functions/server', router);
+// serverless-http가 경로를 자동으로 처리하므로, 기본 경로('/')에 라우터를 마운트합니다.
+app.use('/', router);
 
 
 // --- 서버리스 핸들러 ---
