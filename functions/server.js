@@ -68,6 +68,9 @@ const { createClient } = require('@supabase/supabase-js');
 // --- Supabase 클라이언트 초기화 ---
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
+console.log(`--- Checking Supabase Env Vars ---`);
+console.log(`Type of supabaseUrl: ${typeof supabaseUrl}, Value: ${supabaseUrl}`);
+console.log(`Type of supabaseAnonKey: ${typeof supabaseAnonKey}, Value: ${supabaseAnonKey}`);
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 // --- 파일 업로드 설정 (메모리 스토리지 사용) ---
