@@ -18,6 +18,7 @@ const { Pool } = require('pg');
 // --- 데이터베이스 연결 ---
 // Supabase 연결 정보를 Netlify 환경 변수에서 가져옵니다.
 // 로컬 테스트 시에는 .env 파일(git에 포함되지 않음)을 통해 환경 변수를 로드할 수 있습니다.
+console.log('Attempting to connect with DATABASE_URL:', process.env.DATABASE_URL); // 디버깅 로그 추가
 const connectionString = process.env.DATABASE_URL;
 const pool = new Pool({
     connectionString,
