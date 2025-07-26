@@ -14,17 +14,14 @@ const app = express();
 const projectRoot = path.resolve(__dirname, '..');
 
 const { Pool } = require('pg');
-const { parse } = require('pg-connection-string');
-
 // --- 데이터베이스 연결 ---
-// Supabase 연결 정보를 Netlify 환경 변수에서 가져옵니다.
-// 로컬 테스트 시에는 .env 파일(git에 포함되지 않음)을 통해 환경 변수를 로드할 수 있습니다.
-console.log('Attempting to connect with DATABASE_URL:', process.env.DATABASE_URL); // 디버깅 로그 추가
-const connectionString = process.env.DATABASE_URL;
-const config = parse(connectionString);
-
+// Supabase 연결 정보를 개별 환경 변수에서 가져옵니다.
 const pool = new Pool({
-    ...config,
+    host: process.env.PG_HOST,
+    port: process.env.PG_PORT,
+    database: process.env.PG_DATABASE,
+    user: process.env.PG_USER,
+    password: process.env.PG_PASSWORD,
     ssl: {
         rejectUnauthorized: false
     }
