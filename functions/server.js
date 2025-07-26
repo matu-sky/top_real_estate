@@ -1,5 +1,4 @@
 const express = require('express');
-console.log('All available environment variables:', process.env); // 모든 환경 변수 출력
 const path = require('path');
 
 const session = require('express-session');
@@ -75,8 +74,6 @@ const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
 // --- 미들웨어 설정 ---
-// 정적 파일 경로 수정
-app.use(express.static(path.join(projectRoot, 'public')));
 app.use(express.urlencoded({ extended: true }));
 
 
