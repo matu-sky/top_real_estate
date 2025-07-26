@@ -4,12 +4,19 @@ const sqlite3 = require('sqlite3').verbose();
 const session = require('express-session');
 const fs = require('fs');
 const multer = require('multer');
+const serverless = require('serverless-http'); // serverless-http 추가
 
 const app = express();
-const port = 8080; // Cloud Shell 환경을 위해 8080 포트 사용
+
+// Netlify 함수 환경에서는 __dirname이 functions 폴더를 가리키므로,
+// 프로젝트 루트를 기준으로 경로를 재설정해야 합니다.
+const projectRoot = path.resolve(__dirname, '..');
 
 // --- 데이터베이스 연결 ---
-const dbPath = path.resolve(__dirname, 'data', 'database.db');
+// 중요: Netlify의 파일 시스템은 일시적입니다. 
+// 배포 시마다 데이터베이스 파일이 초기화될 수 있으며, 런타임 중 쓰기 작업은 영구 저장되지 않습니다.
+// 프로덕션 환경에서는 클라우드 기반 데이터베이스(예: PlanetScale, Supabase) 사용을 강력히 권장합니다.
+const dbPath = path.join(projectRoot, 'data', 'database.db');
 const db = new sqlite3.Database(dbPath, (err) => {
     if (err) {
         console.error('데이터베이스 연결 실패:', err.message);
@@ -54,7 +61,7 @@ const db = new sqlite3.Database(dbPath, (err) => {
 });
 
 // --- 메뉴 데이터 로더 ---
-const menuFilePath = path.join(__dirname, 'data', 'menu_settings.json');
+const menuFilePath = path.join(projectRoot, 'data', 'menu_settings.json');
 
 function getMenus(callback) {
     fs.readFile(menuFilePath, 'utf8', (err, data) => {
@@ -78,9 +85,15 @@ function saveMenus(menus, callback) {
 
 
 // --- 파일 업로드 설정 ---
+// 중요: Netlify 함수 환경의 파일 시스템은 읽기 전용입니다 (예외: /tmp).
+// public/uploads/ 에 직접 파일을 저장할 수 없습니다.
+// 이미지 같은 사용자 업로드 파일은 Cloudinary, AWS S3 같은 외부 스토리지 서비스에 저장해야 합니다.
+const uploadDir = '/tmp/uploads';
+fs.mkdirSync(uploadDir, { recursive: true }); // 임시 업로드 디렉토리 생성
+
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
-        cb(null, 'public/uploads/');
+        cb(null, uploadDir);
     },
     filename: function (req, file, cb) {
         cb(null, Date.now() + path.extname(file.originalname));
@@ -89,8 +102,8 @@ const storage = multer.diskStorage({
 const upload = multer({ storage: storage });
 
 // --- 미들웨어 설정 ---
-// 정적 파일 (CSS, JS, 이미지) 제공
-app.use(express.static(path.join(__dirname, 'public')));
+// 정적 파일 경로 수정
+app.use(express.static(path.join(projectRoot, 'public')));
 app.use(express.urlencoded({ extended: true }));
 
 
@@ -103,15 +116,21 @@ app.use(session({
 }));
 
 // --- 뷰 엔진 설정 ---
-app.set('views', path.join(__dirname, 'views'));
+// 뷰 디렉토리 경로 수정
+app.set('views', path.join(projectRoot, 'views'));
 app.set('view engine', 'html');
 app.engine('html', require('ejs').renderFile);
 
 
 // --- 라우팅(Routing) ---
+// 라우터 경로 수정: Netlify 함수는 단일 엔드포인트에서 실행되므로, 
+// Express 앱이 모든 경로를 처리하도록 app.use()의 기본 경로를 수정해야 할 수 있습니다.
+// 여기서는 Netlify의 redirects 규칙을 사용하므로 Express 코드는 그대로 둡니다.
+const router = express.Router();
+
 // 메인 페이지
-app.get('/', (req, res) => {
-    const contentPath = path.join(__dirname, 'data', 'homepage_content.json');
+router.get('/', (req, res) => {
+    const contentPath = path.join(projectRoot, 'data', 'homepage_content.json');
     fs.readFile(contentPath, 'utf8', (err, data) => {
         let content = {};
         if (!err) {
@@ -128,12 +147,12 @@ app.get('/', (req, res) => {
             const processedRows = rows.map(row => {
                 if (row.address) {
                     const addressParts = row.address.split(' ');
-                    let shortAddress = addressParts[0]; // 기본적으로 첫 번째 부분 (e.g., 경기도)
+                    let shortAddress = addressParts[0];
                     if (addressParts.length > 1) {
-                        shortAddress += ' ' + addressParts[1]; // 두 번째 부분 추가 (e.g., 군포시)
+                        shortAddress += ' ' + addressParts[1];
                     }
                     if (addressParts.length > 2 && (addressParts[2].endsWith('동') || addressParts[2].endsWith('읍') || addressParts[2].endsWith('면'))) {
-                        shortAddress += ' ' + addressParts[2]; // 세 번째 부분이 동/읍/면이면 추가
+                        shortAddress += ' ' + addressParts[2];
                     }
                     row.short_address = shortAddress;
                 } else {
@@ -148,15 +167,14 @@ app.get('/', (req, res) => {
 });
 
 // 로그인 페이지 렌더링
-app.get('/login', (req, res) => {
+router.get('/login', (req, res) => {
     res.render('login');
 });
 
 // 로그인 처리
-app.post('/login', express.urlencoded({ extended: true }), (req, res) => {
+router.post('/login', express.urlencoded({ extended: true }), (req, res) => {
     const { username, password } = req.body;
 
-    // 사용자 인증 (실제 앱에서는 데이터베이스와 비교해야 함)
     if (username === 'as123' && password === 'asd123') {
         req.session.loggedin = true;
         res.redirect('/admin');
@@ -174,24 +192,23 @@ function requireLoginAndLoadMenus(req, res, next) {
         if (err) {
             return res.status(500).send('메뉴를 불러올 수 없습니다.');
         }
-        res.locals.menus = menus; // 템플릿에서 사용할 수 있도록 menus를 res.locals에 저장
+        res.locals.menus = menus;
         next();
     });
 }
 
 // 모든 관리자 페이지 라우트에 미들웨어 적용
-app.use('/admin', requireLoginAndLoadMenus);
-app.use('/dashboard', requireLoginAndLoadMenus);
-app.use('/listings', requireLoginAndLoadMenus);
-app.use('/add_property', requireLoginAndLoadMenus);
+router.use('/admin', requireLoginAndLoadMenus);
+router.use('/dashboard', requireLoginAndLoadMenus);
+router.use('/listings', requireLoginAndLoadMenus);
+router.use('/add_property', requireLoginAndLoadMenus);
 
 // 홈페이지 관리 페이지
-app.get('/admin', (req, res) => {
-    const contentPath = path.join(__dirname, 'data', 'homepage_content.json');
+router.get('/admin', (req, res) => {
+    const contentPath = path.join(projectRoot, 'data', 'homepage_content.json');
     fs.readFile(contentPath, 'utf8', (err, data) => {
         let content = {};
         if (err) {
-            // 파일이 없거나 읽기 오류 시 기본값 설정
             content = {
                 hero_title: '최고의 공간,\n데이터로 증명하는 가치',
                 hero_subtitle: '군포첨단탑공인중개사는 감각적인 안목과 정확한 데이터로 당신의 선택을 돕습니다.',
@@ -213,8 +230,8 @@ app.get('/admin', (req, res) => {
 });
 
 // 홈페이지 관리 정보 업데이트
-app.post('/admin/update', requireLoginAndLoadMenus, (req, res) => {
-    const contentPath = path.join(__dirname, 'data', 'homepage_content.json');
+router.post('/admin/update', requireLoginAndLoadMenus, (req, res) => {
+    const contentPath = path.join(projectRoot, 'data', 'homepage_content.json');
 
     fs.readFile(contentPath, 'utf8', (err, data) => {
         if (err) {
@@ -224,7 +241,6 @@ app.post('/admin/update', requireLoginAndLoadMenus, (req, res) => {
 
         let content = JSON.parse(data);
 
-        // 외과수술식 업데이트: 폼에서 넘어온 데이터 키만 정확히 업데이트합니다.
         for (const key in req.body) {
             if (Object.prototype.hasOwnProperty.call(content, key)) {
                 content[key] = req.body[key];
@@ -242,7 +258,7 @@ app.post('/admin/update', requireLoginAndLoadMenus, (req, res) => {
 });
 
 // 로그아웃 처리
-app.get('/logout', (req, res) => {
+router.get('/logout', (req, res) => {
     req.session.destroy((err) => {
         if (err) {
             return res.redirect('/admin');
@@ -252,7 +268,7 @@ app.get('/logout', (req, res) => {
 });
 
 // 대시보드 페이지
-app.get('/dashboard', (req, res) => {
+router.get('/dashboard', (req, res) => {
     const queries = {
         totalProperties: "SELECT COUNT(*) as count FROM properties",
         propertiesByCategory: "SELECT category, COUNT(*) as count FROM properties GROUP BY category"
@@ -275,12 +291,12 @@ app.get('/dashboard', (req, res) => {
 });
 
 // 게시판 설정 페이지
-app.get('/admin/board_settings', (req, res) => {
+router.get('/admin/board_settings', (req, res) => {
     res.render('board_settings', { menus: res.locals.menus });
 });
 
 // 매물 관리 페이지
-app.get('/listings', (req, res) => {
+router.get('/listings', (req, res) => {
     const category = req.query.category;
     let query = "SELECT * FROM properties";
     const params = [];
@@ -306,23 +322,23 @@ app.get('/listings', (req, res) => {
 });
 
 // 새 매물 등록 페이지
-app.get('/add_property', requireLoginAndLoadMenus, (req, res) => {
+router.get('/add_property', requireLoginAndLoadMenus, (req, res) => {
     res.render('add_property', { menus: res.locals.menus });
 });
 
 // 새 상업용 매물 등록 페이지
-app.get('/add_commercial_property', requireLoginAndLoadMenus, (req, res) => {
+router.get('/add_commercial_property', requireLoginAndLoadMenus, (req, res) => {
     res.render('add_commercial_property', { menus: res.locals.menus });
 });
 
 // 새 공장/지산 매물 등록 페이지
-app.get('/add_factory_property', requireLoginAndLoadMenus, (req, res) => {
+router.get('/add_factory_property', requireLoginAndLoadMenus, (req, res) => {
     res.render('add_factory_property', { menus: res.locals.menus });
 });
 
 // --- 홈페이지 메뉴 관리 ---
-app.get('/admin/menu', (req, res) => {
-    const contentPath = path.join(__dirname, 'data', 'homepage_content.json');
+router.get('/admin/menu', (req, res) => {
+    const contentPath = path.join(projectRoot, 'data', 'homepage_content.json');
     fs.readFile(contentPath, 'utf8', (err, data) => {
         if (err) {
             return res.status(500).send('콘텐츠 파일을 읽을 수 없습니다.');
@@ -332,16 +348,14 @@ app.get('/admin/menu', (req, res) => {
     });
 });
 
-app.post('/admin/menu/update', (req, res) => {
-    const contentPath = path.join(__dirname, 'data', 'homepage_content.json');
+router.post('/admin/menu/update', (req, res) => {
+    const contentPath = path.join(projectRoot, 'data', 'homepage_content.json');
     fs.readFile(contentPath, 'utf8', (err, data) => {
         if (err) {
             return res.status(500).send('콘텐츠 파일을 읽을 수 없습니다.');
         }
         let content = JSON.parse(data);
         
-        // 폼에서 전송된 데이터로 메뉴 링크 업데이트
-        // req.body.links가 없는 경우를 대비하여 빈 배열로 처리
         content.header_nav_links = req.body.links || [];
 
         fs.writeFile(contentPath, JSON.stringify(content, null, 2), 'utf8', (err) => {
@@ -355,12 +369,11 @@ app.post('/admin/menu/update', (req, res) => {
 
 
 // ✅ [신규] 새 매물 추가: 폼에서 전송된 데이터를 DB에 저장
-app.post('/listings/add', upload.array('images', 10), (req, res) => { // 'images' 필드에서 최대 10개 파일
-    console.log('--- [Debug] /listings/add --- ');
-    console.log('req.files:', req.files); // 업로드된 파일 정보
-    console.log('req.body:', req.body);   // 폼 데이터
-
-    const image_paths = req.files ? req.files.map(file => 'uploads/' + file.filename).join(',') : null;
+router.post('/listings/add', upload.array('images', 10), (req, res) => {
+    // 중요: Netlify에서는 /tmp에 저장된 파일은 영구적이지 않으며,
+    // 'uploads/' 경로로 직접 접근할 수 없습니다.
+    // 이 로직은 외부 스토리지(S3 등)와 연동해야 정상 작동합니다.
+    const image_paths = req.files ? req.files.map(file => file.path).join(',') : null;
     const { category, title, price, address, area, exclusive_area, approval_date, purpose, total_floors, floor, direction, direction_standard, transaction_type, parking, maintenance_fee, maintenance_fee_details, power_supply, hoist, ceiling_height, permitted_business_types, access_road_condition, move_in_date, description, youtube_url } = req.body;
 
     const query = `INSERT INTO properties (
@@ -380,13 +393,13 @@ app.post('/listings/add', upload.array('images', 10), (req, res) => { // 'images
 });
 
 // ✅ [신규] 매물 수정
-app.post('/listings/edit/:id', upload.array('images', 10), (req, res) => {
+router.post('/listings/edit/:id', upload.array('images', 10), (req, res) => {
     const { id } = req.params;
     const { category, title, price, address, area, exclusive_area, approval_date, purpose, total_floors, floor, direction, direction_standard, transaction_type, parking, maintenance_fee, maintenance_fee_details, power_supply, hoist, ceiling_height, permitted_business_types, access_road_condition, move_in_date, description, youtube_url } = req.body;
     
     let image_paths = req.body.existing_image_paths || '';
     if (req.files && req.files.length > 0) {
-        const new_image_paths = req.files.map(file => 'uploads/' + file.filename).join(',');
+        const new_image_paths = req.files.map(file => file.path).join(',');
         image_paths = image_paths ? [image_paths, new_image_paths].filter(p => p).join(',') : new_image_paths;
     }
 
@@ -407,10 +420,9 @@ app.post('/listings/edit/:id', upload.array('images', 10), (req, res) => {
 });
 
 // ✅ [신규] 매물 삭제
-app.post('/listings/delete/:id', (req, res) => {
+router.post('/listings/delete/:id', (req, res) => {
     const { id } = req.params;
 
-    // 먼저 삭제할 매물의 이미지 경로를 가져옴
     db.get("SELECT image_path FROM properties WHERE id = ?", [id], (err, row) => {
         if (err) {
             return res.status(500).send("오류가 발생했습니다.");
@@ -423,11 +435,14 @@ app.post('/listings/delete/:id', (req, res) => {
                 res.status(500).send("매물 삭제에 실패했습니다.");
                 return;
             }
-            // DB에서 성공적으로 삭제 후, 이미지 파일도 삭제
+            // 중요: Netlify 환경에서는 이 로직이 예상대로 동작하지 않을 수 있습니다.
             if (row && row.image_path) {
-                fs.unlink(path.join(__dirname, 'public', row.image_path), (err) => {
-                    if (err) console.error('이미지 파일 삭제 실패:', err);
-                });
+                 const images = row.image_path.split(',');
+                 images.forEach(p => {
+                    fs.unlink(p, (err) => {
+                        if (err) console.error('이미지 파일 삭제 실패:', err);
+                    });
+                 });
             }
             res.redirect('/listings');
         });
@@ -436,9 +451,9 @@ app.post('/listings/delete/:id', (req, res) => {
 
 
 // 매물 상세 페이지
-app.get('/property/:id', (req, res) => {
+router.get('/property/:id', (req, res) => {
     const { id } = req.params;
-    const contentPath = path.join(__dirname, 'data', 'homepage_content.json');
+    const contentPath = path.join(projectRoot, 'data', 'homepage_content.json');
 
     fs.readFile(contentPath, 'utf8', (err, data) => {
         let content = {};
@@ -455,7 +470,7 @@ app.get('/property/:id', (req, res) => {
             if (row) {
                 if (row.address) {
                     const addressParts = row.address.split(' ');
-                    row.short_address = addressParts.slice(0, 3).join(' '); // ㅇㅇ시 ㅇㅇ구 ㅇㅇ동
+                    row.short_address = addressParts.slice(0, 3).join(' ');
                 }
                 res.render('property_detail', { property: row, content: content });
             } else {
@@ -466,7 +481,7 @@ app.get('/property/:id', (req, res) => {
 });
 
 // API: 특정 매물 정보 가져오기
-app.get('/api/property/:id', requireLoginAndLoadMenus, (req, res) => {
+router.get('/api/property/:id', requireLoginAndLoadMenus, (req, res) => {
     const { id } = req.params;
     const query = "SELECT * FROM properties WHERE id = ?";
 
@@ -484,18 +499,12 @@ app.get('/api/property/:id', requireLoginAndLoadMenus, (req, res) => {
     });
 });
 
-// --- 서버 시작 ---
-app.listen(port, '0.0.0.0', () => {
-    console.log(`서버가 http://localhost:${port} 에서 실행 중입니다.`);
-});
+// Express 앱에 라우터 마운트
+// Netlify에서는 모든 요청이 /.netlify/functions/server 로 라우팅되므로,
+// Express 앱이 모든 하위 경로를 처리하도록 해야 합니다.
+// '/.netlify/functions/server' 와 같은 기본 경로를 설정할 수 있습니다.
+app.use('/.netlify/functions/server', router);
 
-// 앱 종료 시 데이터베이스 연결 닫기
-process.on('SIGINT', () => {
-    db.close((err) => {
-        if (err) {
-            return console.error(err.message);
-        }
-        console.log('데이터베이스 연결이 종료되었습니다.');
-        process.exit(0);
-    });
-});
+
+// --- 서버리스 핸들러 ---
+module.exports.handler = serverless(app);
