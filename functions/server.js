@@ -1,3 +1,9 @@
+console.log('--- Netlify Function Environment ---');
+console.log('Attempting to read SUPABASE_URL:', process.env.SUPABASE_URL ? 'Found' : 'Not Found');
+console.log('Attempting to read SUPABASE_ANON_KEY:', process.env.SUPABASE_ANON_KEY ? 'Found' : 'Not Found');
+console.log('Type of SUPABASE_URL:', typeof process.env.SUPABASE_URL);
+console.log('Type of SUPABASE_ANON_KEY:', typeof process.env.SUPABASE_ANON_KEY);
+console.log('------------------------------------');
 const express = require('express');
 console.log('--- All Environment Variables --- ', process.env);
 const path = require('path');
@@ -68,9 +74,14 @@ const { createClient } = require('@supabase/supabase-js');
 // --- Supabase 클라이언트 초기화 ---
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
-console.log(`--- Checking Supabase Env Vars ---`);
-console.log(`Type of supabaseUrl: ${typeof supabaseUrl}, Value: ${supabaseUrl}`);
-console.log(`Type of supabaseAnonKey: ${typeof supabaseAnonKey}, Value: ${supabaseAnonKey}`);
+
+// 환경 변수 누락 시 명확한 에러 메시지 출력
+if (!supabaseUrl || !supabaseAnonKey) {
+    const errorMessage = 'Supabase URL and Anon Key are required. Check your Netlify environment variables.';
+    console.error(errorMessage);
+    throw new Error(errorMessage);
+}
+
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 // --- 파일 업로드 설정 (메모리 스토리지 사용) ---
