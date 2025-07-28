@@ -11,6 +11,7 @@ const session = require('express-session');
 const multer = require('multer');
 const serverless = require('serverless-http');
 const querystring = require('querystring');
+const fs = require('fs');
 
 const app = express();
 const projectRoot = path.resolve(__dirname, '..');
@@ -532,7 +533,10 @@ router.get('/board/:slug', async (req, res) => {
         const postsResult = await client.query('SELECT * FROM posts WHERE board_id = $1 ORDER BY created_at DESC', [board.id]);
         const posts = postsResult.rows;
 
-        res.render('board', { board, posts, user: req.session });
+        const headerContent = fs.readFileSync(path.join(__dirname, '..', 'views', 'partials', 'header.html'), 'utf8');
+        const footerContent = fs.readFileSync(path.join(__dirname, '..', 'views', 'partials', 'footer.html'), 'utf8');
+
+        res.render('board', { board, posts, user: req.session, headerContent, footerContent });
     } catch (err) {
         console.error('DB 조회 오류:', err.stack);
         res.status(500).send('게시판 정보를 가져오는 데 실패했습니다.');
