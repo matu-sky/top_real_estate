@@ -428,7 +428,32 @@ router.post('/listings/add', async (req, res) => {
 router.post('/listings/edit/:id', upload.array('images', 10), async (req, res) => {
     const { id } = req.params;
     
-    let imageUrls = req.body.existing_image_paths ? req.body.existing_image_paths.split(',') : [];
+    // Netlify 환경에서 Buffer로 들어오는 body를 파싱
+    let body = {};
+    if (req.body instanceof Buffer) {
+        body = querystring.parse(req.body.toString());
+    } else {
+        body = req.body;
+    }
+
+    // 삭제할 이미지 처리
+    if (body.deleted_images) {
+        const imagesToDelete = Array.isArray(body.deleted_images) ? body.deleted_images : [body.deleted_images];
+        const fileNamesToDelete = imagesToDelete.map(url => url.split('/').pop());
+        
+        if (fileNamesToDelete.length > 0) {
+            const { data, error } = await supabase.storage
+                .from('property-images')
+                .remove(fileNamesToDelete);
+
+            if (error) {
+                console.error('Supabase 스토리지 삭제 오류:', error);
+                // 오류가 발생해도 일단 진행하도록 설정. 필요시 에러 처리 강화
+            }
+        }
+    }
+
+    let imageUrls = body.existing_image_paths ? body.existing_image_paths.split(',').filter(p => p) : [];
 
     if (req.files) {
         for (const file of req.files) {

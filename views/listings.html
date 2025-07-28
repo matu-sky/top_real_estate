@@ -124,7 +124,8 @@
     <div id="form-modal" class="modal">
         <div class="modal-content">
             <span class="close-btn">&times;</span>
-            <h4 id="modal-title" style="margin-top:0; margin-bottom: 20px; font-size: 1.5rem;">매물 수정</h4>
+            <div id="deleted_image_paths_container"></div>
+                    <h4 id="modal-title" style="margin-top:0; margin-bottom: 20px; font-size: 1.5rem;">매물 수정</h4>
             <form id="modal-form" method="POST" enctype="multipart/form-data">
                 <input type="hidden" id="existing_image_paths" name="existing_image_paths">
                 
@@ -216,12 +217,44 @@
                         const imagePaths = property.image_path.split(',').filter(p => p);
                         imagePaths.forEach(path => {
                             const imgContainer = document.createElement('div');
+                            imgContainer.style.position = 'relative';
+                            imgContainer.style.marginRight = '10px';
+
                             const imgElement = document.createElement('img');
                             imgElement.src = path;
                             imgElement.style.width = '100px';
                             imgElement.style.height = 'auto';
-                            imgElement.style.margin = '5px';
                             imgContainer.appendChild(imgElement);
+
+                            const deleteBtn = document.createElement('button');
+                            deleteBtn.innerText = 'X';
+                            deleteBtn.type = 'button'; // 중요: 폼 제출 방지
+                            deleteBtn.style.position = 'absolute';
+                            deleteBtn.style.top = '0';
+                            deleteBtn.style.right = '0';
+                            deleteBtn.style.background = 'red';
+                            deleteBtn.style.color = 'white';
+                            deleteBtn.style.border = 'none';
+                            deleteBtn.style.cursor = 'pointer';
+
+                            deleteBtn.onclick = () => {
+                                // 숨겨진 필드에 삭제할 이미지 경로 추가
+                                const deletedInput = document.createElement('input');
+                                deletedInput.type = 'hidden';
+                                deletedInput.name = 'deleted_images';
+                                deletedInput.value = path;
+                                document.getElementById('deleted_image_paths_container').appendChild(deletedInput);
+
+                                // 화면에서 이미지 컨테이너 제거
+                                imgContainer.remove();
+
+                                // 기존 이미지 목록에서 해당 경로 제거
+                                const existingImagesField = document.getElementById('existing_image_paths');
+                                const updatedPaths = existingImagesField.value.split(',').filter(p => p !== path);
+                                existingImagesField.value = updatedPaths.join(',');
+                            };
+
+                            imgContainer.appendChild(deleteBtn);
                             currentImagesContainer.appendChild(imgContainer);
                         });
                     } else {
