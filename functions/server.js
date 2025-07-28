@@ -12,6 +12,18 @@ const multer = require('multer');
 const serverless = require('serverless-http');
 const querystring = require('querystring');
 const fs = require('fs');
+const util = require('util');
+const readdir = util.promisify(fs.readdir);
+
+// 디버깅: 재귀적으로 디렉토리 목록을 가져오는 함수
+async function getFiles(dir) {
+    const dirents = await readdir(dir, { withFileTypes: true });
+    const files = await Promise.all(dirents.map((dirent) => {
+        const res = path.resolve(dir, dirent.name);
+        return dirent.isDirectory() ? getFiles(res) : res;
+    }));
+    return Array.prototype.concat(...files);
+}
 
 const app = express();
 const projectRoot = path.resolve(__dirname, '..');
@@ -604,4 +616,16 @@ if (require.main === module) {
   app.listen(PORT, () => {
     console.log(`로컬 서버가 http://localhost:${PORT} 에서 실행 중입니다.`);
   });
+} else {
+    // Netlify 환경에서만 실행되는 디버깅 코드
+    (async () => {
+        try {
+            console.log('--- Netlify 배포 환경 파일 목록 ---');
+            const files = await getFiles(path.dirname(__filename));
+            console.log(files.join('\n'));
+            console.log('------------------------------------');
+        } catch (err) {
+            console.error('파일 목록을 가져오는 중 오류 발생:', err);
+        }
+    })();
 }
