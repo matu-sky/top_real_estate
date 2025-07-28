@@ -33,11 +33,11 @@
         <div class="property-gallery">
             <% if (property.image_path && property.image_path.length > 0) { %>
                 <div class="main-image">
-                    <img src="/<%= property.image_path.split(',')[0] %>" alt="<%= property.title %>" id="main-property-image">
+                    <img src="<%= property.image_path.split(',')[0] %>" alt="<%= property.title %>" id="main-property-image">
                 </div>
                 <div class="thumbnail-images">
                     <% property.image_path.split(',').forEach(function(img) { %>
-                        <img src="/<%= img %>" alt="<%= property.title %>" class="thumbnail">
+                        <img src="<%= img %>" alt="<%= property.title %>" class="thumbnail">
                     <% }); %>
                 </div>
             <% } else { %>
