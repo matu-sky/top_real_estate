@@ -247,8 +247,18 @@ router.get('/dashboard', async (req, res) => {
 });
 
 // 게시판 설정 페이지
-router.get('/admin/board_settings', (req, res) => {
-    res.render('board_settings', { menus: res.locals.menus });
+router.get('/admin/board_settings', async (req, res) => {
+    let client;
+    try {
+        client = await pool.connect();
+        const result = await client.query('SELECT * FROM boards ORDER BY created_at DESC');
+        res.render('board_settings', { menus: res.locals.menus, boards: result.rows });
+    } catch (err) {
+        console.error('DB 조회 오류:', err.stack);
+        res.status(500).send('게시판 목록을 가져오는 데 실패했습니다.');
+    } finally {
+        if (client) client.release();
+    }
 });
 
 // 새 게시판 만들기 페이지
