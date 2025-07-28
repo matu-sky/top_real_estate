@@ -370,10 +370,17 @@ router.post('/admin/menu/update', (req, res) => {
 
 // ✅ [신규] 새 매물 추가: 폼에서 전송된 데이터를 DB에 저장
 router.post('/listings/add', upload.array('images', 10), async (req, res) => {
+    console.log('--- 매물 등록 요청 시작 ---');
+    console.log('요청 본문:', req.body);
+    console.log('업로드된 파일:', req.files ? req.files.length + '개' : '없음');
+
     let imageUrls = [];
-    if (req.files) {
+    if (req.files && req.files.length > 0) {
+        console.log('이미지 업로드 시작...');
         for (const file of req.files) {
             const newFileName = `${Date.now()}_${file.originalname}`;
+            console.log(`'${newFileName}' 이름으로 Supabase에 업로드 시도`);
+
             const { data, error } = await supabase.storage
                 .from('property-images')
                 .upload(newFileName, file.buffer, {
@@ -382,36 +389,59 @@ router.post('/listings/add', upload.array('images', 10), async (req, res) => {
 
             if (error) {
                 console.error('Supabase 스토리지 업로드 오류:', error);
-                return res.status(500).send('이미지 업로드에 실패했습니다.');
+                return res.status(500).send('이미지 업로드에 실패했습니다. 로그를 확인하세요.');
             }
 
+            console.log(`'${newFileName}' 업로드 성공`);
             const { data: { publicUrl } } = supabase.storage
                 .from('property-images')
                 .getPublicUrl(newFileName);
+            
+            console.log(`공개 URL 가져오기 성공: ${publicUrl}`);
             imageUrls.push(publicUrl);
         }
+        console.log('모든 이미지 업로드 완료.');
     }
 
     const image_paths = imageUrls.join(',');
+    console.log('생성된 이미지 경로 문자열:', image_paths);
+
     const { category, title, price, address, area, exclusive_area, approval_date, purpose, total_floors, floor, direction, direction_standard, transaction_type, parking, maintenance_fee, maintenance_fee_details, power_supply, hoist, ceiling_height, permitted_business_types, access_road_condition, move_in_date, description, youtube_url } = req.body;
 
     const query = `INSERT INTO properties (
         category, title, price, address, area, exclusive_area, approval_date, purpose, total_floors, floor, direction, direction_standard, transaction_type, parking, maintenance_fee, maintenance_fee_details, power_supply, hoist, ceiling_height, permitted_business_types, access_road_condition, move_in_date, description, image_path, youtube_url
-    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25)`;
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25)
+    RETURNING id;`; // RETURNING id 추가하여 삽입된 행의 id를 반환받음
 
     const params = [
         category, title, price, address, area, exclusive_area, approval_date, purpose, total_floors, floor, direction, direction_standard, transaction_type, parking, maintenance_fee, maintenance_fee_details, power_supply, hoist, ceiling_height, permitted_business_types, access_road_condition, move_in_date, description, image_paths, youtube_url
     ];
 
-    const client = await pool.connect();
+    console.log('데이터베이스에 매물 정보 삽입 시도...');
+    console.log('쿼리:', query);
+    console.log('파라미터:', params);
+
+    let client;
     try {
-        await client.query(query, params);
+        console.log('데이터베이스 풀에서 클라이언트 가져오는 중...');
+        client = await pool.connect();
+        console.log('클라이언트 가져오기 성공.');
+
+        const result = await client.query(query, params);
+        console.log('DB 삽입 성공! 삽입된 매물 ID:', result.rows[0].id);
+        
+        console.log('매물 목록 페이지로 리디렉션...');
         res.redirect('/listings');
     } catch (err) {
-        console.error('DB 삽입 오류:', err.stack);
-        res.status(500).send("매물 등록에 실패했습니다.");
+        console.error('DB 삽입 오류 발생:', err.stack);
+        // 사용자에게 좀 더 구체적인 오류 메시지를 보낼 수 있습니다.
+        res.status(500).send(`매물 등록에 실패했습니다. 서버 로그를 확인해주세요. 오류: ${err.message}`);
     } finally {
-        client.release();
+        if (client) {
+            console.log('데이터베이스 클라이언트 반환.');
+            client.release();
+        }
+        console.log('--- 매물 등록 요청 종료 ---');
     }
 });
 
