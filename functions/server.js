@@ -227,6 +227,14 @@ router.get('/admin', (req, res) => {
 
 // 홈페이지 관리 정보 업데이트
 router.post('/admin/update', requireLoginAndLoadMenus, (req, res) => {
+    // Netlify 환경에서 Buffer로 들어오는 body를 파싱
+    let body = {};
+    if (req.body instanceof Buffer) {
+        body = querystring.parse(req.body.toString());
+    } else {
+        body = req.body;
+    }
+
     const contentPath = path.join(projectRoot, 'data', 'homepage_content.json');
 
     fs.readFile(contentPath, 'utf8', (err, data) => {
@@ -237,9 +245,9 @@ router.post('/admin/update', requireLoginAndLoadMenus, (req, res) => {
 
         let content = JSON.parse(data);
 
-        for (const key in req.body) {
+        for (const key in body) {
             if (Object.prototype.hasOwnProperty.call(content, key)) {
-                content[key] = req.body[key];
+                content[key] = body[key];
             }
         }
 
