@@ -533,8 +533,8 @@ router.get('/board/:slug', async (req, res) => {
         const postsResult = await client.query('SELECT * FROM posts WHERE board_id = $1 ORDER BY created_at DESC', [board.id]);
         const posts = postsResult.rows;
 
-        const headerContent = fs.readFileSync(path.resolve(projectRoot, 'views', 'partials', 'header.html'), 'utf8');
-        const footerContent = fs.readFileSync(path.resolve(projectRoot, 'views', 'partials', 'footer.html'), 'utf8');
+        const headerContent = fs.readFileSync(path.join(__dirname, 'views', 'partials', 'header.html'), 'utf8');
+        const footerContent = fs.readFileSync(path.join(__dirname, 'views', 'partials', 'footer.html'), 'utf8');
 
         res.render('board', { board, posts, user: req.session, headerContent, footerContent });
     } catch (err) {
