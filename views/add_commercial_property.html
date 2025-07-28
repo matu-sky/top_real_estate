@@ -112,5 +112,56 @@
             </div>
         </main>
     </div>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        const supabaseUrl = 'https://ofpxyfyudgddvvyvvsnq.supabase.co';
+        const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9mcHh5Znl1ZGdkZHZ2eXZ2c25xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM1Mzk1OTIsImV4cCI6MjA2OTExNTU5Mn0.Bl31ss5czUUvPcvGAxmfRL9P7wf7ZfTEpZqpxwhKcsg';
+        const supabase = window.supabase.createClient(supabaseUrl, supabaseAnonKey);
+
+        const form = document.getElementById('add-property-form');
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+
+            const imageInput = document.getElementById('images');
+            const files = imageInput.files;
+            let imageUrls = [];
+
+            if (files.length > 0) {
+                for (const file of files) {
+                    const newFileName = `${Date.now()}_${file.name}`;
+                    const { data, error } = await supabase.storage
+                        .from('property-images')
+                        .upload(newFileName, file);
+
+                    if (error) {
+                        console.error('Image upload error:', error);
+                        alert('이미지 업로드에 실패했습니다.');
+                        return;
+                    }
+
+                    const { data: { publicUrl } } = supabase.storage
+                        .from('property-images')
+                        .getPublicUrl(newFileName);
+                    imageUrls.push(publicUrl);
+                }
+            }
+
+            const formData = new FormData(form);
+            formData.delete('images');
+            formData.append('image_urls', imageUrls.join(','));
+
+            const response = await fetch('/listings/add', {
+                method: 'POST',
+                body: new URLSearchParams(formData)
+            });
+
+            if (response.ok) {
+                window.location.href = '/listings';
+            } else {
+                const errorText = await response.text();
+                alert(`매물 등록에 실패했습니다. ${errorText}`);
+            }
+        });
+    </script>
 </body>
 </html>
