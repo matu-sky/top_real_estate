@@ -148,11 +148,16 @@
 
             const formData = new FormData(form);
             formData.delete('images');
-            formData.append('image_urls', imageUrls.join(','));
+
+            const body = new URLSearchParams();
+            for (const pair of formData.entries()) {
+                body.append(pair[0], pair[1]);
+            }
+            body.append('image_urls', imageUrls.join(','));
 
             const response = await fetch('/listings/add', {
                 method: 'POST',
-                body: new URLSearchParams(formData)
+                body: body
             });
 
             if (response.ok) {
