@@ -1,0 +1,114 @@
+
+> top_real_estate@1.0.0 start:local
+> node functions/server.js
+
+--- Netlify Function Environment ---
+Attempting to read SUPABASE_URL: Not Found
+Attempting to read SUPABASE_ANON_KEY: Not Found
+Type of SUPABASE_URL: undefined
+Type of SUPABASE_ANON_KEY: undefined
+------------------------------------
+--- All Environment Variables ---  {
+  SHELL: '/bin/bash',
+  npm_command: 'run',
+  CLOUD_CODE_CLOUD_SHELL_AUTHENTICATION: 'true',
+  npm_config_userconfig: '/home/bongsang1962/.npmrc',
+  COLORTERM: 'truecolor',
+  npm_config_cache: '/home/bongsang1962/.npm',
+  TERM_PROGRAM_VERSION: '1.99.3-cde',
+  HISTSIZE: '1000',
+  EDITOR_IN_CLOUD_SHELL: 'true',
+  NODE: '/usr/local/nvm/versions/node/v22.16.0/bin/node',
+  GOOGLE_CLOUD_PROJECT: 'cloudshell-gca',
+  JAVA_HOME: '/usr/lib/jvm/java-17-openjdk-amd64',
+  CLOUD_SHELL: 'true',
+  DEVSHELL_PROJECT_ID: '',
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: '1',
+  COLOR: '0',
+  npm_config_local_prefix: '/home/bongsang1962/top_real_estate',
+  npm_config_globalconfig: '/usr/local/nvm/versions/node/v22.16.0/etc/npmrc',
+  ASPNETCORE_URLS: 'http://*:8080',
+  EDITOR: 'vi',
+  PWD: '/home/bongsang1962/top_real_estate',
+  LOGNAME: 'bongsang1962',
+  npm_config_init_module: '/home/bongsang1962/.npm-init.js',
+  _: '/usr/local/nvm/versions/node/v22.16.0/bin/node',
+  DEVSHELL_CLIENTS_DIR: '/var/run/google/devshell',
+  VSCODE_GIT_ASKPASS_NODE: '/google/devshell/editor/code-oss-for-cloud-shell/node',
+  HOME: '/home/bongsang1962',
+  LANG: 'en_US.UTF-8',
+  LS_COLORS: 'rs=0:di=01;34:ln=01;36:mh=00:pi=40;33:so=01;35:do=01;35:bd=40;33;01:cd=40;33;01:or=40;31;01:mi=00:su=37;41:sg=30;43:ca=00:tw=30;42:ow=34;42:st=37;44:ex=01;32:*.tar=01;31:*.tgz=01;31:*.arc=01;31:*.arj=01;31:*.taz=01;31:*.lha=01;31:*.lz4=01;31:*.lzh=01;31:*.lzma=01;31:*.tlz=01;31:*.txz=01;31:*.tzo=01;31:*.t7z=01;31:*.zip=01;31:*.z=01;31:*.dz=01;31:*.gz=01;31:*.lrz=01;31:*.lz=01;31:*.lzo=01;31:*.xz=01;31:*.zst=01;31:*.tzst=01;31:*.bz2=01;31:*.bz=01;31:*.tbz=01;31:*.tbz2=01;31:*.tz=01;31:*.deb=01;31:*.rpm=01;31:*.jar=01;31:*.war=01;31:*.ear=01;31:*.sar=01;31:*.rar=01;31:*.alz=01;31:*.ace=01;31:*.zoo=01;31:*.cpio=01;31:*.7z=01;31:*.rz=01;31:*.cab=01;31:*.wim=01;31:*.swm=01;31:*.dwm=01;31:*.esd=01;31:*.avif=01;35:*.jpg=01;35:*.jpeg=01;35:*.mjpg=01;35:*.mjpeg=01;35:*.gif=01;35:*.bmp=01;35:*.pbm=01;35:*.pgm=01;35:*.ppm=01;35:*.tga=01;35:*.xbm=01;35:*.xpm=01;35:*.tif=01;35:*.tiff=01;35:*.png=01;35:*.svg=01;35:*.svgz=01;35:*.mng=01;35:*.pcx=01;35:*.mov=01;35:*.mpg=01;35:*.mpeg=01;35:*.m2v=01;35:*.mkv=01;35:*.webm=01;35:*.webp=01;35:*.ogm=01;35:*.mp4=01;35:*.m4v=01;35:*.mp4v=01;35:*.vob=01;35:*.qt=01;35:*.nuv=01;35:*.wmv=01;35:*.asf=01;35:*.rm=01;35:*.rmvb=01;35:*.flc=01;35:*.avi=01;35:*.fli=01;35:*.flv=01;35:*.gl=01;35:*.dl=01;35:*.xcf=01;35:*.xwd=01;35:*.yuv=01;35:*.cgm=01;35:*.emf=01;35:*.ogv=01;35:*.ogx=01;35:*.aac=00;36:*.au=00;36:*.flac=00;36:*.m4a=00;36:*.mid=00;36:*.midi=00;36:*.mka=00;36:*.mp3=00;36:*.mpc=00;36:*.ogg=00;36:*.ra=00;36:*.wav=00;36:*.oga=00;36:*.opus=00;36:*.spx=00;36:*.xspf=00;36:*~=00;90:*#=00;90:*.bak=00;90:*.crdownload=00;90:*.dpkg-dist=00;90:*.dpkg-new=00;90:*.dpkg-old=00;90:*.dpkg-tmp=00;90:*.old=00;90:*.orig=00;90:*.part=00;90:*.rej=00;90:*.rpmnew=00;90:*.rpmorig=00;90:*.rpmsave=00;90:*.swp=00;90:*.tmp=00;90:*.ucf-dist=00;90:*.ucf-new=00;90:*.ucf-old=00;90:',
+  npm_package_version: '1.0.0',
+  CLOUDSDK_CONFIG: '/tmp/tmp.Rp3j92qQU3',
+  MINIKUBE_FORCE_SYSTEMD: 'true',
+  GIT_ASKPASS: '/google/devshell/editor/code-oss-for-cloud-shell/extensions/git/dist/askpass.sh',
+  PROMPT_COMMAND: 'history -a;enableHistoryAppend &> /dev/null;update_devshell_project_id &> /dev/null ; update_devshell_project_id &> /dev/null',
+  USE_PARTITIONED_COOKIES: 'true',
+  INIT_CWD: '/home/bongsang1962/top_real_estate',
+  DOTNET_BUNDLE_EXTRACT_BASE_DIR: '/home/bongsang1962/.cache/dotnet_bundle_extract',
+  GEMINI_DEFAULT_PROJECT: '',
+  npm_lifecycle_script: 'node functions/server.js',
+  VSCODE_GIT_ASKPASS_EXTRA_ARGS: '',
+  GEM_PATH: '/home/bongsang1962/.gems:/usr/local/lib/ruby/gems/3.2.0/',
+  npm_config_npm_version: '11.4.1',
+  GEM_HOME: '/home/bongsang1962/.gems',
+  LESSCLOSE: '/usr/bin/lesspipe %s %s',
+  CLOUDSHELL_OPEN_DIR: 'cloudshell_open',
+  TERM: 'xterm-256color',
+  npm_package_name: 'top_real_estate',
+  CLOUDSDK_DIAGNOSTICS_HIDDEN_PROPERTY_ALLOWLIST: 'compute/gce_metadata_read_timeout_sec',
+  npm_config_prefix: '/usr/local/nvm/versions/node/v22.16.0',
+  LESSOPEN: '| /usr/bin/lesspipe %s',
+  USER: 'bongsang1962',
+  VSCODE_GIT_IPC_HANDLE: '/tmp/vscode-git-73500d3736.sock',
+  BASHRC_PATH: '/home/bongsang1962/.bashrc',
+  CLOUDSDK_DIAGNOSTICS_HIDDEN_PROPERTY_WHITELIST: 'compute/gce_metadata_read_timeout_sec',
+  npm_lifecycle_event: 'start:local',
+  SHLVL: '3',
+  __TMP_CLOUDSDK_CONFIG: '/tmp/tmp.Rp3j92qQU3',
+  CONSOLIDATE_GCA_SPARKS: 'true',
+  USER_EMAIL: 'bongsang1962@gmail.com',
+  npm_config_user_agent: 'npm/11.4.1 node/v22.16.0 linux x64 workspaces/false',
+  npm_execpath: '/usr/local/nvm/versions/node/v22.16.0/lib/node_modules/npm/bin/npm-cli.js',
+  BASHRC_GOOGLE_PATH: '/google/devshell/bashrc.google',
+  MINIKUBE_HOME: '/google/minikube',
+  DEBUGINFOD_URLS: 'https://debuginfod.ubuntu.com ',
+  npm_package_json: '/home/bongsang1962/top_real_estate/package.json',
+  DOCKER_HOST: 'unix:///var/run/docker.sock',
+  VSCODE_GIT_ASKPASS_MAIN: '/google/devshell/editor/code-oss-for-cloud-shell/extensions/git/dist/askpass-main.js',
+  V2V_GCP_V2V_IMAGE: 'projects/v2v-community/global/images/family/v2v-stable',
+  npm_config_noproxy: '',
+  BROWSER: 'echo',
+  PATH: '/home/bongsang1962/top_real_estate/node_modules/.bin:/home/bongsang1962/node_modules/.bin:/home/node_modules/.bin:/node_modules/.bin:/usr/local/nvm/versions/node/v22.16.0/lib/node_modules/npm/node_modules/@npmcli/run-script/lib/node-gyp-bin:/home/bongsang1962/node_modules/.bin:/home/node_modules/.bin:/node_modules/.bin:/usr/local/nvm/versions/node/v22.16.0/lib/node_modules/npm/node_modules/@npmcli/run-script/lib/node-gyp-bin:/home/bongsang1962/.cache/cloud-code/m2c/bin:/google/devshell/editor/code-oss-for-cloud-shell/bin/remote-cli:/opt/gradle/bin:/opt/maven/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/local/go/bin:/usr/local/node_packages/node_modules/.bin:/usr/local/rvm/bin:/home/bongsang1962/.gems/bin:/usr/local/rvm/bin:/home/bongsang1962/gopath/bin:/google/gopath/bin:/google/flutter/bin:/usr/local/nvm/versions/node/v22.16.0/bin:/home/bongsang1962/.gems/bin:/usr/local/rvm/bin:/home/bongsang1962/gopath/bin:/google/gopath/bin:/google/flutter/bin:/usr/local/nvm/versions/node/v22.16.0/bin',
+  npm_config_node_gyp: '/usr/local/nvm/versions/node/v22.16.0/lib/node_modules/npm/node_modules/node-gyp/bin/node-gyp.js',
+  HISTFILESIZE: '1000',
+  npm_config_global_prefix: '/usr/local/nvm/versions/node/v22.16.0',
+  CLOUD_SHELL_FRAME_ANCESTORS: 'https://*.corp.google.com:* https://*.sandbox.google.com:* https://console.cloud.google.com https://ide.cloud.google.com https://shell.cloud.google.com https://ssh.cloud.google.com',
+  NEW_GCA_AUTH_FLOW: 'true',
+  DEVSHELL_GCLOUD_CONFIG: 'cloudshell-26816',
+  npm_node_execpath: '/usr/local/nvm/versions/node/v22.16.0/bin/node',
+  USE_GKE_GCLOUD_AUTH_PLUGIN: 'True',
+  OLDPWD: '/home/bongsang1962',
+  GOPATH: '/home/bongsang1962/gopath:/google/gopath',
+  MINIKUBE_WANTUPDATENOTIFICATION: 'false',
+  CREDENTIALS_SERVICE_PORT: '8998',
+  TERM_PROGRAM: 'vscode',
+  VSCODE_IPC_HOOK_CLI: '/tmp/vscode-ipc-63b0b8eb-71d0-4e73-a322-ce81f3a2622a.sock'
+}
+Supabase URL and Anon Key are required. Check your Netlify environment variables.
+/home/bongsang1962/top_real_estate/functions/server.js:82
+    throw new Error(errorMessage);
+    ^
+
+Error: Supabase URL and Anon Key are required. Check your Netlify environment variables.
+    at Object.<anonymous> (/home/bongsang1962/top_real_estate/functions/server.js:82:11)
+    at Module._compile (node:internal/modules/cjs/loader:1730:14)
+    at Object..js (node:internal/modules/cjs/loader:1895:10)
+    at Module.load (node:internal/modules/cjs/loader:1465:32)
+    at Function._load (node:internal/modules/cjs/loader:1282:12)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:171:5)
+    at node:internal/main/run_main_module:36:49
+
+Node.js v22.16.0

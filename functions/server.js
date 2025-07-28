@@ -1,3 +1,4 @@
+require('dotenv').config();
 console.log('--- Netlify Function Environment ---');
 console.log('Attempting to read SUPABASE_URL:', process.env.SUPABASE_URL ? 'Found' : 'Not Found');
 console.log('Attempting to read SUPABASE_ANON_KEY:', process.env.SUPABASE_ANON_KEY ? 'Found' : 'Not Found');
@@ -369,41 +370,12 @@ router.post('/admin/menu/update', (req, res) => {
 
 
 // ✅ [신규] 새 매물 추가: 폼에서 전송된 데이터를 DB에 저장
-router.post('/listings/add', upload.array('images', 10), async (req, res) => {
+router.post('/listings/add', async (req, res) => {
     console.log('--- 매물 등록 요청 시작 ---');
     console.log('요청 본문:', req.body);
     console.log('업로드된 파일:', req.files ? req.files.length + '개' : '없음');
 
-    let imageUrls = [];
-    if (req.files && req.files.length > 0) {
-        console.log('이미지 업로드 시작...');
-        for (const file of req.files) {
-            const newFileName = `${Date.now()}_${file.originalname}`;
-            console.log(`'${newFileName}' 이름으로 Supabase에 업로드 시도`);
-
-            const { data, error } = await supabase.storage
-                .from('property-images')
-                .upload(newFileName, file.buffer, {
-                    contentType: file.mimetype,
-                });
-
-            if (error) {
-                console.error('Supabase 스토리지 업로드 오류:', error);
-                return res.status(500).send('이미지 업로드에 실패했습니다. 로그를 확인하세요.');
-            }
-
-            console.log(`'${newFileName}' 업로드 성공`);
-            const { data: { publicUrl } } = supabase.storage
-                .from('property-images')
-                .getPublicUrl(newFileName);
-            
-            console.log(`공개 URL 가져오기 성공: ${publicUrl}`);
-            imageUrls.push(publicUrl);
-        }
-        console.log('모든 이미지 업로드 완료.');
-    }
-
-    const image_paths = imageUrls.join(',');
+    const image_paths = req.body.image_urls || '';
     console.log('생성된 이미지 경로 문자열:', image_paths);
 
     const { category, title, price, address, area, exclusive_area, approval_date, purpose, total_floors, floor, direction, direction_standard, transaction_type, parking, maintenance_fee, maintenance_fee_details, power_supply, hoist, ceiling_height, permitted_business_types, access_road_condition, move_in_date, description, youtube_url } = req.body;
