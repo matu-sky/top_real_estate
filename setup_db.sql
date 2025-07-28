@@ -1,4 +1,4 @@
-CREATE TABLE public.properties (
+CREATE TABLE IF NOT EXISTS public.properties (
     id BIGSERIAL PRIMARY KEY,
     category TEXT NOT NULL,
     title TEXT NOT NULL,
@@ -29,7 +29,7 @@ CREATE TABLE public.properties (
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE public.boards (
+CREATE TABLE IF NOT EXISTS public.boards (
     id BIGSERIAL PRIMARY KEY,
     name TEXT NOT NULL,
     slug TEXT NOT NULL UNIQUE,
@@ -39,10 +39,12 @@ CREATE TABLE public.boards (
 
 ALTER TABLE public.properties ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Allow public read access" ON public.properties;
 CREATE POLICY "Allow public read access" ON public.properties
     FOR SELECT
     USING (true);
 
+DROP POLICY IF EXISTS "Allow all access for now" ON public.properties;
 CREATE POLICY "Allow all access for now" ON public.properties
     FOR ALL
     USING (true)
@@ -50,10 +52,12 @@ CREATE POLICY "Allow all access for now" ON public.properties
 
 ALTER TABLE public.boards ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Allow public read access for boards" ON public.boards;
 CREATE POLICY "Allow public read access for boards" ON public.boards
     FOR SELECT
     USING (true);
     
+DROP POLICY IF EXISTS "Allow all access for boards" ON public.boards;
 CREATE POLICY "Allow all access for boards" ON public.boards
     FOR ALL
     USING (true)

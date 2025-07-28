@@ -21,22 +21,19 @@ async function setupDatabase() {
     console.log('데이터베이스에 연결되었습니다.');
 
     try {
-        // 1. site_settings 테이블 생성 (없을 경우에만)
-        await client.query(`
-            CREATE TABLE IF NOT EXISTS site_settings (
-                key TEXT PRIMARY KEY,
-                value TEXT
-            );
-        `);
-        console.log('성공: "site_settings" 테이블이 준비되었습니다.');
+        // 1. setup_db.sql 파일 읽기
+        const sql = fs.readFileSync(path.join(__dirname, 'setup_db.sql'), 'utf8');
+        // 2. SQL 쿼리 실행
+        await client.query(sql);
+        console.log('성공: "setup_db.sql" 파일의 모든 쿼리를 실행했습니다.');
 
-        // 2. homepage_content.json 파일 읽기
+        // 3. homepage_content.json 파일 읽기
         const contentPath = path.join(__dirname, 'data', 'homepage_content.json');
         const data = fs.readFileSync(contentPath, 'utf8');
         const content = JSON.parse(data);
         console.log('성공: "homepage_content.json" 파일을 읽었습니다.');
 
-        // 3. JSON 데이터를 데이터베이스에 삽입/업데이트
+        // 4. JSON 데이터를 데이터베이스에 삽입/업데이트
         for (const [key, value] of Object.entries(content)) {
             // 값이 객체나 배열이면 JSON 문자열로 변환, 아니면 그대로 사용
             const valueToStore = (typeof value === 'object' && value !== null) ? JSON.stringify(value) : value;
