@@ -169,6 +169,7 @@
                         <div class="form-group">
                             <label for="images">새 이미지 추가</label>
                             <input type="file" id="images" name="images" multiple>
+                            <div id="new-image-preview-container"></div>
                         </div>
                     </div>
                 </div>
@@ -185,6 +186,49 @@
         const modalTitle = document.getElementById('modal-title');
         const modalForm = document.getElementById('modal-form');
         const closeBtn = document.querySelector('.close-btn');
+        const newImageInput = modalForm.querySelector('#images');
+        const newImagePreviewContainer = modalForm.querySelector('#new-image-preview-container');
+        let newSelectedFiles = [];
+
+        newImageInput.addEventListener('change', () => {
+            Array.from(newImageInput.files).forEach(file => newSelectedFiles.push(file));
+            updateNewImagePreview();
+        });
+
+        function updateNewImagePreview() {
+            newImagePreviewContainer.innerHTML = '';
+            newSelectedFiles.forEach((file, index) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const previewItem = document.createElement('div');
+                    previewItem.className = 'image-preview-item';
+                    const img = document.createElement('img');
+                    img.src = e.target.result;
+                    previewItem.appendChild(img);
+                    const fileName = document.createElement('span');
+                    fileName.textContent = file.name;
+                    previewItem.appendChild(fileName);
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.textContent = 'X';
+                    deleteBtn.className = 'delete-preview-btn';
+                    deleteBtn.type = 'button';
+                    deleteBtn.onclick = () => {
+                        newSelectedFiles.splice(index, 1);
+                        updateNewImagePreview();
+                    };
+                    previewItem.appendChild(deleteBtn);
+                    newImagePreviewContainer.appendChild(previewItem);
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        // 모달이 열릴 때마다 파일 목록 초기화
+        function resetImageUploadState() {
+            newSelectedFiles = [];
+            newImageInput.value = ''; // 파일 선택 창 비우기
+            updateNewImagePreview();
+        }
 
         document.querySelectorAll('.btn-edit').forEach(button => {
             button.addEventListener('click', async (e) => {
@@ -196,6 +240,8 @@
                     if (!response.ok) throw new Error('매물 정보를 불러오는 데 실패했습니다.');
                     
                     const property = await response.json();
+
+                    resetImageUploadState(); // 이미지 업로드 상태 초기화
 
                     modalTitle.innerText = '매물 수정';
                     modalForm.action = `/listings/edit/${property.id}`;

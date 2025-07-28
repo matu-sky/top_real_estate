@@ -49,7 +49,7 @@
                             <div class="form-group"><label for="power_supply">사용전력(kW)</label><input type="text" id="power_supply" name="power_supply" placeholder="예) 100kW"></div>
                             <div class="form-group"><label for="access_road_condition">진입로 사정</label><input type="text" id="access_road_condition" name="access_road_condition" placeholder="예) 40피트 트레일러 진입 가능"></div>
                             <div class="form-group full-width"><label for="description">물건 상세</label><textarea id="description" name="description" rows="8" placeholder="매물에 대한 상세한 설명을 입력하세요."></textarea></div>
-                            <div class="form-group full-width"><label for="images">파일 업로드</label><input type="file" id="images" name="images" multiple></div>
+                            <div class="form-group full-width"><label for="images">파일 업로드</label><input type="file" id="images" name="images" multiple><div id="image-preview-container"></div></div>
                         </div>
                     </div>
                     <div class="form-actions">
@@ -66,15 +66,54 @@
         const supabase = window.supabase.createClient(supabaseUrl, supabaseAnonKey);
 
         const form = document.getElementById('add-property-form');
+        const imageInput = document.getElementById('images');
+        const previewContainer = document.getElementById('image-preview-container');
+        let selectedFiles = []; // File 객체를 저장할 배열
+
+        imageInput.addEventListener('change', () => {
+            // 새로 선택된 파일들을 기존 목록에 추가
+            Array.from(imageInput.files).forEach(file => selectedFiles.push(file));
+            updateImagePreview();
+        });
+
+        function updateImagePreview() {
+            previewContainer.innerHTML = ''; // 미리보기 초기화
+            selectedFiles.forEach((file, index) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const previewItem = document.createElement('div');
+                    previewItem.className = 'image-preview-item';
+
+                    const img = document.createElement('img');
+                    img.src = e.target.result;
+                    previewItem.appendChild(img);
+
+                    const fileName = document.createElement('span');
+                    fileName.textContent = file.name;
+                    previewItem.appendChild(fileName);
+
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.textContent = 'X';
+                    deleteBtn.className = 'delete-preview-btn';
+                    deleteBtn.type = 'button';
+                    deleteBtn.onclick = () => {
+                        selectedFiles.splice(index, 1); // 목록에서 파일 제거
+                        updateImagePreview(); // 미리보기 업데이트
+                    };
+                    previewItem.appendChild(deleteBtn);
+
+                    previewContainer.appendChild(previewItem);
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
         form.addEventListener('submit', async (event) => {
             event.preventDefault();
 
-            const imageInput = document.getElementById('images');
-            const files = imageInput.files;
             let imageUrls = [];
-
-            if (files.length > 0) {
-                for (const file of files) {
+            if (selectedFiles.length > 0) {
+                for (const file of selectedFiles) {
                     const newFileName = `${Date.now()}_${file.name}`;
                     const { data, error } = await supabase.storage
                         .from('property-images')
