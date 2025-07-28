@@ -165,7 +165,7 @@ router.get('/admin', (req, res) => {
 });
 
 // 홈페이지 관리 정보 업데이트
-router.post('/admin/update', requireLoginAndLoadMenus, (req, res) => {
+router.post('/admin/update', requireLogin, (req, res) => {
     const contentPath = path.join(projectRoot, 'data', 'homepage_content.json');
 
     fs.readFile(contentPath, 'utf8', (err, data) => {
@@ -262,17 +262,17 @@ router.get('/listings', async (req, res) => {
 });
 
 // 새 매물 등록 페이지
-router.get('/add_property', requireLoginAndLoadMenus, (req, res) => {
+router.get('/add_property', requireLogin, (req, res) => {
     res.render('add_property', { menus: res.locals.menus });
 });
 
 // 새 상업용 매물 등록 페이지
-router.get('/add_commercial_property', requireLoginAndLoadMenus, (req, res) => {
+router.get('/add_commercial_property', requireLogin, (req, res) => {
     res.render('add_commercial_property', { menus: res.locals.menus });
 });
 
 // 새 공장/지산 매물 등록 페이지
-router.get('/add_factory_property', requireLoginAndLoadMenus, (req, res) => {
+router.get('/add_factory_property', requireLogin, (req, res) => {
     res.render('add_factory_property', { menus: res.locals.menus });
 });
 
@@ -475,7 +475,7 @@ router.get('/property/:id', async (req, res) => {
 });
 
 // API: 특정 매물 정보 가져오기
-router.get('/api/property/:id', requireLoginAndLoadMenus, async (req, res) => {
+router.get('/api/property/:id', requireLogin, async (req, res) => {
     const { id } = req.params;
     const query = "SELECT * FROM properties WHERE id = $1";
 
