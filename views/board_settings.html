@@ -46,7 +46,7 @@
                         <tbody>
                             <% boards.forEach(board => { %>
                                 <tr>
-                                    <td><%= board.name %></td>
+                                    <td><a href="/board/<%= board.slug %>" target="_blank"><%= board.name %></a></td>
                                     <td>/board/<%= board.slug %></td>
                                     <td><%= new Date(board.created_at).toLocaleDateString('ko-KR') %></td>
                                     <td>
