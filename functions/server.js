@@ -491,7 +491,7 @@ router.get('/property/:id', async (req, res) => {
 });
 
 // API: 특정 매물 정보 가져오기
-router.get('/api/property/:id', requireLoginAndLoadMenus, async (req, res) => {
+router.get('/api/property/:id', requireLogin, async (req, res) => {
     const { id } = req.params;
     const query = "SELECT * FROM properties WHERE id = $1";
 
