@@ -71,13 +71,9 @@ app.use(session({
 }));
 
 // --- 뷰 엔진 설정 ---
-const viewsDir = path.join(projectRoot, 'views');
-app.set('views', viewsDir);
+app.set('views', path.join(__dirname, '..', 'views'));
 app.set('view engine', 'html');
-app.engine('html', (filePath, options, callback) => {
-    const newOptions = { ...options, settings: { ...options.settings, views: [viewsDir] } };
-    require('ejs').renderFile(filePath, newOptions, callback);
-});
+app.engine('html', require('ejs').renderFile);
 
 
 // 모든 페이지에 설정을 로드하는 미들웨어
