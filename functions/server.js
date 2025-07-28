@@ -538,8 +538,8 @@ router.get('/board/:slug', async (req, res) => {
 
         res.render('board', { board, posts, user: req.session, headerContent, footerContent });
     } catch (err) {
-        console.error('DB 조회 오류:', err.stack);
-        res.status(500).send('게시판 정보를 가져오는 데 실패했습니다.');
+        console.error('게시판 페이지 오류:', err);
+        res.status(500).send(`<h1>오류 발생</h1><p>게시판 정보를 가져오는 중 오류가 발생했습니다.</p><pre>${err.stack}</pre>`);
     } finally {
         if (client) client.release();
     }
