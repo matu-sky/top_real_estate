@@ -75,6 +75,7 @@ app.use(session({
 app.set('views', path.join(__dirname, '..', 'views'));
 app.set('view engine', 'html');
 app.engine('html', require('ejs').renderFile);
+app.set('view options', { root: path.join(projectRoot, 'views') });
 
 
 // 모든 페이지에 설정을 로드하는 미들웨어
