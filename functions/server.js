@@ -89,6 +89,9 @@ async function loadSettings(req, res, next) {
             { name: '대시보드', url: '/dashboard' },
             { name: '홈페이지 관리', url: '/admin' },
             { name: '매물 관리', url: '/listings' },
+            { name: '게시판 설정', url: '/admin/board_settings' },
+            { name: '주거용 매물등록', url: '/add_property' },
+            { name: '메뉴 관리', url: '/admin/menu' },
             ...dbMenus // 데이터베이스에서 불러온 메뉴들을 여기에 추가
         ];
         next();
