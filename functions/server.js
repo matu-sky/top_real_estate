@@ -174,32 +174,41 @@ router.get('/admin', (req, res) => {
     res.render('admin', { content: res.locals.settings, menus: res.locals.menus });
 });
 
-// 홈페이지 관리 정보 업데이트
-router.post('/admin/update', requireLogin, (req, res) => {
-    const contentPath = path.join(projectRoot, 'data', 'homepage_content.json');
+// 홈페이지 관리 정보 업데이트 (DB 사용)
+router.post('/admin/update', requireLogin, async (req, res) => {
+    let body = {};
+    if (req.body instanceof Buffer) {
+        body = querystring.parse(req.body.toString());
+    } else {
+        body = req.body;
+    }
 
-    fs.readFile(contentPath, 'utf8', (err, data) => {
-        if (err) {
-            console.error('파일 읽기 오류:', err);
-            return res.status(500).send('콘텐츠 파일을 읽는 데 실패했습니다.');
-        }
+    let client;
+    try {
+        client = await pool.connect();
+        await client.query('BEGIN'); // 트랜잭션 시작
 
-        let content = JSON.parse(data);
-
-        for (const key in req.body) {
-            if (Object.prototype.hasOwnProperty.call(content, key)) {
-                content[key] = req.body[key];
+        for (const key in body) {
+            // settings 객체에 실제로 있는 키인지 확인하여 아무 값이나 저장되는 것을 방지
+            if (Object.prototype.hasOwnProperty.call(res.locals.settings, key)) {
+                const valueToStore = body[key];
+                await client.query(
+                    'UPDATE site_settings SET value = $1 WHERE key = $2',
+                    [valueToStore, key]
+                );
             }
         }
 
-        fs.writeFile(contentPath, JSON.stringify(content, null, 2), 'utf8', (writeErr) => {
-            if (writeErr) {
-                console.error('파일 쓰기 오류:', writeErr);
-                return res.status(500).send('콘텐츠 업데이트에 실패했습니다.');
-            }
-            res.redirect('/admin');
-        });
-    });
+        await client.query('COMMIT'); // 트랜잭션 커밋
+        res.redirect('/admin');
+
+    } catch (err) {
+        if (client) await client.query('ROLLBACK'); // 오류 발생 시 롤백
+        console.error('DB 업데이트 오류:', err.stack);
+        res.status(500).send('콘텐츠 업데이트에 실패했습니다.');
+    } finally {
+        if (client) client.release();
+    }
 });
 
 // 로그아웃 처리
@@ -291,23 +300,32 @@ router.get('/admin/menu', requireLogin, (req, res) => {
     res.render('menu_settings', { menus: res.locals.menus, content: res.locals.settings });
 });
 
-router.post('/admin/menu/update', (req, res) => {
-    const contentPath = path.join(projectRoot, 'data', 'homepage_content.json');
-    fs.readFile(contentPath, 'utf8', (err, data) => {
-        if (err) {
-            return res.status(500).send('콘텐츠 파일을 읽을 수 없습니다.');
-        }
-        let content = JSON.parse(data);
-        
-        content.header_nav_links = req.body.links || [];
+// 메뉴 관리 정보 업데이트 (DB 사용)
+router.post('/admin/menu/update', requireLogin, async (req, res) => {
+    let body = {};
+    if (req.body instanceof Buffer) {
+        body = querystring.parse(req.body.toString());
+    } else {
+        body = req.body;
+    }
 
-        fs.writeFile(contentPath, JSON.stringify(content, null, 2), 'utf8', (err) => {
-            if (err) {
-                return res.status(500).send('메뉴 저장에 실패했습니다.');
-            }
-            res.redirect('/admin/menu');
-        });
-    });
+    const links = body.links || [];
+    const valueToStore = JSON.stringify(links);
+
+    let client;
+    try {
+        client = await pool.connect();
+        await client.query(
+            'INSERT INTO site_settings (key, value) VALUES ($1, $2) ON CONFLICT (key) DO UPDATE SET value = $2',
+            ['header_nav_links', valueToStore]
+        );
+        res.redirect('/admin/menu');
+    } catch (err) {
+        console.error('DB 업데이트 오류:', err.stack);
+        res.status(500).send('메뉴 저장에 실패했습니다.');
+    } finally {
+        if (client) client.release();
+    }
 });
 
 
