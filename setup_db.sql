@@ -29,6 +29,14 @@ CREATE TABLE public.properties (
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE public.boards (
+    id BIGSERIAL PRIMARY KEY,
+    name TEXT NOT NULL,
+    slug TEXT NOT NULL UNIQUE,
+    description TEXT,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);
+
 ALTER TABLE public.properties ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "Allow public read access" ON public.properties
@@ -36,6 +44,17 @@ CREATE POLICY "Allow public read access" ON public.properties
     USING (true);
 
 CREATE POLICY "Allow all access for now" ON public.properties
+    FOR ALL
+    USING (true)
+    WITH CHECK (true);
+
+ALTER TABLE public.boards ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Allow public read access for boards" ON public.boards
+    FOR SELECT
+    USING (true);
+    
+CREATE POLICY "Allow all access for boards" ON public.boards
     FOR ALL
     USING (true)
     WITH CHECK (true);

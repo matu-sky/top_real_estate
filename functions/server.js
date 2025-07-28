@@ -251,6 +251,37 @@ router.get('/admin/board_settings', (req, res) => {
     res.render('board_settings', { menus: res.locals.menus });
 });
 
+// 새 게시판 만들기 페이지
+router.get('/admin/board/new', requireLogin, (req, res) => {
+    res.render('add_board', { menus: res.locals.menus });
+});
+
+// 새 게시판 생성
+router.post('/admin/board/create', requireLogin, async (req, res) => {
+    let body = {};
+    if (req.body instanceof Buffer) {
+        body = querystring.parse(req.body.toString());
+    } else {
+        body = req.body;
+    }
+
+    const { board_name, board_slug, board_description } = body;
+    const query = 'INSERT INTO boards (name, slug, description) VALUES ($1, $2, $3)';
+    const params = [board_name, board_slug, board_description];
+
+    let client;
+    try {
+        client = await pool.connect();
+        await client.query(query, params);
+        res.redirect('/admin/board_settings');
+    } catch (err) {
+        console.error('DB 삽입 오류:', err.stack);
+        res.status(500).send('게시판 생성에 실패했습니다.');
+    } finally {
+        if (client) client.release();
+    }
+});
+
 // 매물 관리 페이지
 router.get('/listings', async (req, res) => {
     const category = req.query.category;
