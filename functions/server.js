@@ -72,10 +72,10 @@ app.use(session({
 }));
 
 // --- 뷰 엔진 설정 ---
-app.set('views', path.join(__dirname, '..', 'views'));
+const viewsPath = process.env.NETLIFY ? path.join(__dirname, 'views') : path.join(__dirname, '..', 'views');
+app.set('views', viewsPath);
 app.set('view engine', 'html');
 app.engine('html', require('ejs').renderFile);
-app.set('view options', { root: path.join(projectRoot, 'views') });
 
 
 // 모든 페이지에 설정을 로드하는 미들웨어
