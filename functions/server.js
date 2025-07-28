@@ -83,7 +83,14 @@ async function loadSettings(req, res, next) {
     try {
         client = await pool.connect();
         res.locals.settings = await getSettings(client);
-        res.locals.menus = res.locals.settings.header_nav_links || [];
+        const dbMenus = res.locals.settings.header_nav_links || [];
+        // 관리자 페이지에 항상 필요한 기본 메뉴 추가
+        res.locals.menus = [
+            { name: '대시보드', url: '/dashboard' },
+            { name: '홈페이지 관리', url: '/admin' },
+            { name: '매물 관리', url: '/listings' },
+            ...dbMenus // 데이터베이스에서 불러온 메뉴들을 여기에 추가
+        ];
         next();
     } catch (err) {
         console.error('설정 로드 오류:', err);
