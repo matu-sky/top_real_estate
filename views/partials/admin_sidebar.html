@@ -3,6 +3,7 @@
         <h1><a href="/dashboard">탑 부동산<span>.</span></a></h1>
     </div>
     <ul class="sidebar-menu">
+        <li><a href="/">홈으로 가기</a></li>
         <% menus.forEach(menu => { %>
             <li class="<%= menu.url === '/admin' ? 'active' : '' %>"><a href="<%= menu.url %>"><%= menu.name %></a></li>
         <% }); %>
