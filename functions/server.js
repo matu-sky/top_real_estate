@@ -518,6 +518,30 @@ router.post('/listings/delete/:id', async (req, res) => {
 });
 
 
+// 게시판 페이지
+router.get('/board/:slug', async (req, res) => {
+    const { slug } = req.params;
+    let client;
+    try {
+        client = await pool.connect();
+        const boardResult = await client.query('SELECT * FROM boards WHERE slug = $1', [slug]);
+        if (boardResult.rows.length === 0) {
+            return res.status(404).send('게시판을 찾을 수 없습니다.');
+        }
+        const board = boardResult.rows[0];
+
+        const postsResult = await client.query('SELECT * FROM posts WHERE board_id = $1 ORDER BY created_at DESC', [board.id]);
+        const posts = postsResult.rows;
+
+        res.render('board', { board, posts, user: req.session });
+    } catch (err) {
+        console.error('DB 조회 오류:', err.stack);
+        res.status(500).send('게시판 정보를 가져오는 데 실패했습니다.');
+    } finally {
+        if (client) client.release();
+    }
+});
+
 // 매물 상세 페이지
 router.get('/property/:id', async (req, res) => {
     const { id } = req.params;

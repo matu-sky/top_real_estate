@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= board.name %> | 탑 부동산</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <%- include('partials/header') %>
+
+    <main class="container">
+        <section class="board-list">
+            <h2><%= board.name %></h2>
+            <p><%= board.description %></p>
+
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>제목</th>
+                        <th>작성자</th>
+                        <th>작성일</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% posts.forEach(post => { %>
+                        <tr>
+                            <td><a href="/board/<%= board.slug %>/<%= post.id %>"><%= post.title %></a></td>
+                            <td><%= post.author %></td>
+                            <td><%= new Date(post.created_at).toLocaleDateString('ko-KR') %></td>
+                        </tr>
+                    <% }); %>
+                </tbody>
+            </table>
+
+            <% if (user && user.loggedin) { %>
+                <a href="/board/<%= board.slug %>/write" class="btn-primary">글쓰기</a>
+            <% } %>
+        </section>
+    </main>
+
+    <%- include('partials/footer') %>
+</body>
+</html>

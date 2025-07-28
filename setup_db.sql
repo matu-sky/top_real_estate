@@ -37,6 +37,15 @@ CREATE TABLE IF NOT EXISTS public.boards (
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE IF NOT EXISTS public.posts (
+    id BIGSERIAL PRIMARY KEY,
+    board_id BIGINT NOT NULL REFERENCES public.boards(id) ON DELETE CASCADE,
+    title TEXT NOT NULL,
+    content TEXT,
+    author TEXT,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);
+
 ALTER TABLE public.properties ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Allow public read access" ON public.properties;
@@ -59,6 +68,19 @@ CREATE POLICY "Allow public read access for boards" ON public.boards
     
 DROP POLICY IF EXISTS "Allow all access for boards" ON public.boards;
 CREATE POLICY "Allow all access for boards" ON public.boards
+    FOR ALL
+    USING (true)
+    WITH CHECK (true);
+
+ALTER TABLE public.posts ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow public read access for posts" ON public.posts;
+CREATE POLICY "Allow public read access for posts" ON public.posts
+    FOR SELECT
+    USING (true);
+
+DROP POLICY IF EXISTS "Allow all access for posts" ON public.posts;
+CREATE POLICY "Allow all access for posts" ON public.posts
     FOR ALL
     USING (true)
     WITH CHECK (true);
