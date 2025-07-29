@@ -534,7 +534,9 @@ router.post('/listings/delete/:id', async (req, res) => {
 });
 
 
-// 게시판 페이지
+// --- 게시판 관련 라우트 ---
+
+// 게시판 페이지 (글 목록)
 router.get('/board/:slug', async (req, res) => {
     const { slug } = req.params;
     let client;
@@ -549,7 +551,12 @@ router.get('/board/:slug', async (req, res) => {
         const postsResult = await client.query('SELECT * FROM posts WHERE board_id = $1 ORDER BY created_at DESC', [board.id]);
         const posts = postsResult.rows;
 
-        res.render('board', { board, posts, user: req.session, content: res.locals.settings });
+        res.render('board', { 
+            board, 
+            posts, 
+            user: req.session, 
+            content: res.locals.settings 
+        });
     } catch (err) {
         console.error('게시판 페이지 오류:', err);
         res.status(500).send(`<h1>오류 발생</h1><p>게시판 정보를 가져오는 중 오류가 발생했습니다.</p><pre>${err.stack}</pre>`);
@@ -557,6 +564,158 @@ router.get('/board/:slug', async (req, res) => {
         if (client) client.release();
     }
 });
+
+// 글쓰기 페이지 보여주기
+router.get('/board/:slug/write', requireLogin, async (req, res) => {
+    const { slug } = req.params;
+    let client;
+    try {
+        client = await pool.connect();
+        const boardResult = await client.query('SELECT * FROM boards WHERE slug = $1', [slug]);
+        if (boardResult.rows.length === 0) {
+            return res.status(404).send('게시판을 찾을 수 없습니다.');
+        }
+        const board = boardResult.rows[0];
+        res.render('write', { 
+            board, 
+            menus: res.locals.menus, 
+            content: res.locals.settings 
+        });
+    } catch (err) {
+        console.error('글쓰기 페이지 오류:', err);
+        res.status(500).send('오류가 발생했습니다.');
+    } finally {
+        if (client) client.release();
+    }
+});
+
+// 새 글 작성 (저장)
+router.post('/board/:slug/write', requireLogin, async (req, res) => {
+    const { slug } = req.params;
+    const { title, content, author } = req.body;
+    let client;
+    try {
+        client = await pool.connect();
+        const boardResult = await client.query('SELECT id FROM boards WHERE slug = $1', [slug]);
+        if (boardResult.rows.length === 0) {
+            return res.status(404).send('게시판을 찾을 수 없습니다.');
+        }
+        const boardId = boardResult.rows[0].id;
+
+        const query = 'INSERT INTO posts (board_id, title, content, author) VALUES ($1, $2, $3, $4)';
+        await client.query(query, [boardId, title, content, author]);
+
+        res.redirect(`/board/${slug}`);
+    } catch (err) {
+        console.error('DB 삽입 오류:', err);
+        res.status(500).send('글 작성에 실패했습니다.');
+    } finally {
+        if (client) client.release();
+    }
+});
+
+// 게시글 상세 페이지
+router.get('/board/:slug/:postId', async (req, res) => {
+    const { slug, postId } = req.params;
+    let client;
+    try {
+        client = await pool.connect();
+        
+        const boardResult = await client.query('SELECT * FROM boards WHERE slug = $1', [slug]);
+        if (boardResult.rows.length === 0) {
+            return res.status(404).send('게시판을 찾을 수 없습니다.');
+        }
+        const board = boardResult.rows[0];
+
+        const postResult = await client.query('SELECT * FROM posts WHERE id = $1 AND board_id = $2', [postId, board.id]);
+        if (postResult.rows.length === 0) {
+            return res.status(404).send('게시글을 찾을 수 없습니다.');
+        }
+        const post = postResult.rows[0];
+
+        res.render('post_detail', {
+            board,
+            post,
+            user: req.session,
+            content: res.locals.settings
+        });
+
+    } catch (err) {
+        console.error('게시글 상세 조회 오류:', err);
+        res.status(500).send('오류가 발생했습니다.');
+    } finally {
+        if (client) client.release();
+    }
+});
+
+
+// 글 수정 페이지 보여주기
+router.get('/board/:slug/:postId/edit', requireLogin, async (req, res) => {
+    const { slug, postId } = req.params;
+    let client;
+    try {
+        client = await pool.connect();
+        const boardResult = await client.query('SELECT * FROM boards WHERE slug = $1', [slug]);
+        if (boardResult.rows.length === 0) {
+            return res.status(404).send('게시판을 찾을 수 없습니다.');
+        }
+        const board = boardResult.rows[0];
+
+        const postResult = await client.query('SELECT * FROM posts WHERE id = $1', [postId]);
+        if (postResult.rows.length === 0) {
+            return res.status(404).send('게시글을 찾을 수 없습니다.');
+        }
+        const post = postResult.rows[0];
+
+        res.render('edit_post', { 
+            board, 
+            post, 
+            menus: res.locals.menus, 
+            content: res.locals.settings 
+        });
+    } catch (err) {
+        console.error('글 수정 페이지 오류:', err);
+        res.status(500).send('오류가 발생했습니다.');
+    } finally {
+        if (client) client.release();
+    }
+});
+
+// 글 수정 (저장)
+router.post('/board/:slug/:postId/edit', requireLogin, async (req, res) => {
+    const { slug, postId } = req.params;
+    const { title, content, author } = req.body;
+    let client;
+    try {
+        client = await pool.connect();
+        const query = 'UPDATE posts SET title = $1, content = $2, author = $3 WHERE id = $4';
+        await client.query(query, [title, content, author, postId]);
+        res.redirect(`/board/${slug}`);
+    } catch (err) {
+        console.error('DB 업데이트 오류:', err);
+        res.status(500).send('글 수정에 실패했습니다.');
+    } finally {
+        if (client) client.release();
+    }
+});
+
+// 글 삭제
+router.post('/board/:slug/:postId/delete', requireLogin, async (req, res) => {
+    const { slug, postId } = req.params;
+    let client;
+    try {
+        client = await pool.connect();
+        await client.query('DELETE FROM posts WHERE id = $1', [postId]);
+        res.redirect(`/board/${slug}`);
+    } catch (err) {
+        console.error('DB 삭제 오류:', err);
+        res.status(500).send('글 삭제에 실패했습니다.');
+    } finally {
+        if (client) client.release();
+    }
+});
+
+// --- End of 게시판 관련 라우트 ---
 
 // 매물 상세 페이지
 router.get('/property/:id', async (req, res) => {

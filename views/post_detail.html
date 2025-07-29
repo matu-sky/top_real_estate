@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= post.title %> | <%= board.name %></title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <%- include('partials/header.html') %>
+
+    <main class="container">
+        <section class="post-detail">
+            <h2><%= post.title %></h2>
+            <div class="post-meta">
+                <span>작성자: <%= post.author %></span>
+                <span>작성일: <%= new Date(post.created_at).toLocaleDateString('ko-KR') %></span>
+            </div>
+            <div class="post-content">
+                <p><%- post.content.replace(/\n/g, '<br>') %></p>
+            </div>
+            <div class="post-actions">
+                <a href="/board/<%= board.slug %>" class="btn-secondary">목록으로</a>
+                <% if (user && user.loggedin) { %>
+                    <a href="/board/<%= board.slug %>/<%= post.id %>/edit" class="btn-primary">수정</a>
+                    <form action="/board/<%= board.slug %>/<%= post.id %>/delete" method="POST" style="display: inline;">
+                        <button type="submit" class="btn-danger" onclick="return confirm('정말로 이 글을 삭제하시겠습니까?');">삭제</button>
+                    </form>
+                <% } %>
+            </div>
+        </section>
+    </main>
+
+    <%- include('partials/footer.html') %>
+</body>
+</html>

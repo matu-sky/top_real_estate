@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>글 수정 | <%= board.name %></title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/admin_style.css">
+</head>
+<body>
+    <div class="admin-container">
+        <main class="main-content" style="margin-left: 0; padding: 2rem;">
+            <header class="content-header">
+                <h2>글 수정: <%= board.name %></h2>
+            </header>
+
+            <div class="card">
+                <div class="card-body">
+                    <form action="/board/<%= board.slug %>/<%= post.id %>/edit" method="POST">
+                        <div class="form-group">
+                            <label for="title">제목</label>
+                            <input type="text" id="title" name="title" class="form-control" value="<%= post.title %>" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="author">작성자</label>
+                            <input type="text" id="author" name="author" class="form-control" value="<%= post.author %>" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="content">내용</label>
+                            <textarea id="content" name="content" class="form-control" rows="10" required><%= post.content %></textarea>
+                        </div>
+                        <button type="submit" class="btn-primary">수정 완료</button>
+                        <a href="/board/<%= board.slug %>" class="btn-secondary">취소</a>
+                    </form>
+                </div>
+            </div>
+        </main>
+    </div>
+</body>
+</html>

@@ -42,6 +42,14 @@
                             <td><a href="/board/<%= board.slug %>/<%= post.id %>"><%= post.title %></a></td>
                             <td><%= post.author %></td>
                             <td><%= new Date(post.created_at).toLocaleDateString('ko-KR') %></td>
+                            <td>
+                                <% if (user && user.loggedin) { %>
+                                    <a href="/board/<%= board.slug %>/<%= post.id %>/edit" class="btn-sm-secondary">수정</a>
+                                    <form action="/board/<%= board.slug %>/<%= post.id %>/delete" method="POST" style="display: inline-block; margin-left: 5px;">
+                                        <button type="submit" class="btn-sm-danger" onclick="return confirm('정말로 이 글을 삭제하시겠습니까?');">삭제</button>
+                                    </form>
+                                <% } %>
+                            </td>
                         </tr>
                     <% }); %>
                 </tbody>
