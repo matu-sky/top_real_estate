@@ -592,7 +592,15 @@ router.get('/board/:slug/write', requireLogin, async (req, res) => {
 // 새 글 작성 (저장)
 router.post('/board/:slug/write', requireLogin, async (req, res) => {
     const { slug } = req.params;
-    const { title, content, author } = req.body;
+    
+    let body = {};
+    if (req.body instanceof Buffer) {
+        body = querystring.parse(req.body.toString());
+    } else {
+        body = req.body;
+    }
+    const { title, content, author } = body;
+
     let client;
     try {
         client = await pool.connect();
@@ -684,7 +692,15 @@ router.get('/board/:slug/:postId/edit', requireLogin, async (req, res) => {
 // 글 수정 (저장)
 router.post('/board/:slug/:postId/edit', requireLogin, async (req, res) => {
     const { slug, postId } = req.params;
-    const { title, content, author } = req.body;
+    
+    let body = {};
+    if (req.body instanceof Buffer) {
+        body = querystring.parse(req.body.toString());
+    } else {
+        body = req.body;
+    }
+    const { title, content, author } = body;
+
     let client;
     try {
         client = await pool.connect();
