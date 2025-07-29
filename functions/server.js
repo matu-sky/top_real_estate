@@ -289,14 +289,15 @@ router.post('/admin/board/create', requireLogin, async (req, res) => {
     }
 
     const { board_name, board_slug, board_description } = body;
-    const query = 'INSERT INTO boards (name, slug, description) VALUES ($1, $2, $3)';
+    const query = 'INSERT INTO boards (name, slug, description) VALUES ($1, $2, $3) RETURNING slug';
     const params = [board_name, board_slug, board_description];
 
     let client;
     try {
         client = await pool.connect();
-        await client.query(query, params);
-        res.redirect('/admin/board_settings');
+        const result = await client.query(query, params);
+        const newBoardSlug = result.rows[0].slug;
+        res.redirect(`/board/${newBoardSlug}`);
     } catch (err) {
         console.error('DB 삽입 오류:', err.stack);
         res.status(500).send('게시판 생성에 실패했습니다.');
