@@ -549,7 +549,7 @@ router.get('/board/:slug', async (req, res) => {
         const postsResult = await client.query('SELECT * FROM posts WHERE board_id = $1 ORDER BY created_at DESC', [board.id]);
         const posts = postsResult.rows;
 
-        res.render('board', { board, posts, user: req.session });
+        res.render('board', { board, posts, user: req.session, content: res.locals.settings });
     } catch (err) {
         console.error('게시판 페이지 오류:', err);
         res.status(500).send(`<h1>오류 발생</h1><p>게시판 정보를 가져오는 중 오류가 발생했습니다.</p><pre>${err.stack}</pre>`);

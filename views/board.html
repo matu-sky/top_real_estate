@@ -7,7 +7,21 @@
     <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
-    <%- include('partials/header.html') %>
+    <header id="header">
+        <div class="container header-container">
+            <div class="logo">
+                <a href="/"><%= content.header_logo_text %></a>
+            </div>
+            <nav>
+                <ul>
+                    <% content.header_nav_links.forEach(link => { %>
+                        <li><a href="<%= link.url %>"><%= link.text %></a></li>
+                    <% }); %>
+                </ul>
+            </nav>
+            <div class="mobile-menu-btn">☰</div>
+        </div>
+    </header>
 
     <main class="container">
         <section class="board-list">
@@ -39,6 +53,31 @@
         </section>
     </main>
 
-    <%- include('partials/footer.html') %>
+    <footer>
+        <div class="container">
+            <div class="footer-info">
+                <p>
+                    <strong>상호:</strong> <%= content.footer_company_name %><span>|</span>
+                    <strong>대표자:</strong> <%= content.footer_ceo_name %><span>|</span>
+                    <strong>주소:</strong> <%= content.footer_address %><br>
+                    <strong>사업자등록번호:</strong> <%= content.footer_business_license %><span>|</span>
+                    <strong>중개업등록번호:</strong> <%= content.footer_registration_number %><span>|</span>
+                    <strong>통신판매업신고번호:</strong> <%= content.footer_mail_order_license %><span>|</span>
+                    <strong>전화번호:</strong> <%= content.footer_phone %>
+                </p>
+            </div>
+            
+            <div class="footer-menu">
+                <% content.footer_links.forEach(link => { %>
+                    <a href="<%= link.url %>"><%= link.text %></a>
+                <% }); %>
+                <a href="/login">관리자</a>
+            </div>
+
+            <div class="copyright">
+                <p><%= content.footer_copyright %></p>
+            </div>
+        </div>
+    </footer>
 </body>
 </html>
