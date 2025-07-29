@@ -359,117 +359,60 @@ footer {
 .youtube-wrapper iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
 
 /* --- 게시판 페이지 디자인 --- */
-.board-container { padding: 60px 20px; }
-.board-header { text-align: center; margin-bottom: 40px; }
-.board-header h2 { font-size: 2.5rem; font-weight: 700; margin: 0 0 10px 0; color: var(--primary-color); }
+.board-container { padding: 60px 0; }
+.board-header { text-align: center; margin-bottom: 50px; }
+.board-header h1 { font-size: 2.5rem; font-weight: 700; margin: 0 0 10px 0; color: var(--primary-color); }
 .board-header p { font-size: 1.1rem; color: #6c757d; max-width: 700px; margin: 0 auto; }
 
-/* 검색창 */
-.board-header .search-form {
-    margin-top: 30px;
-}
-.board-header .search-form form {
-    display: inline-flex;
-    align-items: center;
-    border: 1px solid var(--border-color);
-    border-radius: 50px;
-    padding: 5px;
-    background-color: #fff;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-}
-.board-header .search-form input[type="text"] {
-    border: none;
-    outline: none;
-    padding: 10px 20px;
-    font-size: 1rem;
-    min-width: 350px;
-    background: transparent;
-}
-.board-header .search-form .btn-primary {
-    border-radius: 50px;
-    padding: 8px 25px;
-}
+.board-toolbar { display: flex; justify-content: flex-end; margin-bottom: 25px; }
 
-/* 게시판 툴바 */
-.board-toolbar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-}
-.post-count {
-    font-size: 1rem;
-    color: #495057;
-}
-
-/* 게시글 목록 (카드 형태) */
-.post-list {
-    border-top: 2px solid var(--primary-color);
-}
+.post-list { display: flex; flex-direction: column; gap: 20px; }
 .post-card {
     display: flex;
     align-items: center;
-    padding: 20px 15px;
-    border-bottom: 1px solid var(--border-color);
+    background: #fff;
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 25px 30px;
+    transition: all 0.3s ease;
     text-decoration: none;
     color: var(--text-color);
-    transition: background-color 0.2s;
 }
-.post-card:hover {
-    background-color: var(--light-gray-bg);
-}
-.post-card-number {
-    width: 8%;
-    text-align: center;
-    font-size: 0.95rem;
-    color: #868e96;
-}
-.post-card-content {
-    flex-grow: 1;
-}
-.post-card-content h3 {
-    font-size: 1.1rem;
-    margin: 0 0 5px 0;
-    font-weight: 500;
-}
-.post-card-meta {
-    font-size: 0.9rem;
-    color: #868e96;
-}
-.post-card-meta span:not(:last-child) {
-    margin-right: 15px;
-}
-
-.no-posts {
-    text-align: center;
-    padding: 80px 0;
-    color: #777;
-    border-bottom: 1px solid var(--border-color);
-}
-
-/* 페이지네이션 */
-.pagination {
-    text-align: center;
-    margin-top: 40px;
-}
-.pagination a {
-    display: inline-block;
-    padding: 8px 14px;
-    margin: 0 4px;
-    border-radius: 6px;
-    text-decoration: none;
-    color: var(--primary-color);
-    border: 1px solid #dee2e6;
-    transition: all 0.2s;
-}
-.pagination a:hover {
-    background-color: var(--light-gray-bg);
-}
-.pagination a.active {
-    background-color: var(--primary-color);
-    color: #fff;
+.post-card:hover { 
     border-color: var(--primary-color);
+    box-shadow: 0 8px 25px rgba(13, 44, 84, 0.1);
+    transform: translateY(-5px);
 }
+.post-card-content { flex-grow: 1; }
+.post-card-content h3 {
+    font-size: 1.3rem;
+    margin: 0 0 10px 0;
+    color: var(--primary-color);
+    text-decoration: none;
+}
+.post-card-content h3 a {
+    color: inherit;
+    text-decoration: none;
+}
+.post-card-content h3 a:hover {
+    text-decoration: underline;
+}
+.post-card-snippet {
+    font-size: 0.95rem;
+    color: #495057;
+    margin: 15px 0;
+    line-height: 1.6;
+    height: 3.2em; /* 대략 2줄 높이 */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+}
+.post-card-meta { font-size: 0.9rem; color: #868e96; }
+.post-card-meta span:not(:last-child) { margin-right: 15px; }
+
+.post-card-actions { display: flex; gap: 10px; }
 
 /* --- 버튼 스타일 --- */
 .btn, .btn-primary, .btn-secondary, .btn-danger, .btn-sm-secondary, .btn-sm-danger {
