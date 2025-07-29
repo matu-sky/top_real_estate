@@ -329,6 +329,31 @@ router.post('/admin/board/update/:id', requireLogin, async (req, res) => {
     }
 });
 
+// 게시판 삭제
+router.post('/admin/board/delete/:id', requireLogin, async (req, res) => {
+    const { id } = req.params;
+    let client;
+    try {
+        client = await pool.connect();
+        // 트랜잭션 시작
+        await client.query('BEGIN');
+        // 해당 게시판의 모든 게시글 삭제
+        await client.query('DELETE FROM posts WHERE board_id = $1', [id]);
+        // 게시판 삭제
+        await client.query('DELETE FROM boards WHERE id = $1', [id]);
+        // 트랜잭션 커밋
+        await client.query('COMMIT');
+        res.redirect('/admin/board_settings');
+    } catch (err) {
+        // 오류 발생 시 롤백
+        if (client) await client.query('ROLLBACK');
+        console.error('DB 삭제 오류:', err.stack);
+        res.status(500).send('게시판 삭제에 실패했습니다.');
+    } finally {
+        if (client) client.release();
+    }
+});
+
 // 새 게시판 생성
 router.post('/admin/board/create', requireLogin, async (req, res) => {
     let body = {};
