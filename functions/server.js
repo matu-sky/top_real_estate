@@ -663,18 +663,12 @@ router.get('/board/:slug/write', requireLogin, async (req, res) => {
 });
 
 // 새 글 작성 (저장)
-router.post('/board/:slug/write', requireLogin, async (req, res) => {
+router.post('/board/:slug/write', requireLogin, upload.single('attachment'), async (req, res) => {
     const { slug } = req.params;
     
-    let body = {};
-    if (req.body instanceof Buffer) {
-        body = querystring.parse(req.body.toString());
-    } else {
-        body = req.body;
-    }
-    const { title, content, author } = body;
+    const { title, content, author } = req.body;
 
-    let client;
+    let attachment_path = null;
     try {
         client = await pool.connect();
         const boardResult = await client.query('SELECT id FROM boards WHERE slug = $1', [slug]);
@@ -766,13 +760,7 @@ router.get('/board/:slug/:postId/edit', requireLogin, async (req, res) => {
 router.post('/board/:slug/:postId/edit', requireLogin, upload.single('attachment'), async (req, res) => {
     const { slug, postId } = req.params;
     
-    let body = {};
-    if (req.body instanceof Buffer) {
-        body = querystring.parse(req.body.toString());
-    } else {
-        body = req.body;
-    }
-    const { title, content, author, delete_attachment } = body;
+    const { title, content, author, delete_attachment } = req.body;
 
     let client;
     try {
