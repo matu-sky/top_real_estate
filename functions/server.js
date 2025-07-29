@@ -762,7 +762,7 @@ router.get('/board/:slug/:postId/edit', requireLogin, async (req, res) => {
 });
 
 // 글 수정 (저장)
-router.post('/board/:slug/:postId/edit', requireLogin, async (req, res) => {
+router.post('/board/:slug/:postId/edit', requireLogin, upload.single('attachment'), async (req, res) => {
     const { slug, postId } = req.params;
     
     let body = {};
@@ -771,13 +771,53 @@ router.post('/board/:slug/:postId/edit', requireLogin, async (req, res) => {
     } else {
         body = req.body;
     }
-    const { title, content, author } = body;
+    const { title, content, author, delete_attachment } = body;
 
     let client;
     try {
         client = await pool.connect();
-        const query = 'UPDATE posts SET title = $1, content = $2, author = $3 WHERE id = $4';
-        await client.query(query, [title, content, author, postId]);
+
+        // 기존 게시물 정보 가져오기
+        const postResult = await client.query('SELECT attachment_path FROM posts WHERE id = $1', [postId]);
+        let current_attachment_path = postResult.rows[0]?.attachment_path;
+
+        // 기존 첨부파일 삭제 로직
+        if (delete_attachment && current_attachment_path) {
+            const fileName = current_attachment_path.split('/').pop();
+            await supabase.storage.from('attachments').remove([fileName]);
+            current_attachment_path = null;
+        }
+
+        let attachment_path = current_attachment_path;
+
+        // 새 파일 업로드 로직
+        if (req.file) {
+            // 기존 파일이 있었다면 삭제
+            if (current_attachment_path) {
+                const fileName = current_attachment_path.split('/').pop();
+                await supabase.storage.from('attachments').remove([fileName]);
+            }
+
+            const newFileName = `${Date.now()}_${req.file.originalname}`;
+            const { data, error } = await supabase.storage
+                .from('attachments')
+                .upload(newFileName, req.file.buffer, {
+                    contentType: req.file.mimetype,
+                });
+
+            if (error) {
+                console.error('Supabase 스토리지 업로드 오류:', error);
+                return res.status(500).send('파일 업로드에 실패했습니다.');
+            }
+
+            const { data: { publicUrl } } = supabase.storage
+                .from('attachments')
+                .getPublicUrl(newFileName);
+            attachment_path = publicUrl;
+        }
+
+        const query = 'UPDATE posts SET title = $1, content = $2, author = $3, attachment_path = $4 WHERE id = $5';
+        await client.query(query, [title, content, author, attachment_path, postId]);
         res.redirect(`/board/${slug}`);
     } catch (err) {
         console.error('DB 업데이트 오류:', err);

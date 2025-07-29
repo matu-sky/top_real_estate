@@ -16,21 +16,34 @@
 
             <div class="card">
                 <div class="card-body">
-                    <form action="/board/<%= board.slug %>/<%= post.id %>/edit" method="POST">
+                    <form action="/board/<%= board.slug %>/<%= post.id %>/edit" method="POST" enctype="multipart/form-data">
                         <div class="form-group">
                             <label for="title">제목</label>
-                            <input type="text" id="title" name="title" class="form-control" value="<%= post.title %>" required>
+                            <input type="text" id="title" name="title" value="<%= post.title %>" required>
                         </div>
                         <div class="form-group">
                             <label for="author">작성자</label>
-                            <input type="text" id="author" name="author" class="form-control" value="<%= post.author %>" required>
+                            <input type="text" id="author" name="author" value="<%= post.author %>" required>
                         </div>
                         <div class="form-group">
                             <label for="content">내용</label>
-                            <textarea id="content" name="content" class="form-control" rows="10" required><%= post.content %></textarea>
+                            <textarea id="content" name="content" rows="10" required><%= post.content %></textarea>
                         </div>
-                        <button type="submit" class="btn-primary">수정 완료</button>
-                        <a href="/board/<%= board.slug %>" class="btn-secondary">취소</a>
+                        <div class="form-group">
+                            <label for="attachment">파일 첨부</label>
+                            <input type="file" id="attachment" name="attachment">
+                            <% if (post.attachment_path) { %>
+                                <p class="current-attachment">
+                                    현재 파일: <a href="<%= post.attachment_path %>" target="_blank"><%= post.attachment_path.split('/').pop() %></a>
+                                    <input type="checkbox" name="delete_attachment" id="delete_attachment">
+                                    <label for="delete_attachment">기존 파일 삭제</label>
+                                </p>
+                            <% } %>
+                        </div>
+                        <div class="form-actions">
+                            <button type="submit" class="btn-primary">수정 완료</button>
+                            <a href="/board/<%= board.slug %>" class="btn-secondary">취소</a>
+                        </div>
                     </form>
                 </div>
             </div>

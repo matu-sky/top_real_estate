@@ -18,6 +18,14 @@
             </div>
             <div class="post-content">
                 <p><%- post.content.replace(/\n/g, '<br>') %></p>
+                <% if (post.attachment_path) { %>
+                    <div class="post-attachment">
+                        <strong>첨부파일:</strong>
+                        <a href="<%= post.attachment_path %>" target="_blank" download>
+                            <%= post.attachment_path.split('/').pop() %>
+                        </a>
+                    </div>
+                <% } %>
             </div>
             <div class="post-actions">
                 <a href="/board/<%= board.slug %>" class="btn-secondary">목록으로</a>

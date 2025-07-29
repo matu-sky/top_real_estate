@@ -43,6 +43,7 @@ CREATE TABLE IF NOT EXISTS public.posts (
     title TEXT NOT NULL,
     content TEXT,
     author TEXT,
+    attachment_path TEXT, -- 파일 첨부 경로
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
