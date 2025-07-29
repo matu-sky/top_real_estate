@@ -86,6 +86,7 @@ app.use(session({
 // --- 뷰 엔진 설정 ---
 const viewsPath = path.resolve(projectRoot, 'views');
 app.set('views', viewsPath);
+app.set('view options', { root: viewsPath });
 app.set('view engine', 'html');
 app.engine('html', require('ejs').renderFile);
 app.locals.basedir = viewsPath;
