@@ -358,6 +358,95 @@ footer {
 .youtube-wrapper { position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 12px; }
 .youtube-wrapper iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
 
+/* --- 게시판 페이지 디자인 --- */
+.board-container { padding: 60px 0; }
+.board-header { text-align: center; margin-bottom: 50px; }
+.board-header h1 { font-size: 2.5rem; font-weight: 700; margin: 0 0 10px 0; color: var(--primary-color); }
+.board-header p { font-size: 1.1rem; color: #6c757d; max-width: 700px; margin: 0 auto; }
+
+.board-toolbar { display: flex; justify-content: flex-end; margin-bottom: 25px; }
+
+.post-list { display: flex; flex-direction: column; gap: 20px; }
+.post-card {
+    display: flex;
+    align-items: center;
+    background: #fff;
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 25px 30px;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    color: var(--text-color);
+}
+.post-card:hover { 
+    border-color: var(--primary-color);
+    box-shadow: 0 8px 25px rgba(13, 44, 84, 0.1);
+    transform: translateY(-5px);
+}
+.post-card-content { flex-grow: 1; }
+.post-card-content h3 { font-size: 1.3rem; margin: 0 0 10px 0; }
+.post-card-meta { font-size: 0.9rem; color: #868e96; }
+.post-card-meta span:not(:last-child) { margin-right: 15px; }
+
+.post-card-actions { display: flex; gap: 10px; }
+
+/* --- 버튼 스타일 --- */
+.btn, .btn-primary, .btn-secondary, .btn-danger, .btn-sm-secondary, .btn-sm-danger {
+    display: inline-block;
+    font-family: 'Noto Sans KR', sans-serif;
+    font-weight: 500;
+    text-align: center;
+    vertical-align: middle;
+    cursor: pointer;
+    border: 1px solid transparent;
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+    border-radius: 8px;
+    text-decoration: none;
+    transition: all 0.2s ease-in-out;
+}
+
+.btn-primary {
+    background-color: var(--primary-color);
+    color: #fff;
+    border-color: var(--primary-color);
+}
+.btn-primary:hover { background-color: #0a2240; border-color: #0a2240; }
+
+.btn-secondary {
+    background-color: #6c757d;
+    color: #fff;
+    border-color: #6c757d;
+}
+.btn-secondary:hover { background-color: #5a6268; border-color: #545b62; }
+
+.btn-danger {
+    background-color: #dc3545;
+    color: #fff;
+    border-color: #dc3545;
+}
+.btn-danger:hover { background-color: #c82333; border-color: #bd2130; }
+
+.btn-sm-secondary, .btn-sm-danger {
+    padding: 0.3rem 0.8rem;
+    font-size: 0.8rem;
+    border-radius: 6px;
+}
+
+.btn-sm-secondary {
+    background-color: transparent;
+    color: var(--primary-color);
+    border-color: var(--border-color);
+}
+.btn-sm-secondary:hover { background-color: var(--light-gray-bg); }
+
+.btn-sm-danger {
+    background-color: transparent;
+    color: #dc3545;
+    border-color: var(--border-color);
+}
+.btn-sm-danger:hover { background-color: #fdf2f2; }
+
 
 /* --- 반응형 --- */
 @media (max-width: 1200px) {
@@ -406,4 +495,5 @@ footer {
         display: inline-block;
         margin: 5px 10px;
     }
+    .post-card { flex-direction: column; align-items: flex-start; gap: 15px; }
 }
