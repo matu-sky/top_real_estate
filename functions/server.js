@@ -799,10 +799,15 @@ router.post('/board/:slug/:postId/edit', requireLogin, upload.single('attachment
                 return res.status(500).send('파일 업로드에 실패했습니다.');
             }
 
-            const { data: { publicUrl } } = supabase.storage
+            const { data: urlData } = supabase.storage
                 .from('attachments')
                 .getPublicUrl(newFileName);
-            attachment_path = publicUrl;
+
+            if (!urlData || !urlData.publicUrl) {
+                console.error('Supabase URL 가져오기 오류: publicUrl을 찾을 수 없습니다.');
+                return res.status(500).send('파일 URL을 가져오는 데 실패했습니다.');
+            }
+            attachment_path = urlData.publicUrl;
         }
 
         const query = 'UPDATE posts SET title = $1, content = $2, author = $3, attachment_path = $4 WHERE id = $5';
