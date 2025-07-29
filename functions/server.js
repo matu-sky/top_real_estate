@@ -84,7 +84,7 @@ app.use(session({
 }));
 
 // --- 뷰 엔진 설정 ---
-const viewsPath = path.join(projectRoot, 'views');
+const viewsPath = process.env.NETLIFY ? path.join(__dirname, 'views') : path.join(__dirname, '..', 'views');
 app.set('views', viewsPath);
 app.set('view engine', 'html');
 app.engine('html', require('ejs').renderFile);
