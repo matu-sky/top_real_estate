@@ -25,21 +25,8 @@
 
     <main class="container board-container">
         <div class="board-header">
-            <div class="board-header">
             <h2><%= board.name %></h2>
             <p><%= board.description %></p>
-        </div>
-
-        <div class="board-toolbar">
-            <div class="search-form">
-                <form action="/board/<%= board.slug %>" method="GET">
-                    <input type="text" name="search" placeholder="검색어 입력" value="<%= typeof search !== 'undefined' ? search : '' %>">
-                    <button type="submit" class="btn-primary">검색</button>
-                </form>
-            </div>
-            <% if (user && user.loggedin) { %>
-                <a href="/board/<%= board.slug %>/write" class="btn-primary">글쓰기</a>
-            <% } %>
         </div>
 
         <table class="board-table">
@@ -69,14 +56,29 @@
             </tbody>
         </table>
 
-        <div class="pagination">
-            <% if (totalPages > 1) { %>
-                <% for (let i = 1; i <= totalPages; i++) { %>
-                    <a href="/board/<%= board.slug %>?page=<%= i %>&search=<%= typeof search !== 'undefined' ? search : '' %>" class="<%= currentPage == i ? 'active' : '' %>">
-                        <%= i %>
-                    </a>
+        <div class="board-footer" style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px;">
+            <div class="search-form">
+                <form action="/board/<%= board.slug %>" method="GET" style="display: flex;">
+                    <input type="text" name="search" placeholder="검색어 입력" value="<%= typeof search !== 'undefined' ? search : '' %>" style="padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
+                    <button type="submit" class="btn-primary" style="margin-left: 5px;">검색</button>
+                </form>
+            </div>
+            
+            <div class="pagination" style="display: flex; justify-content: center; flex-grow: 1;">
+                <% if (totalPages > 1) { %>
+                    <% for (let i = 1; i <= totalPages; i++) { %>
+                        <a href="/board/<%= board.slug %>?page=<%= i %>&search=<%= typeof search !== 'undefined' ? search : '' %>" class="<%= currentPage == i ? 'active' : '' %>" style="padding: 5px 10px; margin: 0 2px; border: 1px solid #ddd; text-decoration: none; color: #333; <%= currentPage == i ? 'background-color: #007bff; color: white; border-color: #007bff;' : '' %>">
+                            <%= i %>
+                        </a>
+                    <% } %>
                 <% } %>
-            <% } %>
+            </div>
+
+            <div class="write-button">
+                <% if (user && user.loggedin) { %>
+                    <a href="/board/<%= board.slug %>/write" class="btn-primary">글쓰기</a>
+                <% } %>
+            </div>
         </div>
     </main>
 
