@@ -37,9 +37,9 @@
 
         <div class="post-list">
             <% posts.forEach(post => { %>
-                <a href="/board/<%= board.slug %>/<%= post.id %>" class="post-card">
+                <div class="post-card">
                     <div class="post-card-content">
-                        <h3><%= post.title %></h3>
+                        <h3><a href="/board/<%= board.slug %>/<%= post.id %>"><%= post.title %></a></h3>
                         <div class="post-card-meta">
                             <span><strong>작성자:</strong> <%= post.author %></span>
                             <span><strong>작성일:</strong> <%= new Date(post.created_at).toLocaleDateString('ko-KR') %></span>
@@ -53,7 +53,7 @@
                             </form>
                         </div>
                     <% } %>
-                </a>
+                </div>
             <% }); %>
 
             <% if (posts.length === 0) { %>
