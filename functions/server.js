@@ -282,6 +282,53 @@ router.get('/admin/board/new', requireLogin, (req, res) => {
     res.render('add_board', { menus: res.locals.menus });
 });
 
+// 게시판 수정 페이지 보여주기
+router.get('/admin/board/edit/:id', requireLogin, async (req, res) => {
+    const { id } = req.params;
+    let client;
+    try {
+        client = await pool.connect();
+        const result = await client.query('SELECT * FROM boards WHERE id = $1', [id]);
+        if (result.rows.length === 0) {
+            return res.status(404).send('게시판을 찾을 수 없습니다.');
+        }
+        const board = result.rows[0];
+        res.render('edit_board', { menus: res.locals.menus, board });
+    } catch (err) {
+        console.error('DB 조회 오류:', err.stack);
+        res.status(500).send('게시판 정보를 가져오는 데 실패했습니다.');
+    } finally {
+        if (client) client.release();
+    }
+});
+
+// 게시판 정보 업데이트
+router.post('/admin/board/update/:id', requireLogin, async (req, res) => {
+    const { id } = req.params;
+    let body = {};
+    if (req.body instanceof Buffer) {
+        body = querystring.parse(req.body.toString());
+    } else {
+        body = req.body;
+    }
+
+    const { board_name, board_slug, board_description } = body;
+    const query = 'UPDATE boards SET name = $1, slug = $2, description = $3 WHERE id = $4';
+    const params = [board_name, board_slug, board_description, id];
+
+    let client;
+    try {
+        client = await pool.connect();
+        await client.query(query, params);
+        res.redirect('/admin/board_settings');
+    } catch (err) {
+        console.error('DB 업데이트 오류:', err.stack);
+        res.status(500).send('게시판 업데이트에 실패했습니다.');
+    } finally {
+        if (client) client.release();
+    }
+});
+
 // 새 게시판 생성
 router.post('/admin/board/create', requireLogin, async (req, res) => {
     let body = {};
