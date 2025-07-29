@@ -88,6 +88,7 @@ const viewsPath = path.resolve(projectRoot, 'views');
 app.set('views', viewsPath);
 app.set('view engine', 'html');
 app.engine('html', require('ejs').renderFile);
+app.locals.basedir = viewsPath;
 
 
 // 모든 페이지에 설정을 로드하는 미들웨어
