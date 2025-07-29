@@ -611,10 +611,6 @@ router.post('/listings/delete/:id', async (req, res) => {
 // 게시판 페이지 (글 목록)
 router.get('/board/:slug', async (req, res) => {
     const { slug } = req.params;
-    const { search, page = 1 } = req.query;
-    const postsPerPage = 10; // 페이지당 게시글 수
-    const offset = (page - 1) * postsPerPage;
-
     let client;
     try {
         client = await pool.connect();
@@ -624,36 +620,14 @@ router.get('/board/:slug', async (req, res) => {
         }
         const board = boardResult.rows[0];
 
-        let countQuery = 'SELECT COUNT(*) FROM posts WHERE board_id = $1';
-        let postsQuery = 'SELECT * FROM posts WHERE board_id = $1';
-        const params = [board.id];
-
-        if (search) {
-            countQuery += ' AND (title ILIKE $2 OR content ILIKE $2)';
-            postsQuery += ' AND (title ILIKE $2 OR content ILIKE $2)';
-            params.push(`%${search}%`);
-        }
-
-        postsQuery += ' ORDER BY created_at DESC LIMIT $_LIMIT OFFSET $_OFFSET';
-        
-        const countResult = await client.query(countQuery, params);
-        const totalPosts = parseInt(countResult.rows[0].count, 10);
-        const totalPages = Math.ceil(totalPosts / postsPerPage);
-
-        const finalPostsQuery = postsQuery.replace('$_LIMIT', postsPerPage).replace('$_OFFSET', offset);
-        const postsResult = await client.query(finalPostsQuery, params);
+        const postsResult = await client.query('SELECT * FROM posts WHERE board_id = $1 ORDER BY created_at DESC', [board.id]);
         const posts = postsResult.rows;
 
         res.render('board', { 
             board, 
             posts, 
             user: req.session, 
-            content: res.locals.settings,
-            currentPage: page,
-            totalPages,
-            totalPosts,
-            postsPerPage,
-            search
+            content: res.locals.settings 
         });
     } catch (err) {
         console.error('게시판 페이지 오류:', err);

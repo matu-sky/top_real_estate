@@ -25,57 +25,46 @@
 
     <main class="container board-container">
         <div class="board-header">
-            <div class="board-header">
-            <h2><%= board.name %></h2>
+            <h1><%= board.name %></h1>
             <p><%= board.description %></p>
         </div>
 
         <div class="board-toolbar">
-            <div class="search-form">
-                <form action="/board/<%= board.slug %>" method="GET">
-                    <input type="text" name="search" placeholder="검색어 입력" value="<%= typeof search !== 'undefined' ? search : '' %>">
-                    <button type="submit" class="btn-primary">검색</button>
-                </form>
-            </div>
             <% if (user && user.loggedin) { %>
-                <a href="/board/<%= board.slug %>/write" class="btn-primary">글쓰기</a>
+                <a href="/board/<%= board.slug %>/write" class="btn btn-primary">글쓰기</a>
             <% } %>
         </div>
 
-        <table class="board-table">
-            <thead>
-                <tr>
-                    <th class="id">번호</th>
-                    <th class="title">제목</th>
-                    <th class="author">작성자</th>
-                    <th class="date">작성일</th>
-                </tr>
-            </thead>
-            <tbody>
-                <% posts.forEach((post, index) => { %>
-                    <tr>
-                        <td><%= totalPosts - ((currentPage - 1) * postsPerPage) - index %></td>
-                        <td><a href="/board/<%= board.slug %>/<%= post.id %>"><%= post.title %></a></td>
-                        <td><%= post.author %></td>
-                        <td><%= new Date(post.created_at).toLocaleDateString('ko-KR') %></td>
-                    </tr>
-                <% }); %>
+        <div class="post-list">
+            <% posts.forEach(post => { %>
+                <div class="post-card">
+                    <div class="post-card-content">
+                        <h3><a href="/board/<%= board.slug %>/<%= post.id %>"><%= post.title %></a></h3>
+                        <p class="post-card-snippet">
+                            <% if (post.content) { %>
+                                <%= post.content.substring(0, 100) %><% if (post.content.length > 100) { %>...<% } %>
+                            <% } %>
+                        </p>
+                        <div class="post-card-meta">
+                            <span><strong>작성자:</strong> <%= post.author %></span>
+                            <span><strong>작성일:</strong> <%= new Date(post.created_at).toLocaleDateString('ko-KR') %></span>
+                        </div>
+                    </div>
+                    <% if (user && user.loggedin) { %>
+                        <div class="post-card-actions">
+                            <a href="/board/<%= board.slug %>/<%= post.id %>/edit" class="btn btn-sm-secondary">수정</a>
+                            <form action="/board/<%= board.slug %>/<%= post.id %>/delete" method="POST" style="display: inline-block;">
+                                <button type="submit" class="btn btn-sm-danger" onclick="return confirm('정말로 이 글을 삭제하시겠습니까?');">삭제</button>
+                            </form>
+                        </div>
+                    <% } %>
+                </div>
+            <% }); %>
 
-                <% if (posts.length === 0) { %>
-                    <tr>
-                        <td colspan="4" class="no-posts">게시글이 없습니다.</td>
-                    </tr>
-                <% } %>
-            </tbody>
-        </table>
-
-        <div class="pagination">
-            <% if (totalPages > 1) { %>
-                <% for (let i = 1; i <= totalPages; i++) { %>
-                    <a href="/board/<%= board.slug %>?page=<%= i %>&search=<%= typeof search !== 'undefined' ? search : '' %>" class="<%= currentPage == i ? 'active' : '' %>">
-                        <%= i %>
-                    </a>
-                <% } %>
+            <% if (posts.length === 0) { %>
+                <div class="post-card">
+                    <p>아직 등록된 글이 없습니다. 첫 번째 글을 작성해보세요!</p>
+                </div>
             <% } %>
         </div>
     </main>
