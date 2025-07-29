@@ -266,6 +266,7 @@ router.get('/admin/board_settings', async (req, res) => {
     try {
         client = await pool.connect();
         const result = await client.query('SELECT * FROM boards ORDER BY created_at DESC');
+        console.log('Fetched boards:', result.rows);
         res.render('board_settings', { menus: res.locals.menus, boards: result.rows });
     } catch (err) {
         console.error('DB 조회 오류:', err.stack);
