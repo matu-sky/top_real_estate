@@ -651,7 +651,8 @@ router.get('/board/:slug/write', requireLogin, async (req, res) => {
         res.render('write', { 
             board, 
             menus: res.locals.menus, 
-            content: res.locals.settings 
+            content: res.locals.settings, 
+            user: req.session 
         });
     } catch (err) {
         console.error('글쓰기 페이지 오류:', err);
