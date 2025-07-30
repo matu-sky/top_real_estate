@@ -34,21 +34,21 @@
                             <input type="file" id="attachment" name="attachment">
                             <% if (post.attachment_path) { %>
                                 <div class="current-attachment mt-2">
+                                    <% 
+                                        const fileNameWithTimestamp = post.attachment_path.split('/').pop();
+                                        const base64Part = fileNameWithTimestamp.substring(fileNameWithTimestamp.indexOf('_') + 1);
+                                        const decodedFileName = Buffer.from(base64Part, 'base64').toString('utf8');
+                                    %>
                                     <p><strong>현재 파일:</strong> 
                                         <a href="<%= post.attachment_path %>" target="_blank">
-                                            <% 
-                                                const fileNameWithTimestamp = post.attachment_path.split('/').pop();
-                                                const base64Part = fileNameWithTimestamp.substring(fileNameWithTimestamp.indexOf('_') + 1);
-                                                const decodedFileName = Buffer.from(base64Part, 'base64').toString('utf8');
-                                            %>
                                             <%= decodedFileName %>
                                         </a>
                                     </p>
-                                    <% if (post.attachment_path.match(/\.(jpeg|jpg|gif|png)$/i)) { %>
+                                    <% if (decodedFileName.match(/\.(jpeg|jpg|gif|png|webp)$/i)) { %>
                                         <img src="<%= post.attachment_path %>" alt="첨부 이미지" style="max-width: 200px; margin-top: 10px;">
                                     <% } %>
                                     <div class="form-check mt-2">
-                                        <input class="form-check-input" type="checkbox" name="delete_attachment" id="delete_attachment">
+                                        <input class="form-check-input" type="checkbox" name="delete_attachment" id="delete_attachment" value="on">
                                         <label class="form-check-label" for="delete_attachment">
                                             기존 첨부파일 삭제 (새 파일 첨부 시 자동으로 삭제됩니다)
                                         </label>

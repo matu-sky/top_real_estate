@@ -17,22 +17,23 @@
                 <span>작성일: <%= new Date(post.created_at).toLocaleDateString('ko-KR') %></span>
             </div>
             <div class="post-content">
-                <% if (post.attachment_path && post.attachment_path.match(/\.(jpeg|jpg|gif|png)$/i)) { %>
-                    <img src="<%= post.attachment_path %>" alt="첨부 이미지" class="img-fluid mb-3">
-                <% } %>
-                <p><%- post.content.replace(/\n/g, '<br>') %></p>
-                <% if (post.attachment_path) { %>
+                <% if (post.attachment_path) { 
+                    const fileNameWithTimestamp = post.attachment_path.split('/').pop();
+                    const base64Part = fileNameWithTimestamp.substring(fileNameWithTimestamp.indexOf('_') + 1);
+                    const decodedFileName = Buffer.from(base64Part, 'base64').toString('utf8');
+                %>
+                    <% if (decodedFileName.match(/\.(jpeg|jpg|gif|png|webp)$/i)) { %>
+                        <img src="<%= post.attachment_path %>" alt="첨부 이미지" class="img-fluid mb-3">
+                    <% } %>
+                    <p><%- post.content.replace(/\n/g, '<br>') %></p>
                     <div class="post-attachment">
                         <strong>첨부파일:</strong>
-                        <a href="<%= post.attachment_path %>" target="_blank" download>
-                            <% 
-                                const fileNameWithTimestamp = post.attachment_path.split('/').pop();
-                                const base64Part = fileNameWithTimestamp.substring(fileNameWithTimestamp.indexOf('_') + 1);
-                                const decodedFileName = Buffer.from(base64Part, 'base64').toString('utf8');
-                            %>
+                        <a href="<%= post.attachment_path %>" target="_blank" download="<%= decodedFileName %>">
                             <%= decodedFileName %>
                         </a>
                     </div>
+                <% } else { %>
+                    <p><%- post.content.replace(/\n/g, '<br>') %></p>
                 <% } %>
             </div>
             <div class="post-actions">
