@@ -676,8 +676,9 @@ router.get('/board/:slug/write', requireLogin, async (req, res) => {
             return res.status(404).send('게시판을 찾을 수 없습니다.');
         }
         const board = boardResult.rows[0];
+        // 이제 board.board_type을 템플릿에서 사용할 수 있습니다.
         res.render('write', { 
-            board, 
+            board: board, 
             menus: res.locals.menus, 
             content: res.locals.settings, 
             user: req.session 
