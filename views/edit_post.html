@@ -33,11 +33,18 @@
                             <label for="attachment">파일 첨부</label>
                             <input type="file" id="attachment" name="attachment">
                             <% if (post.attachment_path) { %>
-                                <p class="current-attachment">
-                                    현재 파일: <a href="<%= post.attachment_path %>" target="_blank"><%= post.attachment_path.split('/').pop() %></a>
-                                    <input type="checkbox" name="delete_attachment" id="delete_attachment">
-                                    <label for="delete_attachment">기존 파일 삭제</label>
-                                </p>
+                                <div class="current-attachment mt-2">
+                                    <p><strong>현재 파일:</strong> <a href="<%= post.attachment_path %>" target="_blank"><%= post.attachment_path.split('/').pop() %></a></p>
+                                    <% if (post.attachment_path.match(/\.(jpeg|jpg|gif|png)$/i)) { %>
+                                        <img src="<%= post.attachment_path %>" alt="첨부 이미지" style="max-width: 200px; margin-top: 10px;">
+                                    <% } %>
+                                    <div class="form-check mt-2">
+                                        <input class="form-check-input" type="checkbox" name="delete_attachment" id="delete_attachment">
+                                        <label class="form-check-label" for="delete_attachment">
+                                            기존 첨부파일 삭제 (새 파일 첨부 시 자동으로 삭제됩니다)
+                                        </label>
+                                    </div>
+                                </div>
                             <% } %>
                         </div>
                         <div class="form-actions">

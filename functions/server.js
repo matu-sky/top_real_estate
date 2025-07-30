@@ -665,25 +665,43 @@ router.get('/board/:slug/write', requireLogin, async (req, res) => {
 // 새 글 작성 (저장)
 router.post('/board/:slug/write', requireLogin, upload.single('attachment'), async (req, res) => {
     const { slug } = req.params;
-    
     const { title, content, author } = req.body;
 
     let attachment_path = null;
+    let client;
     try {
         client = await pool.connect();
+
+        if (req.file) {
+            const newFileName = `${Date.now()}_${req.file.originalname}`;
+            const { error: uploadError } = await supabase.storage
+                .from('attachments')
+                .upload(newFileName, req.file.buffer, { contentType: req.file.mimetype });
+
+            if (uploadError) {
+                throw new Error(`Supabase upload error: ${uploadError.message}`);
+            }
+
+            const { data: urlData } = supabase.storage.from('attachments').getPublicUrl(newFileName);
+            if (!urlData || !urlData.publicUrl) {
+                throw new Error('Failed to get public URL from Supabase.');
+            }
+            attachment_path = urlData.publicUrl;
+        }
+
         const boardResult = await client.query('SELECT id FROM boards WHERE slug = $1', [slug]);
         if (boardResult.rows.length === 0) {
             return res.status(404).send('게시판을 찾을 수 없습니다.');
         }
         const boardId = boardResult.rows[0].id;
 
-        const query = 'INSERT INTO posts (board_id, title, content, author) VALUES ($1, $2, $3, $4)';
-        await client.query(query, [boardId, title, content, author]);
+        const query = 'INSERT INTO posts (board_id, title, content, author, attachment_path) VALUES ($1, $2, $3, $4, $5)';
+        await client.query(query, [boardId, title, content, author, attachment_path]);
 
         res.redirect(`/board/${slug}`);
     } catch (err) {
         console.error('DB 삽입 오류:', err);
-        res.status(500).send('글 작성에 실패했습니다.');
+        res.status(500).send(`글 작성에 실패했습니다. <br><br><strong>오류 정보:</strong><pre>${err.stack}</pre>`);
     } finally {
         if (client) client.release();
     }
@@ -759,14 +777,50 @@ router.get('/board/:slug/:postId/edit', requireLogin, async (req, res) => {
 // 글 수정 (저장)
 router.post('/board/:slug/:postId/edit', requireLogin, upload.single('attachment'), async (req, res) => {
     const { slug, postId } = req.params;
-    const { title, content, author } = req.body;
+    const { title, content, author, delete_attachment } = req.body;
 
     let client;
     try {
         client = await pool.connect();
 
-        const query = 'UPDATE posts SET title = $1, content = $2, author = $3 WHERE id = $4';
-        const params = [title, content, author, postId];
+        const postResult = await client.query('SELECT attachment_path FROM posts WHERE id = $1', [postId]);
+        if (postResult.rows.length === 0) {
+            return res.status(404).send('수정할 게시글을 찾을 수 없습니다.');
+        }
+        let current_attachment_path = postResult.rows[0].attachment_path;
+
+        if (delete_attachment === 'on' && current_attachment_path) {
+            const fileName = current_attachment_path.split('/').pop();
+            await supabase.storage.from('attachments').remove([fileName]);
+            current_attachment_path = null;
+        }
+
+        let attachment_path = current_attachment_path;
+
+        if (req.file) {
+            if (current_attachment_path) {
+                const fileName = current_attachment_path.split('/').pop();
+                await supabase.storage.from('attachments').remove([fileName]);
+            }
+
+            const newFileName = `${Date.now()}_${req.file.originalname}`;
+            const { error: uploadError } = await supabase.storage
+                .from('attachments')
+                .upload(newFileName, req.file.buffer, { contentType: req.file.mimetype });
+
+            if (uploadError) {
+                throw new Error(`Supabase upload error: ${uploadError.message}`);
+            }
+
+            const { data: urlData } = supabase.storage.from('attachments').getPublicUrl(newFileName);
+            if (!urlData || !urlData.publicUrl) {
+                throw new Error('Failed to get public URL from Supabase.');
+            }
+            attachment_path = urlData.publicUrl;
+        }
+
+        const query = 'UPDATE posts SET title = $1, content = $2, author = $3, attachment_path = $4 WHERE id = $5';
+        const params = [title, content, author, attachment_path, postId];
         
         await client.query(query, params);
         res.redirect(`/board/${slug}`);

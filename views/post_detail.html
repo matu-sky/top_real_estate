@@ -17,6 +17,9 @@
                 <span>작성일: <%= new Date(post.created_at).toLocaleDateString('ko-KR') %></span>
             </div>
             <div class="post-content">
+                <% if (post.attachment_path && post.attachment_path.match(/\.(jpeg|jpg|gif|png)$/i)) { %>
+                    <img src="<%= post.attachment_path %>" alt="첨부 이미지" class="img-fluid mb-3">
+                <% } %>
                 <p><%- post.content.replace(/\n/g, '<br>') %></p>
                 <% if (post.attachment_path) { %>
                     <div class="post-attachment">
