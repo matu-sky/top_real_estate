@@ -114,10 +114,10 @@ async function loadSettings(req, res, next) {
         // 최종 안전장치: 메뉴가 비어있으면 기본 메뉴로 대체
         if (dbMenus.length === 0) {
             dbMenus = [
-                { text: '회사소개', url: '/#about' },
-                { text: '컨설팅상담', url: '/board/consulting' },
-                { text: '부동산정보', url: '/board/rearinfo' },
-                { text: '오시는길', url: '/property_list?category=map' }
+                { text: '라이프스타일 제안', url: '/#lifestyle' },
+                { text: '최신 매물', url: '/#recent-listings' },
+                { text: '컨설팅 상담신청', url: '/#about' },
+                { text: '오시는 길', url: '/#location' }
             ];
         }
 
