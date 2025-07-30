@@ -453,11 +453,45 @@ router.get('/admin/menu', requireLogin, (req, res) => {
     res.render('menu_settings', { menus: res.locals.menus, content: res.locals.settings });
 });
 
-// 메뉴 관리 정보 업데이트 (DB 사용) - 임시 진단용 코드
+// 메뉴 관리 정보 업데이트 (DB 사용)
 router.post('/admin/menu/update', requireLogin, async (req, res) => {
-    // 클라이언트로부터 받은 데이터를 그대로 화면에 출력하여 확인합니다.
-    res.setHeader('Content-Type', 'application/json');
-    res.status(200).send(JSON.stringify(req.body, null, 2));
+    // Netlify 환경에서 Buffer로 전달되는 req.body를 파싱합니다.
+    const bodyString = req.body.toString('utf8');
+    const parsedBody = querystring.parse(bodyString);
+
+    let { link_texts, link_urls } = parsedBody;
+
+    // 입력값이 하나일 경우 문자열로 들어오므로, 배열로 변환합니다.
+    if (typeof link_texts === 'string') link_texts = [link_texts];
+    if (typeof link_urls === 'string') link_urls = [link_urls];
+
+    const links = [];
+    if (link_texts && link_urls && link_texts.length === link_urls.length) {
+        for (let i = 0; i < link_texts.length; i++) {
+            const text = link_texts[i].trim();
+            const url = link_urls[i].trim();
+            if (text !== '' && url !== '') {
+                links.push({ text, url });
+            }
+        }
+    }
+
+    const valueToStore = JSON.stringify(links);
+
+    let client;
+    try {
+        client = await pool.connect();
+        await client.query(
+            'INSERT INTO site_settings (key, value) VALUES ($1, $2) ON CONFLICT (key) DO UPDATE SET value = $2',
+            ['header_nav_links', valueToStore]
+        );
+        res.redirect('/admin/menu');
+    } catch (err) {
+        console.error('DB 업데이트 오류:', err.stack);
+        res.status(500).send('메뉴 저장에 실패했습니다.');
+    } finally {
+        if (client) client.release();
+    }
 });
 
 
