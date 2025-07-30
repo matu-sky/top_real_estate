@@ -99,12 +99,20 @@ async function loadSettings(req, res, next) {
         client = await pool.connect();
         res.locals.settings = await getSettings(client);
 
-        // DB에서 메뉴 설정 불러오기, 실패 시 기본 메뉴 사용
-        let dbMenus = res.locals.settings.header_nav_links;
+        let dbMenus = [];
+        try {
+            // DB에서 가져온 값이 유효한 JSON 배열인지 확인
+            const parsedMenus = JSON.parse(res.locals.settings.header_nav_links);
+            if (Array.isArray(parsedMenus)) {
+                dbMenus = parsedMenus;
+            }
+        } catch (e) {
+            // JSON 파싱에 실패하면 아무것도 하지 않음 (dbMenus는 빈 배열 유지)
+            console.error('DB 메뉴 파싱 오류. 기본 메뉴를 사용합니다.');
+        }
 
-        // DB 메뉴가 유효한 배열이 아닐 경우, 기본 메뉴로 대체
-        if (!Array.isArray(dbMenus) || dbMenus.length === 0) {
-            console.log('DB 메뉴가 유효하지 않거나 비어있어 기본 메뉴를 사용합니다.');
+        // 최종 안전장치: 메뉴가 비어있으면 기본 메뉴로 대체
+        if (dbMenus.length === 0) {
             dbMenus = [
                 { text: '회사소개', url: '/#about' },
                 { text: '컨설팅상담', url: '/board/consulting' },
@@ -113,15 +121,17 @@ async function loadSettings(req, res, next) {
             ];
         }
 
-        // 관리자 페이지에 항상 필요한 기본 메뉴 추가
+        // res.locals.settings에 최종 메뉴를 다시 할당하여 템플릿에서 일관되게 사용
+        res.locals.settings.header_nav_links = dbMenus;
+
+        // 관리자 페이지 사이드바 메뉴
         res.locals.menus = [
             { name: '대시보드', url: '/dashboard' },
             { name: '홈페이지 관리', url: '/admin' },
             { name: '매물 관리', url: '/listings' },
             { name: '게시판 설정', url: '/admin/board_settings' },
             { name: '주거용 매물등록', url: '/add_property' },
-            { name: '메뉴 관리', url: '/admin/menu' },
-            ...dbMenus
+            { name: '메뉴 관리', url: '/admin/menu' }
         ];
         next();
     } catch (err) {
@@ -445,14 +455,24 @@ router.get('/admin/menu', requireLogin, (req, res) => {
 
 // 메뉴 관리 정보 업데이트 (DB 사용)
 router.post('/admin/menu/update', requireLogin, async (req, res) => {
-    const { links } = req.body;
+    let { link_texts, link_urls } = req.body;
 
-    // 데이터 유효성 검사: links가 배열인지 확인하고, 유효한 항목만 필터링
-    const validLinks = Array.isArray(links) ? links.filter(link => 
-        link && link.text && link.url && link.text.trim() !== '' && link.url.trim() !== ''
-    ) : [];
+    // 입력값이 하나일 경우 문자열로 들어오므로, 배열로 변환
+    if (typeof link_texts === 'string') link_texts = [link_texts];
+    if (typeof link_urls === 'string') link_urls = [link_urls];
 
-    const valueToStore = JSON.stringify(validLinks);
+    const links = [];
+    if (link_texts && link_urls && link_texts.length === link_urls.length) {
+        for (let i = 0; i < link_texts.length; i++) {
+            const text = link_texts[i].trim();
+            const url = link_urls[i].trim();
+            if (text !== '' && url !== '') {
+                links.push({ text, url });
+            }
+        }
+    }
+
+    const valueToStore = JSON.stringify(links);
 
     let client;
     try {

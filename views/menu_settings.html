@@ -37,10 +37,10 @@
                 <div class="card">
                     <div class="card-header"><h4>메뉴 항목</h4></div>
                     <div class="card-body" id="menu-list">
-                        <% content.header_nav_links.forEach((link, index) => { %>
+                        <% content.header_nav_links.forEach((link) => { %>
                             <div class="menu-item">
-                                <input type="text" name="links[<%= index %>][text]" value="<%= link.text %>" placeholder="메뉴 이름">
-                                <input type="text" name="links[<%= index %>][url]" value="<%= link.url %>" placeholder="연결 URL">
+                                <input type="text" name="link_texts" value="<%= link.text %>" placeholder="메뉴 이름">
+                                <input type="text" name="link_urls" value="<%= link.url %>" placeholder="연결 URL">
                                 <button type="button" class="btn btn-danger" onclick="removeItem(this)">삭제</button>
                             </div>
                         <% }); %>
@@ -62,12 +62,11 @@
             const newItem = document.createElement('div');
             newItem.className = 'menu-item';
             newItem.innerHTML = `
-                <input type="text" name="links[${menuIndex}][text]" placeholder="메뉴 이름">
-                <input type="text" name="links[${menuIndex}][url]" placeholder="연결 URL">
+                <input type="text" name="link_texts" placeholder="메뉴 이름">
+                <input type="text" name="link_urls" placeholder="연결 URL">
                 <button type="button" class="btn btn-danger" onclick="removeItem(this)">삭제</button>
             `;
             menuList.appendChild(newItem);
-            menuIndex++;
         });
 
         function removeItem(button) {
