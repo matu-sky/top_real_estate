@@ -676,6 +676,7 @@ router.get('/board/:slug/write', requireLogin, async (req, res) => {
             return res.status(404).send('게시판을 찾을 수 없습니다.');
         }
         const board = boardResult.rows[0];
+        // 이제 board.board_type을 템플릿에서 사용할 수 있습니다.
         res.render('write', { 
             board, 
             menus: res.locals.menus, 
@@ -693,7 +694,7 @@ router.get('/board/:slug/write', requireLogin, async (req, res) => {
 // 새 글 작성 (저장)
 router.post('/board/:slug/write', requireLogin, upload.single('attachment'), async (req, res) => {
     const { slug } = req.params;
-    const { title, content, author } = req.body;
+    const { title, content, author, youtube_url } = req.body; // youtube_url 추가
 
     let attachment_path = null;
     let client;
@@ -725,8 +726,8 @@ router.post('/board/:slug/write', requireLogin, upload.single('attachment'), asy
         }
         const boardId = boardResult.rows[0].id;
 
-        const query = 'INSERT INTO posts (board_id, title, content, author, attachment_path) VALUES ($1, $2, $3, $4, $5)';
-        await client.query(query, [boardId, title, content, author, attachment_path]);
+        const query = 'INSERT INTO posts (board_id, title, content, author, attachment_path, youtube_url) VALUES ($1, $2, $3, $4, $5, $6)';
+        await client.query(query, [boardId, title, content, author, attachment_path, youtube_url]);
 
         res.redirect(`/board/${slug}`);
     } catch (err) {
