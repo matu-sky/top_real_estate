@@ -673,7 +673,7 @@ router.post('/board/:slug/write', requireLogin, upload.single('attachment'), asy
         client = await pool.connect();
 
         if (req.file) {
-            const newFileName = `${Date.now()}_${req.file.originalname}`;
+            const newFileName = `${Date.now()}_${encodeURIComponent(req.file.originalname)}`;
             const { error: uploadError } = await supabase.storage
                 .from('attachments')
                 .upload(newFileName, req.file.buffer, { contentType: req.file.mimetype });
@@ -803,7 +803,7 @@ router.post('/board/:slug/:postId/edit', requireLogin, upload.single('attachment
                 await supabase.storage.from('attachments').remove([fileName]);
             }
 
-            const newFileName = `${Date.now()}_${req.file.originalname}`;
+            const newFileName = `${Date.now()}_${encodeURIComponent(req.file.originalname)}`;
             const { error: uploadError } = await supabase.storage
                 .from('attachments')
                 .upload(newFileName, req.file.buffer, { contentType: req.file.mimetype });
