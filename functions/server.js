@@ -294,7 +294,8 @@ router.get('/admin/board_settings', async (req, res) => {
 
 // 새 게시판 만들기 페이지
 router.get('/admin/board/new', requireLogin, (req, res) => {
-    res.render('add_board', { menus: res.locals.menus });
+    const boardType = req.query.type || 'general'; // URL 쿼리에서 유형을 가져옴
+    res.render('add_board', { menus: res.locals.menus, boardType: boardType });
 });
 
 // 게시판 수정 페이지 보여주기
@@ -378,9 +379,9 @@ router.post('/admin/board/create', requireLogin, async (req, res) => {
         body = req.body;
     }
 
-    const { board_name, board_slug, board_description } = body;
-    const query = 'INSERT INTO boards (name, slug, description) VALUES ($1, $2, $3)';
-    const params = [board_name, board_slug, board_description];
+    const { board_name, board_slug, board_description, board_type } = body;
+    const query = 'INSERT INTO boards (name, slug, description, board_type) VALUES ($1, $2, $3, $4)';
+    const params = [board_name, board_slug, board_description, board_type];
 
     let client;
     try {
