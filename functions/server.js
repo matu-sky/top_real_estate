@@ -759,24 +759,56 @@ router.get('/board/:slug/:postId/edit', requireLogin, async (req, res) => {
 // 글 수정 (저장)
 router.post('/board/:slug/:postId/edit', requireLogin, upload.single('attachment'), async (req, res) => {
     const { slug, postId } = req.params;
-
-    const { title, content, author } = req.body;
+    const { title, content, author, delete_attachment } = req.body;
 
     let client;
     try {
         client = await pool.connect();
 
-        // 임시로 파일 처리 로직을 비활성화하고 기존 값 유지
         const postResult = await client.query('SELECT attachment_path FROM posts WHERE id = $1', [postId]);
-        const attachment_path = postResult.rows[0]?.attachment_path;
+        if (postResult.rows.length === 0) {
+            return res.status(404).send('수정할 게시글을 찾을 수 없습니다.');
+        }
+        let current_attachment_path = postResult.rows[0].attachment_path;
+
+        if (delete_attachment && current_attachment_path) {
+            const fileName = current_attachment_path.split('/').pop();
+            await supabase.storage.from('attachments').remove([fileName]);
+            current_attachment_path = null;
+        }
+
+        let attachment_path = current_attachment_path;
+
+        if (req.file) {
+            if (current_attachment_path) {
+                const fileName = current_attachment_path.split('/').pop();
+                await supabase.storage.from('attachments').remove([fileName]);
+            }
+
+            const newFileName = `${Date.now()}_${req.file.originalname}`;
+            const { data, error: uploadError } = await supabase.storage
+                .from('attachments')
+                .upload(newFileName, req.file.buffer, { contentType: req.file.mimetype });
+
+            if (uploadError) {
+                throw new Error(`Supabase upload error: ${uploadError.message}`);
+            }
+
+            const { data: urlData } = supabase.storage.from('attachments').getPublicUrl(newFileName);
+            if (!urlData || !urlData.publicUrl) {
+                throw new Error('Failed to get public URL from Supabase.');
+            }
+            attachment_path = urlData.publicUrl;
+        }
 
         const query = 'UPDATE posts SET title = $1, content = $2, author = $3, attachment_path = $4 WHERE id = $5';
-        await client.query(query, [title, content, author, attachment_path, postId]);
+        const params = [title, content, author, attachment_path, postId];
         
+        await client.query(query, params);
         res.redirect(`/board/${slug}`);
     } catch (err) {
-        console.error('DB 업데이트 오류:', err);
-        res.status(500).send('글 수정에 실패했습니다.');
+        console.error('글 수정 최종 오류:', err.stack);
+        res.status(500).send(`글 수정에 실패했습니다. 전문가의 도움이 필요합니다. <br><br><strong>오류 정보:</strong><pre>${err.stack}</pre>`);
     } finally {
         if (client) client.release();
     }
