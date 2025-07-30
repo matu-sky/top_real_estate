@@ -759,7 +759,7 @@ router.get('/board/:slug/:postId/edit', requireLogin, async (req, res) => {
 // 글 수정 (저장)
 router.post('/board/:slug/:postId/edit', requireLogin, upload.single('attachment'), async (req, res) => {
     const { slug, postId } = req.params;
-    
+
     const { title, content, author, delete_attachment } = req.body;
 
     let client;
