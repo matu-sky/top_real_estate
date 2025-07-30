@@ -100,18 +100,11 @@ async function loadSettings(req, res, next) {
         res.locals.settings = await getSettings(client);
 
         // DB에서 메뉴 설정 불러오기, 실패 시 기본 메뉴 사용
-        let dbMenus = [];
-        try {
-            const menuSettings = res.locals.settings.header_nav_links;
-            if (menuSettings && Array.isArray(menuSettings)) {
-                dbMenus = menuSettings;
-            }
-        } catch (e) {
-            console.error('메뉴 파싱 오류, 기본 메뉴를 사용합니다:', e);
-        }
+        let dbMenus = res.locals.settings.header_nav_links;
 
-        // DB 메뉴가 비어있을 경우를 대비한 최종 안전장치
-        if (dbMenus.length === 0) {
+        // DB 메뉴가 유효한 배열이 아닐 경우, 기본 메뉴로 대체
+        if (!Array.isArray(dbMenus) || dbMenus.length === 0) {
+            console.log('DB 메뉴가 유효하지 않거나 비어있어 기본 메뉴를 사용합니다.');
             dbMenus = [
                 { text: '회사소개', url: '/#about' },
                 { text: '컨설팅상담', url: '/board/consulting' },
@@ -452,28 +445,14 @@ router.get('/admin/menu', requireLogin, (req, res) => {
 
 // 메뉴 관리 정보 업데이트 (DB 사용)
 router.post('/admin/menu/update', requireLogin, async (req, res) => {
-    let body = {};
-    if (req.body instanceof Buffer) {
-        body = querystring.parse(req.body.toString());
-    } else {
-        body = req.body;
-    }
+    const { links } = req.body;
 
-    // 데이터 유효성 검사 추가
-    const links = [];
-    if (body.links && Array.isArray(body.links)) {
-        body.links.forEach(link => {
-            // text와 url 속성이 모두 존재하고, 비어있지 않은 경우에만 추가
-            if (link.text && link.url && link.text.trim() !== '' && link.url.trim() !== '') {
-                links.push({
-                    text: link.text.trim(),
-                    url: link.url.trim()
-                });
-            }
-        });
-    }
+    // 데이터 유효성 검사: links가 배열인지 확인하고, 유효한 항목만 필터링
+    const validLinks = Array.isArray(links) ? links.filter(link => 
+        link && link.text && link.url && link.text.trim() !== '' && link.url.trim() !== ''
+    ) : [];
 
-    const valueToStore = JSON.stringify(links);
+    const valueToStore = JSON.stringify(validLinks);
 
     let client;
     try {
