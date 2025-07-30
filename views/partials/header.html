@@ -6,8 +6,10 @@
         <nav>
             <ul>
                 <% if (content && content.header_nav_links) { %>
-                    <% content.header_nav_links.forEach(link => { %>
-                        <li><a href="<%= link.url %>"><%= link.text %></a></li>
+                    <% content.header_nav_links.forEach(link => { 
+                        const finalUrl = link.url.startsWith('/') ? link.url : '/' + link.url;
+                    %>
+                        <li><a href="<%= finalUrl %>"><%= link.text %></a></li>
                     <% }); %>
                 <% } %>
             </ul>
