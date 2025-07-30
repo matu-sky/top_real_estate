@@ -155,92 +155,10 @@ body {
     background-color: #e74c3c;
 }
 
-/* --- 테이블 스타일 --- */
-.table {
+table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 0.95rem;
 }
-
-/* 모달 스타일 */
-.modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.6);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
-}
-
-.modal-content {
-    background-color: #fff;
-    padding: 40px;
-    border-radius: 12px;
-    width: 80%;
-    max-width: 800px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-    text-align: center;
-}
-
-.modal-content h3 {
-    margin-top: 0;
-    font-size: 1.8rem;
-}
-
-.modal-content p {
-    color: #6c757d;
-    margin-bottom: 30px;
-}
-
-.board-type-selection {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 20px;
-    margin-bottom: 30px;
-}
-
-.board-type-card {
-    display: block;
-    padding: 25px;
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    text-decoration: none;
-    color: var(--text-color);
-    transition: all 0.3s ease;
-    text-align: left;
-}
-
-.board-type-card:hover {
-    border-color: var(--primary-color);
-    transform: translateY(-5px);
-    box-shadow: 0 8px 20px rgba(0,0,0,0.08);
-}
-
-.board-type-card h4 {
-    margin: 0 0 10px 0;
-    font-size: 1.2rem;
-    color: var(--primary-color);
-}
-
-.board-type-card p {
-    margin: 0;
-    font-size: 0.9rem;
-    color: #495057;
-}
-
-.close-modal-btn {
-    background-color: #6c757d;
-    color: white;
-}
-
-.close-modal-btn:hover {
-    background-color: #5a6268;
-}
-
 
 table th, table td {
     padding: 12px 15px;

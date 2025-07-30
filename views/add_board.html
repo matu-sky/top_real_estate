@@ -19,11 +19,10 @@
                 <div class="card-header"><h4>게시판 정보 입력</h4></div>
                 <div class="card-body">
                     <form action="/admin/board/create" method="POST">
-                    <input type="hidden" name="board_type" value="<%= boardType %>">
-                    <div class="form-group">
-                        <label for="board_name">게시판 이름</label>
-                        <input type="text" id="board_name" name="board_name" required>
-                    </div>
+                        <div class="form-group">
+                            <label for="board_name">게시판 이름</label>
+                            <input type="text" id="board_name" name="board_name" placeholder="예: 공지사항" required>
+                        </div>
                         <div class="form-group">
                             <label for="board_slug">게시판 경로 (영문/숫자)</label>
                             <input type="text" id="board_slug" name="board_slug" placeholder="예: notice (URL에 사용됩니다)" required pattern="[a-zA-Z0-9_-]+">
