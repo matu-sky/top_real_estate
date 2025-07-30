@@ -99,20 +99,11 @@ async function loadSettings(req, res, next) {
         client = await pool.connect();
         res.locals.settings = await getSettings(client);
 
-        let dbMenus = [];
-        try {
-            // DB에서 가져온 값이 유효한 JSON 배열인지 확인
-            const parsedMenus = JSON.parse(res.locals.settings.header_nav_links);
-            if (Array.isArray(parsedMenus)) {
-                dbMenus = parsedMenus;
-            }
-        } catch (e) {
-            // JSON 파싱에 실패하면 아무것도 하지 않음 (dbMenus는 빈 배열 유지)
-            console.error('DB 메뉴 파싱 오류. 기본 메뉴를 사용합니다.');
-        }
+        // getSettings에서 이미 JSON.parse를 수행했으므로, 그대로 사용합니다.
+        let dbMenus = res.locals.settings.header_nav_links;
 
-        // 최종 안전장치: 메뉴가 비어있으면 기본 메뉴로 대체
-        if (dbMenus.length === 0) {
+        // 최종 안전장치: 메뉴가 유효한 배열이 아니거나 비어있으면 기본 메뉴로 대체
+        if (!Array.isArray(dbMenus) || dbMenus.length === 0) {
             dbMenus = [
                 { text: '라이프스타일 제안', url: '/#lifestyle' },
                 { text: '최신 매물', url: '/#recent-listings' },
@@ -453,53 +444,45 @@ router.get('/admin/menu', requireLogin, (req, res) => {
     res.render('menu_settings', { menus: res.locals.menus, content: res.locals.settings });
 });
 
-// 메뉴 관리 정보 업데이트 (DB 사용) - 최종 정밀 진단용 코드
+// 메뉴 관리 정보 업데이트 (DB 사용)
 router.post('/admin/menu/update', requireLogin, async (req, res) => {
-    const diagnostics = { step: 0, log: [] };
-    try {
-        diagnostics.step = 1;
-        diagnostics.log.push(`Request body is a Buffer: ${req.body instanceof Buffer}`);
-        const bodyString = req.body.toString('utf8');
-        diagnostics.log.push(`Step 1: Converted Buffer to string: ${bodyString}`);
+    // Netlify 환경에서 Buffer로 전달되는 req.body를 파싱합니다.
+    const bodyString = req.body.toString('utf8');
+    const parsedBody = querystring.parse(bodyString);
 
-        diagnostics.step = 2;
-        const parsedBody = querystring.parse(bodyString);
-        diagnostics.log.push(`Step 2: Parsed string to object: ${JSON.stringify(parsedBody)}`);
+    let { link_texts, link_urls } = parsedBody;
 
-        diagnostics.step = 3;
-        let { link_texts, link_urls } = parsedBody;
-        diagnostics.log.push(`Step 3.1: Extracted link_texts: ${JSON.stringify(link_texts)}`);
-        diagnostics.log.push(`Step 3.2: Extracted link_urls: ${JSON.stringify(link_urls)}`);
+    // 입력값이 하나일 경우 문자열로 들어오므로, 배열로 변환합니다.
+    if (typeof link_texts === 'string') link_texts = [link_texts];
+    if (typeof link_urls === 'string') link_urls = [link_urls];
 
-        diagnostics.step = 4;
-        if (typeof link_texts === 'string') link_texts = [link_texts];
-        if (typeof link_urls === 'string') link_urls = [link_urls];
-        diagnostics.log.push(`Step 4.1: Processed link_texts (now array): ${JSON.stringify(link_texts)}`);
-        diagnostics.log.push(`Step 4.2: Processed link_urls (now array): ${JSON.stringify(link_urls)}`);
-
-        diagnostics.step = 5;
-        const links = [];
-        if (link_texts && link_urls && link_texts.length === link_urls.length) {
-            for (let i = 0; i < link_texts.length; i++) {
-                const text = link_texts[i].trim();
-                const url = link_urls[i].trim();
-                if (text !== '' && url !== '') {
-                    links.push({ text, url });
-                }
+    const links = [];
+    if (link_texts && link_urls && link_texts.length === link_urls.length) {
+        for (let i = 0; i < link_texts.length; i++) {
+            const text = link_texts[i].trim();
+            const url = link_urls[i].trim();
+            if (text !== '' && url !== '') {
+                links.push({ text, url });
             }
         }
-        diagnostics.log.push(`Step 5: Final reconstructed links array: ${JSON.stringify(links)}`);
-
-        diagnostics.step = 6;
-        const valueToStore = JSON.stringify(links);
-        diagnostics.log.push(`Step 6: Final JSON string to be stored in DB: ${valueToStore}`);
-
-    } catch (e) {
-        diagnostics.error = e.stack;
     }
 
-    res.setHeader('Content-Type', 'application/json');
-    res.status(200).send(JSON.stringify(diagnostics, null, 2));
+    const valueToStore = JSON.stringify(links);
+
+    let client;
+    try {
+        client = await pool.connect();
+        await client.query(
+            'INSERT INTO site_settings (key, value) VALUES ($1, $2) ON CONFLICT (key) DO UPDATE SET value = $2',
+            ['header_nav_links', valueToStore]
+        );
+        res.redirect('/admin/menu');
+    } catch (err) {
+        console.error('DB 업데이트 오류:', err.stack);
+        res.status(500).send('메뉴 저장에 실패했습니다.');
+    } finally {
+        if (client) client.release();
+    }
 });
 
 
