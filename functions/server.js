@@ -98,7 +98,28 @@ async function loadSettings(req, res, next) {
     try {
         client = await pool.connect();
         res.locals.settings = await getSettings(client);
-        const dbMenus = res.locals.settings.header_nav_links || [];
+
+        // DB에서 메뉴 설정 불러오기, 실패 시 기본 메뉴 사용
+        let dbMenus = [];
+        try {
+            const menuSettings = res.locals.settings.header_nav_links;
+            if (menuSettings && Array.isArray(menuSettings)) {
+                dbMenus = menuSettings;
+            }
+        } catch (e) {
+            console.error('메뉴 파싱 오류, 기본 메뉴를 사용합니다:', e);
+        }
+
+        // DB 메뉴가 비어있을 경우를 대비한 최종 안전장치
+        if (dbMenus.length === 0) {
+            dbMenus = [
+                { text: '회사소개', url: '/#about' },
+                { text: '컨설팅상담', url: '/board/consulting' },
+                { text: '부동산정보', url: '/board/rearinfo' },
+                { text: '오시는길', url: '/property_list?category=map' }
+            ];
+        }
+
         // 관리자 페이지에 항상 필요한 기본 메뉴 추가
         res.locals.menus = [
             { name: '대시보드', url: '/dashboard' },
@@ -107,7 +128,7 @@ async function loadSettings(req, res, next) {
             { name: '게시판 설정', url: '/admin/board_settings' },
             { name: '주거용 매물등록', url: '/add_property' },
             { name: '메뉴 관리', url: '/admin/menu' },
-            ...dbMenus // 데이터베이스에서 불러온 메뉴들을 여기에 추가
+            ...dbMenus
         ];
         next();
     } catch (err) {
@@ -438,7 +459,20 @@ router.post('/admin/menu/update', requireLogin, async (req, res) => {
         body = req.body;
     }
 
-    const links = body.links || [];
+    // 데이터 유효성 검사 추가
+    const links = [];
+    if (body.links && Array.isArray(body.links)) {
+        body.links.forEach(link => {
+            // text와 url 속성이 모두 존재하고, 비어있지 않은 경우에만 추가
+            if (link.text && link.url && link.text.trim() !== '' && link.url.trim() !== '') {
+                links.push({
+                    text: link.text.trim(),
+                    url: link.url.trim()
+                });
+            }
+        });
+    }
+
     const valueToStore = JSON.stringify(links);
 
     let client;
