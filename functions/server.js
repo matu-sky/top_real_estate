@@ -760,58 +760,19 @@ router.get('/board/:slug/:postId/edit', requireLogin, async (req, res) => {
 router.post('/board/:slug/:postId/edit', requireLogin, upload.single('attachment'), async (req, res) => {
     const { slug, postId } = req.params;
 
-    const { title, content, author, delete_attachment } = req.body;
+    const { title, content, author } = req.body;
 
     let client;
     try {
         client = await pool.connect();
 
-        // 기존 게시물 정보 가져오기
+        // 임시로 파일 처리 로직을 비활성화하고 기존 값 유지
         const postResult = await client.query('SELECT attachment_path FROM posts WHERE id = $1', [postId]);
-        let current_attachment_path = postResult.rows[0]?.attachment_path;
-
-        // 기존 첨부파일 삭제 로직
-        if (delete_attachment && current_attachment_path) {
-            const fileName = current_attachment_path.split('/').pop();
-            await supabase.storage.from('attachments').remove([fileName]);
-            current_attachment_path = null;
-        }
-
-        let attachment_path = current_attachment_path;
-
-        // 새 파일 업로드 로직
-        if (req.file) {
-            // 기존 파일이 있었다면 삭제
-            if (current_attachment_path) {
-                const fileName = current_attachment_path.split('/').pop();
-                await supabase.storage.from('attachments').remove([fileName]);
-            }
-
-            const newFileName = `${Date.now()}_${req.file.originalname}`;
-            const { data, error } = await supabase.storage
-                .from('attachments')
-                .upload(newFileName, req.file.buffer, {
-                    contentType: req.file.mimetype,
-                });
-
-            if (error) {
-                console.error('Supabase 스토리지 업로드 오류:', error);
-                return res.status(500).send('파일 업로드에 실패했습니다.');
-            }
-
-            const { data: urlData } = supabase.storage
-                .from('attachments')
-                .getPublicUrl(newFileName);
-
-            if (!urlData || !urlData.publicUrl) {
-                console.error('Supabase URL 가져오기 오류: publicUrl을 찾을 수 없습니다.');
-                return res.status(500).send('파일 URL을 가져오는 데 실패했습니다.');
-            }
-            attachment_path = urlData.publicUrl;
-        }
+        const attachment_path = postResult.rows[0]?.attachment_path;
 
         const query = 'UPDATE posts SET title = $1, content = $2, author = $3, attachment_path = $4 WHERE id = $5';
         await client.query(query, [title, content, author, attachment_path, postId]);
+        
         res.redirect(`/board/${slug}`);
     } catch (err) {
         console.error('DB 업데이트 오류:', err);
