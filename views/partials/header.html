@@ -1,0 +1,17 @@
+<header id="header">
+    <div class="container header-container">
+        <div class="logo">
+            <a href="/"><%= content.header_logo_text %></a>
+        </div>
+        <nav>
+            <ul>
+                <% if (content && content.header_nav_links) { %>
+                    <% content.header_nav_links.forEach(link => { %>
+                        <li><a href="<%= link.url %>"><%= link.text %></a></li>
+                    <% }); %>
+                <% } %>
+            </ul>
+        </nav>
+        <div class="mobile-menu-btn">☰</div>
+    </div>
+</header>
