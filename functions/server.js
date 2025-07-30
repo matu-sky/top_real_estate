@@ -673,7 +673,9 @@ router.post('/board/:slug/write', requireLogin, upload.single('attachment'), asy
         client = await pool.connect();
 
         if (req.file) {
-            const newFileName = `${Date.now()}_${encodeURIComponent(req.file.originalname)}`;
+            // 한글 파일명이 깨지는 문제를 해결하기 위해 인코딩을 변환합니다.
+            const originalname_utf8 = Buffer.from(req.file.originalname, 'latin1').toString('utf8');
+            const newFileName = `${Date.now()}_${encodeURIComponent(originalname_utf8)}`;
             const { error: uploadError } = await supabase.storage
                 .from('attachments')
                 .upload(newFileName, req.file.buffer, { contentType: req.file.mimetype });
@@ -803,7 +805,9 @@ router.post('/board/:slug/:postId/edit', requireLogin, upload.single('attachment
                 await supabase.storage.from('attachments').remove([fileName]);
             }
 
-            const newFileName = `${Date.now()}_${encodeURIComponent(req.file.originalname)}`;
+            // 한글 파일명이 깨지는 문제를 해결하기 위해 인코딩을 변환합니다.
+            const originalname_utf8 = Buffer.from(req.file.originalname, 'latin1').toString('utf8');
+            const newFileName = `${Date.now()}_${encodeURIComponent(originalname_utf8)}`;
             const { error: uploadError } = await supabase.storage
                 .from('attachments')
                 .upload(newFileName, req.file.buffer, { contentType: req.file.mimetype });
