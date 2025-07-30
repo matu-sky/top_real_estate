@@ -50,6 +50,10 @@ header {
     text-decoration: none;
 }
 .logo a span { color: var(--secondary-color); }
+nav {
+    position: relative; /* z-index 적용을 위해 추가 */
+    z-index: 1; /* 헤더 내에서 다른 요소와 겹치지 않도록 보장 */
+}
 nav ul {
     margin: 0; padding: 0; list-style: none; display: flex;
 }
