@@ -496,16 +496,26 @@ footer {
         top: 75px;
         left: 0;
         width: 100%;
-        background-color: #fff;
-        border-top: 1px solid var(--border-color);
-        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        background-color: #f1f1f1; /* 배경색 추가로 구분감 */
+        padding: 10px;
+        box-sizing: border-box;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
     }
     nav.active a {
-        padding: 15px 25px;
+        background-color: #ffffff;
+        color: var(--primary-color);
+        font-weight: 500;
+        padding: 15px;
         width: 100%;
         box-sizing: border-box;
-        text-align: left;
-        border-bottom: 1px solid var(--border-color);
+        text-align: center;
+        border-radius: 8px; /* 버튼처럼 보이게 */
+        margin-bottom: 5px; /* 버튼 간 간격 */
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        border-bottom: none; /* 기존 라인 제거 */
+    }
+    nav.active a:last-child {
+        margin-bottom: 0;
     }
     
     .consulting-parallax-bg {
