@@ -25,6 +25,32 @@
             <% posts.forEach(post => { %>
                 <div class="post-card">
                     <div class="post-card-content">
+                        <%# 유튜브 썸네일 추가 %>
+                        <% if (board.board_type === 'youtube' && post.youtube_url) { %>
+                            <% 
+                                let videoId = '';
+                                try {
+                                    const url = new URL(post.youtube_url);
+                                    if (url.hostname === 'youtu.be') {
+                                        videoId = url.pathname.slice(1);
+                                    } else {
+                                        videoId = url.searchParams.get('v');
+                                    }
+                                } catch (e) {
+                                    const regex = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|watch\?v=|v\/|e(?:mbed)?\/)|youtu\.be\/)([^"&?\/\s]{11})/;
+                                    const match = post.youtube_url.match(regex);
+                                    if (match) videoId = match[1];
+                                }
+                            %>
+                            <% if (videoId) { %>
+                                <div class="post-card-thumbnail" style="margin-bottom: 1rem;">
+                                    <a href="/board/<%= board.slug %>/<%= post.id %>">
+                                        <img src="https://img.youtube.com/vi/<%= videoId %>/mqdefault.jpg" alt="<%= post.title %> 썸네일" style="width: 100%; height: auto;">
+                                    </a>
+                                </div>
+                            <% } %>
+                        <% } %>
+
                         <h3><a href="/board/<%= board.slug %>/<%= post.id %>"><%= post.title %></a></h3>
                         <p class="post-card-snippet">
                             <% if (post.content) { %>
