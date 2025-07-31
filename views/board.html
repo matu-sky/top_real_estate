@@ -9,7 +9,7 @@
 <body>
     <%- include('partials/header.html') %>
 
-    <main class="container board-container">
+    <main class="board-container">
         <div 
             class="board-header"
             <% if (board.slug === 'rearinfo') { %>
@@ -18,8 +18,8 @@
                     background-size: cover;
                     background-position: center;
                     padding: 4rem 2rem;
-                    border-radius: 8px;
                     text-align: center;
+                    margin-bottom: 2rem; /* 헤더와 콘텐츠 목록 사이 간격 */
                 "
             <% } %>
         >
@@ -31,7 +31,8 @@
             </p>
         </div>
 
-        <div class="board-toolbar">
+        <div class="container">
+            <div class="board-toolbar">
             <% if (user && user.loggedin) { %>
                 <a href="/board/<%= board.slug %>/write" class="btn btn-primary">글쓰기</a>
             <% } %>
