@@ -34,6 +34,7 @@
                             <div class="form-group">
                                 <label for="youtube_url">유튜브 동영상 URL</label>
                                 <input type="url" id="youtube_url" name="youtube_url" placeholder="https://www.youtube.com/watch?v=..." class="form-control">
+                                <div id="youtube_preview" style="margin-top: 15px;"></div>
                             </div>
                         <% } else if (board.board_type === 'gallery') { %>
                             <div class="form-group">
@@ -55,5 +56,56 @@
             </div>
         </main>
     </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const youtubeUrlInput = document.getElementById('youtube_url');
+        const youtubePreview = document.getElementById('youtube_preview');
+
+        if (youtubeUrlInput) {
+            youtubeUrlInput.addEventListener('input', function() {
+                const url = this.value;
+                let videoId = '';
+
+                if (!url) {
+                    youtubePreview.innerHTML = '';
+                    return;
+                }
+
+                try {
+                    const urlObj = new URL(url);
+                    if (urlObj.hostname === 'youtu.be') {
+                        videoId = urlObj.pathname.slice(1);
+                    } else if (urlObj.hostname.includes('youtube.com')) {
+                        videoId = urlObj.searchParams.get('v');
+                    }
+                } catch (e) {
+                    // 정규식으로 ID 추출 시도
+                    const regex = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|watch\?v=|v\/|e(?:mbed)?\/)|youtu\.be\/)([^"&?\/\s]{11})/;
+                    const match = url.match(regex);
+                    if (match) {
+                        videoId = match[1];
+                    }
+                }
+
+                if (videoId) {
+                    youtubePreview.innerHTML = `
+                        <p><strong>동영상 미리보기</strong></p>
+                        <div class="youtube-video-container" style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; max-width: 100%;">
+                            <iframe 
+                                src="https://www.youtube.com/embed/${videoId}" 
+                                style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;" 
+                                frameborder="0" 
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                                allowfullscreen>
+                            </iframe>
+                        </div>`;
+                } else {
+                    youtubePreview.innerHTML = '<p style="color: red;">유효한 유튜브 URL이 아닙니다.</p>';
+                }
+            });
+        }
+    });
+</script>
 </body>
 </html>
