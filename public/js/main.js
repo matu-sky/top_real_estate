@@ -29,4 +29,16 @@ document.addEventListener('DOMContentLoaded', function() {
             thumbnails[0].classList.add('active');
         }
     }
+
+    // 퀵메뉴 스크롤 이벤트
+    const quickMenu = document.querySelector('.quick-menu');
+    if (quickMenu) {
+        window.addEventListener('scroll', function() {
+            if (window.scrollY > 200) { // 200px 이상 스크롤하면 보이도록 설정
+                quickMenu.classList.add('visible');
+            } else {
+                quickMenu.classList.remove('visible');
+            }
+        });
+    }
 });
