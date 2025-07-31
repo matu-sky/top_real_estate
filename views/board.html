@@ -23,32 +23,47 @@
 
         <div class="post-list">
             <% posts.forEach(post => { %>
+                <%
+                    let thumbnailUrl = null;
+                    if (board.board_type === 'youtube' && post.youtube_url) {
+                        let videoId = '';
+                        try {
+                            const url = new URL(post.youtube_url);
+                            if (url.hostname === 'youtu.be') {
+                                videoId = url.pathname.slice(1);
+                            } else {
+                                videoId = url.searchParams.get('v');
+                            }
+                        } catch (e) {
+                            const regex = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|watch\?v=|v\/|e(?:mbed)?\/)|youtu\.be\/)([^"&?\/\s]{11})/;
+                            const match = post.youtube_url.match(regex);
+                            if (match) videoId = match[1];
+                        }
+                        if (videoId) {
+                            thumbnailUrl = `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`;
+                        }
+                    } else if (board.board_type === 'gallery' && post.attachment_path) {
+                        try {
+                            const images = JSON.parse(post.attachment_path);
+                            if (Array.isArray(images) && images.length > 0) {
+                                thumbnailUrl = images[0];
+                            }
+                        } catch (e) {
+                            thumbnailUrl = post.attachment_path;
+                        }
+                    } else if (board.board_type === 'news' && post.attachment_path) {
+                        thumbnailUrl = post.attachment_path;
+                    }
+                %>
                 <div class="post-card">
-                    <div class="post-card-content" <% if (board.board_type === 'youtube' && post.youtube_url) { %>style="display: flex; align-items: flex-start; gap: 1rem;"<% } %>>
-                        <%# 유튜브 썸네일 %>
-                        <% if (board.board_type === 'youtube' && post.youtube_url) { %>
-                            <% 
-                                let videoId = '';
-                                try {
-                                    const url = new URL(post.youtube_url);
-                                    if (url.hostname === 'youtu.be') {
-                                        videoId = url.pathname.slice(1);
-                                    } else {
-                                        videoId = url.searchParams.get('v');
-                                    }
-                                } catch (e) {
-                                    const regex = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|watch\?v=|v\/|e(?:mbed)?\/)|youtu\.be\/)([^"&?\/\s]{11})/;
-                                    const match = post.youtube_url.match(regex);
-                                    if (match) videoId = match[1];
-                                }
-                            %>
-                            <% if (videoId) { %>
-                                <div class="post-card-thumbnail" style="flex-shrink: 0;">
-                                    <a href="/board/<%= board.slug %>/<%= post.id %>">
-                                        <img src="https://img.youtube.com/vi/<%= videoId %>/mqdefault.jpg" alt="<%= post.title %> 썸네일" style="width: 120px; height: 90px; object-fit: cover; display: block;">
-                                    </a>
-                                </div>
-                            <% } %>
+                    <div class="post-card-content" <% if (thumbnailUrl) { %>style="display: flex; align-items: flex-start; gap: 1rem;"<% } %>>
+                        <%# 썸네일 (공통 로직) %>
+                        <% if (thumbnailUrl) { %>
+                            <div class="post-card-thumbnail" style="flex-shrink: 0;">
+                                <a href="/board/<%= board.slug %>/<%= post.id %>">
+                                    <img src="<%= thumbnailUrl %>" alt="<%= post.title %> 썸네일" style="width: 120px; height: 90px; object-fit: cover; display: block;">
+                                </a>
+                            </div>
                         <% } %>
 
                         <%# 텍스트 컨텐츠 %>
