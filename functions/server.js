@@ -692,16 +692,44 @@ router.get('/board/:slug/write', requireLogin, async (req, res) => {
 });
 
 // 새 글 작성 (저장)
-router.post('/board/:slug/write', requireLogin, upload.single('attachment'), async (req, res) => {
+router.post('/board/:slug/write', requireLogin, upload.array('attachments', 10), async (req, res) => {
     const { slug } = req.params;
-    const { title, content, author } = req.body;
+    const { title, content, author, youtube_url } = req.body; // youtube_url 추가
 
     let attachment_path = null;
     let client;
     try {
         client = await pool.connect();
 
-        if (req.file) {
+        const boardResult = await client.query('SELECT id, board_type FROM boards WHERE slug = $1', [slug]);
+        if (boardResult.rows.length === 0) {
+            return res.status(404).send('게시판을 찾을 수 없습니다.');
+        }
+        const board = boardResult.rows[0];
+        const boardId = board.id;
+
+        // 파일 처리 로직 수정
+        let attachment_paths = [];
+        if (req.files && req.files.length > 0) { // 갤러리 (여러 파일)
+            for (const file of req.files) {
+                const originalname_utf8 = Buffer.from(file.originalname, 'latin1').toString('utf8');
+                const originalname_base64 = Buffer.from(originalname_utf8).toString('base64');
+                const newFileName = `${Date.now()}_${originalname_base64}`;
+                const { error: uploadError } = await supabase.storage
+                    .from('attachments')
+                    .upload(newFileName, file.buffer, { contentType: file.mimetype });
+
+                if (uploadError) {
+                    throw new Error(`Supabase upload error: ${uploadError.message}`);
+                }
+
+                const { data: urlData } = supabase.storage.from('attachments').getPublicUrl(newFileName);
+                if (!urlData || !urlData.publicUrl) {
+                    throw new Error('Failed to get public URL from Supabase.');
+                }
+                attachment_paths.push(urlData.publicUrl);
+            }
+        } else if (req.file) { // 일반, 뉴스 (단일 파일)
             const originalname_utf8 = Buffer.from(req.file.originalname, 'latin1').toString('utf8');
             const originalname_base64 = Buffer.from(originalname_utf8).toString('base64');
             const newFileName = `${Date.now()}_${originalname_base64}`;
@@ -717,17 +745,14 @@ router.post('/board/:slug/write', requireLogin, upload.single('attachment'), asy
             if (!urlData || !urlData.publicUrl) {
                 throw new Error('Failed to get public URL from Supabase.');
             }
-            attachment_path = urlData.publicUrl;
+            attachment_paths.push(urlData.publicUrl);
         }
 
-        const boardResult = await client.query('SELECT id FROM boards WHERE slug = $1', [slug]);
-        if (boardResult.rows.length === 0) {
-            return res.status(404).send('게시판을 찾을 수 없습니다.');
-        }
-        const boardId = boardResult.rows[0].id;
+        // DB에 저장할 경로 (갤러리는 JSON, 나머지는 단일 URL)
+        const attachment_path_to_db = board.board_type === 'gallery' ? JSON.stringify(attachment_paths) : (attachment_paths[0] || null);
 
-        const query = 'INSERT INTO posts (board_id, title, content, author, attachment_path) VALUES ($1, $2, $3, $4, $5)';
-        await client.query(query, [boardId, title, content, author, attachment_path]);
+        const query = 'INSERT INTO posts (board_id, title, content, author, attachment_path, youtube_url) VALUES ($1, $2, $3, $4, $5, $6)';
+        await client.query(query, [boardId, title, content, author, attachment_path_to_db, youtube_url]);
 
         res.redirect(`/board/${slug}`);
     } catch (err) {

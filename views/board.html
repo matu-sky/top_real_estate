@@ -21,9 +21,29 @@
             <% } %>
         </div>
 
-        <div class="post-list">
+        <div class="post-list <%= board.board_type === 'gallery' ? 'gallery-style' : '' %>">
             <% posts.forEach(post => { %>
+                <% 
+                    let thumbnailUrl = null;
+                    if (board.board_type === 'gallery' && post.attachment_path) {
+                        try {
+                            const images = JSON.parse(post.attachment_path);
+                            if (Array.isArray(images) && images.length > 0) {
+                                thumbnailUrl = images[0];
+                            }
+                        } catch (e) { /* JSON 파싱 실패 시 무시 */ }
+                    } else if (post.attachment_path) {
+                        thumbnailUrl = post.attachment_path; // 일반/뉴스 게시판
+                    }
+                %>
                 <div class="post-card">
+                    <% if (thumbnailUrl) { %>
+                        <div class="post-card-thumbnail">
+                            <a href="/board/<%= board.slug %>/<%= post.id %>">
+                                <img src="<%= thumbnailUrl %>" alt="<%= post.title %> 썸네일">
+                            </a>
+                        </div>
+                    <% } %>
                     <div class="post-card-content">
                         <h3><a href="/board/<%= board.slug %>/<%= post.id %>"><%= post.title %></a></h3>
                         <p class="post-card-snippet">

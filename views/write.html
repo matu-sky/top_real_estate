@@ -27,12 +27,26 @@
                         </div>
                         <div class="form-group">
                             <label for="content">내용</label>
-                            <textarea id="content" name="content" rows="10" required></textarea>
+                            <textarea id="content" name="content" rows="10"></textarea>
                         </div>
-                        <div class="form-group">
-                            <label for="attachment">파일 첨부</label>
-                            <input type="file" id="attachment" name="attachment">
-                        </div>
+
+                        <% if (board.board_type === 'youtube') { %>
+                            <div class="form-group">
+                                <label for="youtube_url">유튜브 동영상 URL</label>
+                                <input type="url" id="youtube_url" name="youtube_url" placeholder="https://www.youtube.com/watch?v=..." class="form-control">
+                            </div>
+                        <% } else if (board.board_type === 'gallery') { %>
+                            <div class="form-group">
+                                <label for="attachments">이미지 첨부 (여러 장 가능)</label>
+                                <input type="file" id="attachments" name="attachments" accept="image/*" multiple required>
+                            </div>
+                        <% } else { %>
+                            <div class="form-group">
+                                <label for="attachment">파일 첨부</label>
+                                <input type="file" id="attachment" name="attachment">
+                            </div>
+                        <% } %>
+
                         <div class="form-actions">
                             <button type="submit" class="btn-primary">작성 완료</button>
                             <a href="/board/<%= board.slug %>" class="btn-secondary">취소</a>
