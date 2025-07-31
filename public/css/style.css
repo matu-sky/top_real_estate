@@ -523,6 +523,14 @@ footer {
         margin: 5px 10px;
     }
     .post-card { flex-direction: column; align-items: flex-start; gap: 15px; }
+
+    /* 모바일에서 1열로 변경 */
+    .lifestyle-grid {
+        grid-template-columns: 1fr;
+    }
+    .listing-grid {
+        grid-template-columns: 1fr;
+    }
 }
 
 /* --- 게시글 상세 페이지 --- */
