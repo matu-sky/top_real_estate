@@ -517,7 +517,14 @@ footer {
     }
 }
 @media (max-width: 768px) {
-    .footer-info span { display: block; margin: 5px 0; }
+    .footer-info p {
+        font-size: 0.8rem; /* 폰트 크기 미세 조정 */
+        line-height: 1.7; /* 줄 간격 조정 */
+    }
+    .footer-info span { 
+        display: inline; /* 구분자 인라인 처리 */
+        margin: 0 6px; /* 구분자 좌우 여백 */
+    } 
     .footer-menu a {
         display: inline-block;
         margin: 5px 10px;
