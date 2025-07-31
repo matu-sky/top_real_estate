@@ -692,42 +692,56 @@ router.get('/board/:slug/write', requireLogin, async (req, res) => {
 });
 
 // 새 글 작성 (저장)
-router.post('/board/:slug/write', requireLogin, upload.single('attachment'), async (req, res) => {
+router.post('/board/:slug/write', requireLogin, upload.array('attachments', 10), async (req, res) => {
     const { slug } = req.params;
-    const { title, content, author } = req.body;
+    const { title, content, author, youtube_url } = req.body; // youtube_url 추가
 
-    let attachment_path = null;
+    let attachment_path_to_db = null;
     let client;
     try {
         client = await pool.connect();
 
-        if (req.file) {
-            const originalname_utf8 = Buffer.from(req.file.originalname, 'latin1').toString('utf8');
-            const originalname_base64 = Buffer.from(originalname_utf8).toString('base64');
-            const newFileName = `${Date.now()}_${originalname_base64}`;
-            const { error: uploadError } = await supabase.storage
-                .from('attachments')
-                .upload(newFileName, req.file.buffer, { contentType: req.file.mimetype });
-
-            if (uploadError) {
-                throw new Error(`Supabase upload error: ${uploadError.message}`);
-            }
-
-            const { data: urlData } = supabase.storage.from('attachments').getPublicUrl(newFileName);
-            if (!urlData || !urlData.publicUrl) {
-                throw new Error('Failed to get public URL from Supabase.');
-            }
-            attachment_path = urlData.publicUrl;
-        }
-
-        const boardResult = await client.query('SELECT id FROM boards WHERE slug = $1', [slug]);
+        const boardResult = await client.query('SELECT id, board_type FROM boards WHERE slug = $1', [slug]);
         if (boardResult.rows.length === 0) {
             return res.status(404).send('게시판을 찾을 수 없습니다.');
         }
-        const boardId = boardResult.rows[0].id;
+        const board = boardResult.rows[0];
+        const boardId = board.id;
 
-        const query = 'INSERT INTO posts (board_id, title, content, author, attachment_path) VALUES ($1, $2, $3, $4, $5)';
-        await client.query(query, [boardId, title, content, author, attachment_path]);
+        let attachment_paths = [];
+        // req.files는 `upload.array` 미들웨어를 사용할 때, req.file은 `upload.single`을 사용할 때 채워집니다.
+        // 우리는 `upload.array`로 통일했으므로 req.files만 확인하면 됩니다.
+        if (req.files && req.files.length > 0) {
+            for (const file of req.files) {
+                const originalname_utf8 = Buffer.from(file.originalname, 'latin1').toString('utf8');
+                const originalname_base64 = Buffer.from(originalname_utf8).toString('base64');
+                const newFileName = `${Date.now()}_${originalname_base64}`;
+                const { error: uploadError } = await supabase.storage
+                    .from('attachments')
+                    .upload(newFileName, file.buffer, { contentType: file.mimetype });
+
+                if (uploadError) {
+                    throw new Error(`Supabase upload error: ${uploadError.message}`);
+                }
+
+                const { data: urlData } = supabase.storage.from('attachments').getPublicUrl(newFileName);
+                if (!urlData || !urlData.publicUrl) {
+                    throw new Error('Failed to get public URL from Supabase.');
+                }
+                attachment_paths.push(urlData.publicUrl);
+            }
+
+            // 게시판 유형에 따라 저장 방식을 다르게 함
+            if (board.board_type === 'gallery') {
+                attachment_path_to_db = JSON.stringify(attachment_paths);
+            } else {
+                // 갤러리가 아닌 게시판은 첫 번째 파일만 저장
+                attachment_path_to_db = attachment_paths[0];
+            }
+        }
+
+        const query = 'INSERT INTO posts (board_id, title, content, author, attachment_path, youtube_url) VALUES ($1, $2, $3, $4, $5, $6)';
+        await client.query(query, [boardId, title, content, author, attachment_path_to_db, youtube_url]);
 
         res.redirect(`/board/${slug}`);
     } catch (err) {
