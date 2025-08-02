@@ -636,12 +636,12 @@ router.post('/listings/delete/:id', async (req, res) => {
 
 // --- 컨설팅 접수 포털 ---
 router.get('/consulting_portal', (req, res) => {
-    res.render('consulting_portal');
+    res.render('consulting_portal', { content: res.locals.settings });
 });
 
 router.get('/request_contact', (req, res) => {
     const type = req.query.type || '기타문의';
-    res.render('request_contact', { type });
+    res.render('request_contact', { type, content: res.locals.settings });
 });
 
 router.post('/request_contact/submit', (req, res) => {
