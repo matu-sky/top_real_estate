@@ -691,12 +691,15 @@ router.get('/board/:slug/write', requireLogin, async (req, res) => {
     }
 });
 
+const youtubeThumbnail = require('youtube-thumbnail');
+
 // 새 글 작성 (저장)
 router.post('/board/:slug/write', requireLogin, upload.array('attachments', 10), async (req, res) => {
     const { slug } = req.params;
     const { title, content, author, youtube_url } = req.body; // youtube_url 추가
 
     let attachment_path_to_db = null;
+    let thumbnail_url = null; // 썸네일 URL 변수 추가
     let client;
     try {
         client = await pool.connect();
@@ -708,9 +711,18 @@ router.post('/board/:slug/write', requireLogin, upload.array('attachments', 10),
         const board = boardResult.rows[0];
         const boardId = board.id;
 
+        // 유튜브 URL이 있으면 썸네일 추출
+        if (board.board_type === 'youtube' && youtube_url) {
+            try {
+                const thumbnail = youtubeThumbnail(youtube_url);
+                thumbnail_url = thumbnail.high.url;
+            } catch (err) {
+                console.error('유튜브 썸네일 추출 오류:', err);
+                // 썸네일 추출에 실패해도 글쓰기는 계속 진행
+            }
+        }
+
         let attachment_paths = [];
-        // req.files는 `upload.array` 미들웨어를 사용할 때, req.file은 `upload.single`을 사용할 때 채워집니다.
-        // 우리는 `upload.array`로 통일했으므로 req.files만 확인하면 됩니다.
         if (req.files && req.files.length > 0) {
             for (const file of req.files) {
                 const originalname_utf8 = Buffer.from(file.originalname, 'latin1').toString('utf8');
@@ -731,17 +743,15 @@ router.post('/board/:slug/write', requireLogin, upload.array('attachments', 10),
                 attachment_paths.push(urlData.publicUrl);
             }
 
-            // 게시판 유형에 따라 저장 방식을 다르게 함
             if (board.board_type === 'gallery') {
                 attachment_path_to_db = JSON.stringify(attachment_paths);
             } else {
-                // 갤러리가 아닌 게시판은 첫 번째 파일만 저장
                 attachment_path_to_db = attachment_paths[0];
             }
         }
 
-        const query = 'INSERT INTO posts (board_id, title, content, author, attachment_path, youtube_url) VALUES ($1, $2, $3, $4, $5, $6)';
-        await client.query(query, [boardId, title, content, author, attachment_path_to_db, youtube_url]);
+        const query = 'INSERT INTO posts (board_id, title, content, author, attachment_path, youtube_url, thumbnail_url) VALUES ($1, $2, $3, $4, $5, $6, $7)';
+        await client.query(query, [boardId, title, content, author, attachment_path_to_db, youtube_url, thumbnail_url]);
 
         res.redirect(`/board/${slug}`);
     } catch (err) {

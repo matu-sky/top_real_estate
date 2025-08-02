@@ -44,6 +44,7 @@ CREATE TABLE IF NOT EXISTS public.posts (
     content TEXT,
     author TEXT,
     attachment_path TEXT, -- 파일 첨부 경로
+    thumbnail_url TEXT, -- 유튜브 썸네일 URL
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
