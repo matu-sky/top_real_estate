@@ -10,21 +10,40 @@
     <%- include('partials/header.html') %>
 
     <main class="board-container">
-        <div 
-            class="board-header"
-            style="
-                background-image: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url('https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?q=80&w=2070&auto=format&fit=crop');
-                background-size: cover;
-                background-position: center;
-                padding: 4rem 2rem;
-                text-align: center;
-                margin-bottom: 2rem; /* 헤더와 콘텐츠 목록 사이 간격 */
-            "
-        >
-            <h1 style="color: #ffffff; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);">
+        <%
+            let headerStyle, titleStyle, descriptionStyle;
+
+            if (board.board_type === 'youtube') {
+                // 유튜브 게시판: 영자신문 배경, 밝은 오버레이, 검은색 텍스트
+                headerStyle = `
+                    background-image: linear-gradient(rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.7)), url('https://images.unsplash.com/photo-1504711434969-e33886168f5c?q=80&w=2071&auto=format&fit=crop');
+                    background-size: cover;
+                    background-position: center;
+                    padding: 4rem 2rem;
+                    text-align: center;
+                    margin-bottom: 2rem;
+                `;
+                titleStyle = `color: #111111; text-shadow: none;`;
+                descriptionStyle = `color: #333333; text-shadow: none;`;
+            } else {
+                // 다른 모든 게시판: 기존 스타일
+                headerStyle = `
+                    background-image: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url('https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?q=80&w=2070&auto=format&fit=crop');
+                    background-size: cover;
+                    background-position: center;
+                    padding: 4rem 2rem;
+                    text-align: center;
+                    margin-bottom: 2rem;
+                `;
+                titleStyle = `color: #ffffff; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);`;
+                descriptionStyle = `color: #eeeeee; text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);`;
+            }
+        %>
+        <div class="board-header" style="<%- headerStyle %>">
+            <h1 style="<%- titleStyle %>">
                 <%= board.name %>
             </h1>
-            <p style="color: #eeeeee; text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);">
+            <p style="<%- descriptionStyle %>">
                 <%= board.description %>
             </p>
         </div>
