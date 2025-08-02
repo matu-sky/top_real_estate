@@ -634,6 +634,42 @@ router.post('/listings/delete/:id', async (req, res) => {
 });
 
 
+// --- 컨설팅 접수 포털 ---
+router.get('/consulting_portal', (req, res) => {
+    res.render('consulting_portal');
+});
+
+router.get('/request_contact', (req, res) => {
+    const type = req.query.type || '기타문의';
+    res.render('request_contact', { type });
+});
+
+router.post('/request_contact/submit', (req, res) => {
+    const { type, name, contact_method, email, phone } = req.body;
+
+    console.log('--- 새로운 상담 접수 ---');
+    console.log('상담 유형:', type);
+    console.log('고객 성함:', name);
+    console.log('선호 연락 방식:', contact_method);
+    if (contact_method === 'email') {
+        console.log('이메일:', email);
+        // 여기에 Nodemailer를 이용한 이메일 발송 로직 추가 예정
+    } else if (contact_method === 'sms') {
+        console.log('휴대폰 번호:', phone);
+        // 여기에 CoolSMS 등을 이용한 문자 발송 로직 추가 예정
+    }
+    console.log('--------------------------');
+
+    // 지금은 실제 발송 대신, 접수 완료 페이지로 리디렉션합니다.
+    res.redirect('/consulting_thankyou');
+});
+
+// 접수 완료 페이지
+router.get('/consulting_thankyou', (req, res) => {
+    res.send('<h1>상담 신청이 정상적으로 접수되었습니다.</h1><p>담당자가 확인 후, 선택하신 연락 방법으로 상세 안내를 보내드리겠습니다.</p><a href="/">홈으로 돌아가기</a>');
+});
+
+
 // --- 게시판 관련 라우트 ---
 
 // 게시판 페이지 (글 목록)

@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>상담 유형 선택 | 탑 부동산</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .portal-container {
+            padding: 60px 0;
+            text-align: center;
+        }
+        .portal-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px;
+            margin-top: 40px;
+            text-align: left;
+        }
+        .service-card {
+            display: block;
+            background-color: #fff;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 35px;
+            text-decoration: none;
+            color: var(--text-color);
+            transition: all 0.3s ease;
+        }
+        .service-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 12px 30px rgba(13, 44, 84, 0.12);
+            border-color: var(--primary-color);
+        }
+        .service-card h3 {
+            font-size: 1.5rem;
+            color: var(--primary-color);
+            margin-top: 0;
+            margin-bottom: 15px;
+        }
+        .service-card p {
+            line-height: 1.7;
+            color: #495057;
+        }
+    </style>
+</head>
+<body>
+    <%- include('partials/header.html') %>
+
+    <main class="container portal-container">
+        <div class="section-title">
+            <h2>어떤 도움이 필요하신가요?</h2>
+            <p>원하시는 서비스를 선택하시면, 담당자 배정 및 상담이 더욱 신속하게 이루어집니다.</p>
+        </div>
+
+        <div class="portal-grid">
+            <a href="/request_contact?type=매물의뢰" class="service-card">
+                <h3>매물 내놓기 (매도/임대)</h3>
+                <p>아파트, 상가, 토지 등 소중한 자산을 최고의 조건으로 거래할 수 있도록 돕겠습니다.</p>
+            </a>
+            <a href="/request_contact?type=매물찾기" class="service-card">
+                <h3>매물 찾기 (매수/임차)</h3>
+                <p>원하시는 조건에 꼭 맞는 집, 사무실, 투자처를 찾아드리겠습니다.</p>
+            </a>
+            <a href="/request_contact?type=창업상담" class="service-card">
+                <h3>창업/사업이전 컨설팅</h3>
+                <p>업종과 예산에 맞는 최적의 입지 분석 및 상권 정보를 제공합니다.</p>
+            </a>
+            <a href="/request_contact?type=폐업문의" class="service-card">
+                <h3>폐업/철거/원상복구 문의</h3>
+                <p>복잡한 폐업 절차와 원상복구 문제를 최소한의 비용으로 해결해 드립니다.</p>
+            </a>
+        </div>
+    </main>
+
+    <%- include('partials/footer.html') %>
+</body>
+</html>

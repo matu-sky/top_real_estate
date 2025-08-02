@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>상담 접수 | 탑 부동산</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/admin_style.css"> <!-- 폼 스타일 재사용 -->
+    <style>
+        .form-container {
+            max-width: 600px;
+            margin: 60px auto;
+            padding: 40px;
+            background-color: #fff;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+        }
+        .contact-method-group label {
+            margin-right: 20px;
+        }
+    </style>
+</head>
+<body>
+    <%- include('partials/header.html') %>
+
+    <main class="container">
+        <div class="form-container">
+            <div class="section-title" style="margin-bottom: 30px;">
+                <h2>상담 접수</h2>
+                <p><strong>선택하신 유형: <%= type %></strong></p>
+                <p style="font-size: 0.9rem; color: #6c757d;">연락처를 남겨주시면, 담당자가 확인 후 상세 안내를 보내드리겠습니다.</p>
+            </div>
+
+            <form action="/request_contact/submit" method="POST">
+                <input type="hidden" name="type" value="<%= type %>">
+
+                <div class="form-group">
+                    <label for="name">성함 *</label>
+                    <input type="text" id="name" name="name" required>
+                </div>
+
+                <div class="form-group">
+                    <label>연락받으실 방법 *</label>
+                    <div class="contact-method-group">
+                        <input type="radio" id="contact_email" name="contact_method" value="email" required onchange="toggleContactInput()">
+                        <label for="contact_email">이메일</label>
+                        <input type="radio" id="contact_sms" name="contact_method" value="sms" onchange="toggleContactInput()">
+                        <label for="contact_sms">문자 메시지</label>
+                    </div>
+                </div>
+
+                <div class="form-group" id="email_input_group" style="display: none;">
+                    <label for="email">이메일 주소 *</label>
+                    <input type="email" id="email" name="email">
+                </div>
+
+                <div class="form-group" id="sms_input_group" style="display: none;">
+                    <label for="phone">휴대폰 번호 *</label>
+                    <input type="tel" id="phone" name="phone" placeholder="'-' 없이 숫자만 입력">
+                </div>
+
+                <div class="form-group">
+                    <input type="checkbox" id="privacy_policy" name="privacy_policy" required>
+                    <label for="privacy_policy">개인정보 수집 및 이용에 동의합니다. *</label>
+                </div>
+
+                <button type="submit" class="btn-primary" style="width: 100%; padding: 15px;">상세 안내 받기</button>
+            </form>
+        </div>
+    </main>
+
+    <script>
+        function toggleContactInput() {
+            const emailGroup = document.getElementById('email_input_group');
+            const smsGroup = document.getElementById('sms_input_group');
+            const emailInput = document.getElementById('email');
+            const phoneInput = document.getElementById('phone');
+
+            if (document.getElementById('contact_email').checked) {
+                emailGroup.style.display = 'block';
+                smsGroup.style.display = 'none';
+                emailInput.required = true;
+                phoneInput.required = false;
+            } else if (document.getElementById('contact_sms').checked) {
+                emailGroup.style.display = 'none';
+                smsGroup.style.display = 'block';
+                emailInput.required = false;
+                phoneInput.required = true;
+            }
+        }
+    </script>
+
+    <%- include('partials/footer.html') %>
+</body>
+</html>
