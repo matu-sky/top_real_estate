@@ -653,20 +653,13 @@ router.post('/request_contact/submit', (req, res) => {
     console.log('선호 연락 방식:', contact_method);
     if (contact_method === 'email') {
         console.log('이메일:', email);
-        // 여기에 Nodemailer를 이용한 이메일 발송 로직 추가 예정
     } else if (contact_method === 'sms') {
         console.log('휴대폰 번호:', phone);
-        // 여기에 CoolSMS 등을 이용한 문자 발송 로직 추가 예정
     }
     console.log('--------------------------');
 
-    // 지금은 실제 발송 대신, 접수 완료 페이지로 리디렉션합니다.
-    res.redirect('/consulting_thankyou');
-});
-
-// 접수 완료 페이지
-router.get('/consulting_thankyou', (req, res) => {
-    res.send('<h1>상담 신청이 정상적으로 접수되었습니다.</h1><p>담당자가 확인 후, 선택하신 연락 방법으로 상세 안내를 보내드리겠습니다.</p><a href="/">홈으로 돌아가기</a>');
+    // 성공했다는 JSON 응답을 클라이언트로 보냄
+    res.json({ success: true, message: '상담 신청이 정상적으로 접수되었습니다.' });
 });
 
 

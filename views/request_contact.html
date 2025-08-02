@@ -18,6 +18,39 @@
         .contact-method-group label {
             margin-right: 20px;
         }
+        /* 모달 스타일 */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s, visibility 0.3s;
+        }
+        .modal-overlay.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+        .modal-content {
+            background: #fff;
+            padding: 40px;
+            border-radius: 12px;
+            max-width: 450px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        .modal-content h3 {
+            margin-top: 0;
+            color: var(--primary-color);
+        }
     </style>
 </head>
 <body>
@@ -31,7 +64,7 @@
                 <p style="font-size: 0.9rem; color: #6c757d;">연락처를 남겨주시면, 담당자가 확인 후 상세 안내를 보내드리겠습니다.</p>
             </div>
 
-            <form action="/request_contact/submit" method="POST">
+            <form id="contactForm" action="/request_contact/submit" method="POST">
                 <input type="hidden" name="type" value="<%= type %>">
 
                 <div class="form-group">
@@ -69,6 +102,15 @@
         </div>
     </main>
 
+    <!-- 성공 모달 -->
+    <div id="successModal" class="modal-overlay">
+        <div class="modal-content">
+            <h3>접수 완료</h3>
+            <p>상담 신청이 정상적으로 접수되었습니다.<br>담당자가 확인 후, 선택하신 연락 방법으로 상세 안내를 보내드리겠습니다.</p>
+            <a href="/" class="btn-primary">홈으로 돌아가기</a>
+        </div>
+    </div>
+
     <script>
         function toggleContactInput() {
             const emailGroup = document.getElementById('email_input_group');
@@ -88,6 +130,35 @@
                 phoneInput.required = true;
             }
         }
+
+        document.getElementById('contactForm').addEventListener('submit', async function(e) {
+            e.preventDefault(); // 기본 폼 제출(새로고침) 방지
+
+            const form = e.target;
+            const formData = new FormData(form);
+            const data = Object.fromEntries(formData.entries());
+
+            try {
+                const response = await fetch(form.action, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data),
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    document.getElementById('successModal').classList.add('visible');
+                } else {
+                    alert('오류가 발생했습니다. 다시 시도해주세요.');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('오류가 발생했습니다. 다시 시도해주세요.');
+            }
+        });
     </script>
 
     <%- include('partials/footer.html') %>
