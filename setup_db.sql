@@ -34,6 +34,7 @@ CREATE TABLE IF NOT EXISTS public.boards (
     name TEXT NOT NULL,
     slug TEXT NOT NULL UNIQUE,
     description TEXT,
+    board_type TEXT DEFAULT 'general', -- 게시판 유형 추가
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -44,6 +45,7 @@ CREATE TABLE IF NOT EXISTS public.posts (
     content TEXT,
     author TEXT,
     attachment_path TEXT, -- 파일 첨부 경로
+    youtube_url TEXT, -- 유튜브 동영상 URL
     thumbnail_url TEXT, -- 유튜브 썸네일 URL
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );

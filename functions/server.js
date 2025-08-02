@@ -318,7 +318,7 @@ router.get('/admin/board/edit/:id', requireLogin, async (req, res) => {
     }
 });
 
-// 게시판 정보 업데이트 (v2)
+// 게시판 정보 업데이트 (v3)
 router.post('/admin/board/update/:id', requireLogin, async (req, res) => {
     const { id } = req.params;
     let body = {};
