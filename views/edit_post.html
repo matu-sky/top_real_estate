@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>글 수정 | <%= board.name %></title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/admin_style.css">
+</head>
+<body>
+    <div class="admin-container">
+        <main class="main-content" style="margin-left: 0; padding: 2rem;">
+            <header class="content-header">
+                <h2>글 수정: <%= board.name %></h2>
+            </header>
+
+            <div class="card">
+                <div class="card-body">
+                    <form action="/board/<%= board.slug %>/<%= post.id %>/edit" method="POST" enctype="multipart/form-data" accept-charset="UTF-8">
+                        <div class="form-group">
+                            <label for="title">제목</label>
+                            <input type="text" id="title" name="title" value="<%= post.title %>" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="author">작성자</label>
+                            <input type="text" id="author" name="author" value="<%= post.author %>" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="content">내용</label>
+                            <textarea id="content" name="content" rows="10" required><%= post.content %></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="attachment">파일 첨부</label>
+                            <input type="file" id="attachment" name="attachment">
+                            <% if (post.attachment_path) { %>
+                                <div class="current-attachment mt-2">
+                                    <% 
+                                        const fileNameWithTimestamp = post.attachment_path.split('/').pop();
+                                        const base64Part = fileNameWithTimestamp.substring(fileNameWithTimestamp.indexOf('_') + 1);
+                                        const decodedFileName = Buffer.from(base64Part, 'base64').toString('utf8');
+                                    %>
+                                    <p><strong>현재 파일:</strong> 
+                                        <a href="<%= post.attachment_path %>" target="_blank">
+                                            <%= decodedFileName %>
+                                        </a>
+                                    </p>
+                                    <% if (decodedFileName.match(/\.(jpeg|jpg|gif|png|webp)$/i)) { %>
+                                        <img src="<%= post.attachment_path %>" alt="첨부 이미지" style="max-width: 200px; margin-top: 10px;">
+                                    <% } %>
+                                    <div class="form-check mt-2">
+                                        <input class="form-check-input" type="checkbox" name="delete_attachment" id="delete_attachment" value="on">
+                                        <label class="form-check-label" for="delete_attachment">
+                                            기존 첨부파일 삭제 (새 파일 첨부 시 자동으로 삭제됩니다)
+                                        </label>
+                                    </div>
+                                </div>
+                            <% } %>
+                        </div>
+                        <div class="form-actions">
+                            <button type="submit" class="btn-primary">수정 완료</button>
+                            <a href="/board/<%= board.slug %>" class="btn-secondary">취소</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </main>
+    </div>
+</body>
+</html>

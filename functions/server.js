@@ -1,109 +1,77 @@
+require('dotenv').config();
+console.log('--- Netlify Function Environment ---');
+console.log('Attempting to read SUPABASE_URL:', process.env.SUPABASE_URL ? 'Found' : 'Not Found');
+console.log('Attempting to read SUPABASE_ANON_KEY:', process.env.SUPABASE_ANON_KEY ? 'Found' : 'Not Found');
+console.log('Type of SUPABASE_URL:', typeof process.env.SUPABASE_URL);
+console.log('Type of SUPABASE_ANON_KEY:', typeof process.env.SUPABASE_ANON_KEY);
+console.log('------------------------------------');
 const express = require('express');
 const path = require('path');
-const sqlite3 = require('sqlite3').verbose();
 const session = require('express-session');
-const fs = require('fs');
 const multer = require('multer');
-const serverless = require('serverless-http'); // serverless-http 추가
+const serverless = require('serverless-http');
+const querystring = require('querystring');
+const fs = require('fs');
+const util = require('util');
+const readdir = util.promisify(fs.readdir);
+
+// 디버깅: 재귀적으로 디렉토리 목록을 가져오는 함수
+async function getFiles(dir) {
+    const dirents = await readdir(dir, { withFileTypes: true });
+    const files = await Promise.all(dirents.map((dirent) => {
+        const res = path.resolve(dir, dirent.name);
+        return dirent.isDirectory() ? getFiles(res) : res;
+    }));
+    return Array.prototype.concat(...files);
+}
 
 const app = express();
-
-// Netlify 함수 환경에서는 __dirname이 functions 폴더를 가리키므로,
-// 프로젝트 루트를 기준으로 경로를 재설정해야 합니다.
 const projectRoot = path.resolve(__dirname, '..');
 
-// --- 데이터베이스 연결 ---
-// 중요: Netlify의 파일 시스템은 일시적입니다. 
-// 배포 시마다 데이터베이스 파일이 초기화될 수 있으며, 런타임 중 쓰기 작업은 영구 저장되지 않습니다.
-// 프로덕션 환경에서는 클라우드 기반 데이터베이스(예: PlanetScale, Supabase) 사용을 강력히 권장합니다.
-const dbPath = path.join(projectRoot, 'data', 'database.db');
-const db = new sqlite3.Database(dbPath, (err) => {
-    if (err) {
-        console.error('데이터베이스 연결 실패:', err.message);
-    } else {
-        console.log('데이터베이스에 성공적으로 연결되었습니다.');
-        // properties 테이블 생성 (모든 컬럼 포함)
-        db.run(`CREATE TABLE IF NOT EXISTS properties (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            category TEXT NOT NULL,
-            title TEXT NOT NULL,
-            price TEXT,
-            address TEXT,
-            area REAL, -- 주거용: 면적, 공장/지산: 분양면적
-            exclusive_area REAL, -- 공장/지산: 전용면적
-            approval_date TEXT,
-            purpose TEXT,
-            total_floors INTEGER,
-            floor INTEGER,
-            direction TEXT,
-            direction_standard TEXT,
-            transaction_type TEXT,
-            parking INTEGER,
-            maintenance_fee INTEGER,
-            maintenance_fee_details TEXT, -- [신규] 관리비 상세
-            power_supply TEXT, -- 공장/지산: 사용전력
-            hoist TEXT, -- 공장/지산: 호이스트
-            ceiling_height REAL, -- 공장/지산: 층고
-            permitted_business_types TEXT, -- [신규] 가능 업종
-            access_road_condition TEXT, -- [신규] 진입로 사정
-            move_in_date TEXT,
-            description TEXT,
-            image_path TEXT, -- 다중 이미지 경로 (쉼표로 구분)
-            youtube_url TEXT,
-            status TEXT DEFAULT '게시중',
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-        )`, (err) => {
-            if (err) {
-                console.error('테이블 생성 실패:', err.message);
-            }
-        });
-    }
+const { Pool } = require('pg');
+const pool = new Pool({
+    host: process.env.PG_HOST,
+    port: process.env.PG_PORT,
+    database: process.env.PG_DATABASE,
+    user: process.env.PG_USER,
+    password: process.env.PG_PASSWORD,
+    ssl: { rejectUnauthorized: false }
 });
 
-// --- 메뉴 데이터 로더 ---
-const menuFilePath = path.join(projectRoot, 'data', 'menu_settings.json');
-
-function getMenus(callback) {
-    fs.readFile(menuFilePath, 'utf8', (err, data) => {
-        if (err) {
-            console.error('메뉴 파일 읽기 오류:', err);
-            return callback(err, []);
-        }
+// --- 데이터베이스 기반 설정 로더 ---
+async function getSettings(client) {
+    const result = await client.query('SELECT key, value FROM site_settings');
+    const settings = {};
+    for (const row of result.rows) {
         try {
-            const menus = JSON.parse(data);
-            callback(null, menus);
-        } catch (parseErr) {
-            console.error('메뉴 파일 파싱 오류:', parseErr);
-            callback(parseErr, []);
+            settings[row.key] = JSON.parse(row.value);
+        } catch (e) {
+            settings[row.key] = row.value;
         }
-    });
-}
-
-function saveMenus(menus, callback) {
-    fs.writeFile(menuFilePath, JSON.stringify(menus, null, 2), 'utf8', callback);
-}
-
-
-// --- 파일 업로드 설정 ---
-// 중요: Netlify 함수 환경의 파일 시스템은 읽기 전용입니다 (예외: /tmp).
-// public/uploads/ 에 직접 파일을 저장할 수 없습니다.
-// 이미지 같은 사용자 업로드 파일은 Cloudinary, AWS S3 같은 외부 스토리지 서비스에 저장해야 합니다.
-const uploadDir = '/tmp/uploads';
-fs.mkdirSync(uploadDir, { recursive: true }); // 임시 업로드 디렉토리 생성
-
-const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-        cb(null, uploadDir);
-    },
-    filename: function (req, file, cb) {
-        cb(null, Date.now() + path.extname(file.originalname));
     }
-});
+    return settings;
+}
+
+const { createClient } = require('@supabase/supabase-js');
+
+// --- Supabase 클라이언트 초기화 ---
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
+
+// 환경 변수 누락 시 명확한 에러 메시지 출력
+if (!supabaseUrl || !supabaseAnonKey) {
+    const errorMessage = 'Supabase URL and Anon Key are required. Check your Netlify environment variables.';
+    console.error(errorMessage);
+    throw new Error(errorMessage);
+}
+
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+// --- 파일 업로드 설정 (메모리 스토리지 사용) ---
+const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
 // --- 미들웨어 설정 ---
-// 정적 파일 경로 수정
-app.use(express.static(path.join(projectRoot, 'public')));
 app.use(express.urlencoded({ extended: true }));
 
 
@@ -116,54 +84,80 @@ app.use(session({
 }));
 
 // --- 뷰 엔진 설정 ---
-// 뷰 디렉토리 경로 수정
-app.set('views', path.join(projectRoot, 'views'));
+const viewsPath = path.resolve(projectRoot, 'views');
+app.set('views', viewsPath);
+app.set('view options', { root: viewsPath });
 app.set('view engine', 'html');
 app.engine('html', require('ejs').renderFile);
+app.locals.basedir = viewsPath;
 
 
-// --- 라우팅(Routing) ---
-// 라우터 경로 수정: Netlify 함수는 단일 엔드포인트에서 실행되므로, 
-// Express 앱이 모든 경로를 처리하도록 app.use()의 기본 경로를 수정해야 할 수 있습니다.
-// 여기서는 Netlify의 redirects 규칙을 사용하므로 Express 코드는 그대로 둡니다.
-const router = express.Router();
+// 모든 페이지에 설정을 로드하는 미들웨어
+async function loadSettings(req, res, next) {
+    let client;
+    try {
+        client = await pool.connect();
+        res.locals.settings = await getSettings(client);
 
-// 메인 페이지
-router.get('/', (req, res) => {
-    const contentPath = path.join(projectRoot, 'data', 'homepage_content.json');
-    fs.readFile(contentPath, 'utf8', (err, data) => {
-        let content = {};
-        if (!err) {
-            content = JSON.parse(data);
+        // getSettings에서 이미 JSON.parse를 수행했으므로, 그대로 사용합니다.
+        let dbMenus = res.locals.settings.header_nav_links;
+
+        // 최종 안전장치: 메뉴가 유효한 배열이 아니거나 비어있으면 기본 메뉴로 대체
+        if (!Array.isArray(dbMenus) || dbMenus.length === 0) {
+            dbMenus = [
+                { text: '라이프스타일 제안', url: '/#lifestyle' },
+                { text: '최신 매물', url: '/#recent-listings' },
+                { text: '컨설팅 상담신청', url: '/#about' },
+                { text: '오시는 길', url: '/#location' }
+            ];
         }
 
-        const query = "SELECT * FROM properties ORDER BY created_at DESC LIMIT 4";
-        db.all(query, [], (err, rows) => {
-            if (err) {
-                console.error('DB 조회 오류:', err.message);
-                return res.render('index', { content: content, properties: [] });
-            }
-            
-            const processedRows = rows.map(row => {
-                if (row.address) {
-                    const addressParts = row.address.split(' ');
-                    let shortAddress = addressParts[0];
-                    if (addressParts.length > 1) {
-                        shortAddress += ' ' + addressParts[1];
-                    }
-                    if (addressParts.length > 2 && (addressParts[2].endsWith('동') || addressParts[2].endsWith('읍') || addressParts[2].endsWith('면'))) {
-                        shortAddress += ' ' + addressParts[2];
-                    }
-                    row.short_address = shortAddress;
-                } else {
-                    row.short_address = '주소 정보 없음';
-                }
-                return row;
-            });
+        // res.locals.settings에 최종 메뉴를 다시 할당하여 템플릿에서 일관되게 사용
+        res.locals.settings.header_nav_links = dbMenus;
 
-            res.render('index', { content: content, properties: processedRows });
+        // 관리자 페이지 사이드바 메뉴
+        res.locals.menus = [
+            { name: '대시보드', url: '/dashboard' },
+            { name: '홈페이지 관리', url: '/admin' },
+            { name: '매물 관리', url: '/listings' },
+            { name: '게시판 설정', url: '/admin/board_settings' },
+            { name: '주거용 매물등록', url: '/add_property' },
+            { name: '메뉴 관리', url: '/admin/menu' }
+        ];
+        next();
+    } catch (err) {
+        console.error('설정 로드 오류:', err);
+        res.status(500).send('사이트 설정을 불러오는 데 실패했습니다.');
+    } finally {
+        if (client) client.release();
+    }
+}
+
+// --- 라우팅(Routing) ---
+const router = express.Router();
+
+// 모든 요청에 대해 설정 로드 미들웨어 적용
+router.use(loadSettings);
+
+// 메인 페이지
+router.get('/', async (req, res) => {
+    let client;
+    try {
+        client = await pool.connect();
+        const result = await client.query("SELECT * FROM properties ORDER BY created_at DESC LIMIT 4");
+        const properties = result.rows.map(row => {
+            if (row.address) {
+                row.short_address = row.address.split(' ').slice(0, 3).join(' ');
+            }
+            return row;
         });
-    });
+        res.render('index', { content: res.locals.settings, properties });
+    } catch (err) {
+        console.error('DB 조회 오류:', err.stack);
+        res.render('index', { content: res.locals.settings, properties: [] });
+    } finally {
+        if (client) client.release();
+    }
 });
 
 // 로그인 페이지 렌더링
@@ -173,8 +167,15 @@ router.get('/login', (req, res) => {
 
 // 로그인 처리
 router.post('/login', (req, res) => {
-    console.log('Login attempt with body:', req.body);
-    const { username, password } = req.body;
+    // Netlify 환경에서 Buffer로 들어오는 body를 파싱
+    let body = {};
+    if (req.body instanceof Buffer) {
+        body = querystring.parse(req.body.toString());
+    } else {
+        body = req.body;
+    }
+    console.log('Login attempt with parsed body:', body); // 디버깅 로그 수정
+    const { username, password } = body;
 
     if (username === 'as123' && password === 'asd123') {
         req.session.loggedin = true;
@@ -184,78 +185,60 @@ router.post('/login', (req, res) => {
     }
 });
 
-// 인증 확인 및 메뉴 로드 미들웨어
-function requireLoginAndLoadMenus(req, res, next) {
+// 인증 확인 미들웨어
+function requireLogin(req, res, next) {
     if (!req.session.loggedin) {
         return res.redirect('/login');
     }
-    getMenus((err, menus) => {
-        if (err) {
-            return res.status(500).send('메뉴를 불러올 수 없습니다.');
-        }
-        res.locals.menus = menus;
-        next();
-    });
+    next();
 }
 
 // 모든 관리자 페이지 라우트에 미들웨어 적용
-router.use('/admin', requireLoginAndLoadMenus);
-router.use('/dashboard', requireLoginAndLoadMenus);
-router.use('/listings', requireLoginAndLoadMenus);
-router.use('/add_property', requireLoginAndLoadMenus);
+router.use('/admin', requireLogin);
+router.use('/dashboard', requireLogin);
+router.use('/listings', requireLogin);
+router.use('/add_property', requireLogin);
 
-// 홈페이지 관리 페이지
+// 홈페이지 관리 페이지 (읽기 전용)
 router.get('/admin', (req, res) => {
-    const contentPath = path.join(projectRoot, 'data', 'homepage_content.json');
-    fs.readFile(contentPath, 'utf8', (err, data) => {
-        let content = {};
-        if (err) {
-            content = {
-                hero_title: '최고의 공간,\n데이터로 증명하는 가치',
-                hero_subtitle: '군포첨단탑공인중개사는 감각적인 안목과 정확한 데이터로 당신의 선택을 돕습니다.',
-                lifestyle_card1_title: '내 집 마련의 꿈',
-                lifestyle_card1_desc: '가족의 행복이 자라는 포근한 보금자리',
-                lifestyle_card2_title: '성공적인 비즈니스',
-                lifestyle_card2_desc: '최적의 입지에서 시작하는 당신의 사업 (상가, 공장, 지식산업센터 전문)',
-                lifestyle_card3_title: '안정적인 수익형 투자',
-                lifestyle_card3_desc: '미래를 준비하는 현명한 자산 관리',
-                consulting_title: '단순한 중개를 넘어,\n지역 최고의 파트너가 되겠습니다.',
-                consulting_desc: '군포첨단탑공인중개사는 다년간의 경험과 데이터 분석을 통해 군포시의 부동산 시장을 가장 깊이 이해하고 있습니다. 주거용 부동산은 물론, 상가, 공장, 지식산업센터 등 특수 목적의 비주거용 부동산에 대한 깊이 있는 컨설팅을 제공합니다. 법률, 세무, 대출까지 원스톱으로 이어지는 전문가 네트워크를 통해 복잡한 부동산 거래를 가장 쉽고 안전하게 해결해 드립니다.',
-                consulting_button_text: '컨설팅 상담 신청'
-            };
-        } else {
-            content = JSON.parse(data);
-        }
-        res.render('admin', { content: content, menus: res.locals.menus });
-    });
+    res.render('admin', { content: res.locals.settings, menus: res.locals.menus });
 });
 
-// 홈페이지 관리 정보 업데이트
-router.post('/admin/update', requireLoginAndLoadMenus, (req, res) => {
-    const contentPath = path.join(projectRoot, 'data', 'homepage_content.json');
+// 홈페이지 관리 정보 업데이트 (DB 사용)
+router.post('/admin/update', requireLogin, async (req, res) => {
+    let body = {};
+    if (req.body instanceof Buffer) {
+        body = querystring.parse(req.body.toString());
+    } else {
+        body = req.body;
+    }
 
-    fs.readFile(contentPath, 'utf8', (err, data) => {
-        if (err) {
-            console.error('파일 읽기 오류:', err);
-            return res.status(500).send('콘텐츠 파일을 읽는 데 실패했습니다.');
-        }
+    let client;
+    try {
+        client = await pool.connect();
+        await client.query('BEGIN'); // 트랜잭션 시작
 
-        let content = JSON.parse(data);
-
-        for (const key in req.body) {
-            if (Object.prototype.hasOwnProperty.call(content, key)) {
-                content[key] = req.body[key];
+        for (const key in body) {
+            // settings 객체에 실제로 있는 키인지 확인하여 아무 값이나 저장되는 것을 방지
+            if (Object.prototype.hasOwnProperty.call(res.locals.settings, key)) {
+                const valueToStore = body[key];
+                await client.query(
+                    'UPDATE site_settings SET value = $1 WHERE key = $2',
+                    [valueToStore, key]
+                );
             }
         }
 
-        fs.writeFile(contentPath, JSON.stringify(content, null, 2), 'utf8', (writeErr) => {
-            if (writeErr) {
-                console.error('파일 쓰기 오류:', writeErr);
-                return res.status(500).send('콘텐츠 업데이트에 실패했습니다.');
-            }
-            res.redirect('/admin');
-        });
-    });
+        await client.query('COMMIT'); // 트랜잭션 커밋
+        res.redirect('/admin');
+
+    } catch (err) {
+        if (client) await client.query('ROLLBACK'); // 오류 발생 시 롤백
+        console.error('DB 업데이트 오류:', err.stack);
+        res.status(500).send('콘텐츠 업데이트에 실패했습니다.');
+    } finally {
+        if (client) client.release();
+    }
 });
 
 // 로그아웃 처리
@@ -269,235 +252,705 @@ router.get('/logout', (req, res) => {
 });
 
 // 대시보드 페이지
-router.get('/dashboard', (req, res) => {
-    const queries = {
-        totalProperties: "SELECT COUNT(*) as count FROM properties",
-        propertiesByCategory: "SELECT category, COUNT(*) as count FROM properties GROUP BY category"
-    };
+router.get('/dashboard', async (req, res) => {
+    const client = await pool.connect();
+    try {
+        const totalQuery = "SELECT COUNT(*) AS count FROM properties";
+        const categoryQuery = "SELECT category, COUNT(*) AS count FROM properties GROUP BY category";
 
-    db.get(queries.totalProperties, [], (err, total) => {
-        if (err) return res.status(500).send("데이터베이스 오류");
-        db.all(queries.propertiesByCategory, [], (err, categories) => {
-            if (err) return res.status(500).send("데이터베이스 오류");
+        const totalResult = await client.query(totalQuery);
+        const categoryResult = await client.query(categoryQuery);
 
-            res.render('dashboard', { 
-                menus: res.locals.menus, 
-                stats: {
-                    total: total.count,
-                    byCategory: categories
-                }
-            });
+        res.render('dashboard', { 
+            menus: res.locals.menus, 
+            stats: {
+                total: totalResult.rows[0].count,
+                byCategory: categoryResult.rows
+            }
         });
-    });
+    } catch (err) {
+        console.error('대시보드 데이터 조회 오류:', err.stack);
+        res.status(500).send("데이터베이스 오류");
+    } finally {
+        client.release();
+    }
 });
 
 // 게시판 설정 페이지
-router.get('/admin/board_settings', (req, res) => {
-    res.render('board_settings', { menus: res.locals.menus });
+router.get('/admin/board_settings', async (req, res) => {
+    let client;
+    try {
+        client = await pool.connect();
+        const result = await client.query('SELECT * FROM boards ORDER BY created_at DESC');
+        console.log('Fetched boards:', result.rows);
+        res.render('board_settings', { menus: res.locals.menus, boards: result.rows });
+    } catch (err) {
+        console.error('DB 조회 오류:', err.stack);
+        res.status(500).send('게시판 목록을 가져오는 데 실패했습니다.');
+    } finally {
+        if (client) client.release();
+    }
+});
+
+// 새 게시판 만들기 페이지
+router.get('/admin/board/new', requireLogin, (req, res) => {
+    const boardType = req.query.type || 'general'; // URL 쿼리에서 유형을 가져옴
+    res.render('add_board', { menus: res.locals.menus, boardType: boardType });
+});
+
+// 게시판 수정 페이지 보여주기
+router.get('/admin/board/edit/:id', requireLogin, async (req, res) => {
+    const { id } = req.params;
+    let client;
+    try {
+        client = await pool.connect();
+        const result = await client.query('SELECT * FROM boards WHERE id = $1', [id]);
+        if (result.rows.length === 0) {
+            return res.status(404).send('게시판을 찾을 수 없습니다.');
+        }
+        const board = result.rows[0];
+        res.render('edit_board', { menus: res.locals.menus, board });
+    } catch (err) {
+        console.error('DB 조회 오류:', err.stack);
+        res.status(500).send('게시판 정보를 가져오는 데 실패했습니다.');
+    } finally {
+        if (client) client.release();
+    }
+});
+
+// 게시판 정보 업데이트 (v2)
+router.post('/admin/board/update/:id', requireLogin, async (req, res) => {
+    const { id } = req.params;
+    let body = {};
+    if (req.body instanceof Buffer) {
+        body = querystring.parse(req.body.toString());
+    } else {
+        body = req.body;
+    }
+
+    const { board_name, board_slug, board_description, board_type } = body;
+    const query = 'UPDATE boards SET name = $1, slug = $2, description = $3, board_type = $4 WHERE id = $5';
+    const params = [board_name, board_slug, board_description, board_type, id];
+
+    let client;
+    try {
+        client = await pool.connect();
+        await client.query(query, params);
+        res.redirect('/admin/board_settings');
+    } catch (err) {
+        console.error('DB 업데이트 오류:', err.stack);
+        res.status(500).send('게시판 업데이트에 실패했습니다.');
+    } finally {
+        if (client) client.release();
+    }
+});
+
+// 게시판 삭제
+router.post('/admin/board/delete/:id', requireLogin, async (req, res) => {
+    const { id } = req.params;
+    let client;
+    try {
+        client = await pool.connect();
+        // 트랜잭션 시작
+        await client.query('BEGIN');
+        // 해당 게시판의 모든 게시글 삭제
+        await client.query('DELETE FROM posts WHERE board_id = $1', [id]);
+        // 게시판 삭제
+        await client.query('DELETE FROM boards WHERE id = $1', [id]);
+        // 트랜잭션 커밋
+        await client.query('COMMIT');
+        res.redirect('/admin/board_settings');
+    } catch (err) {
+        // 오류 발생 시 롤백
+        if (client) await client.query('ROLLBACK');
+        console.error('DB 삭제 오류:', err.stack);
+        res.status(500).send('게시판 삭제에 실패했습니다.');
+    } finally {
+        if (client) client.release();
+    }n});
+
+// 새 게시판 생성
+router.post('/admin/board/create', requireLogin, async (req, res) => {
+    let body = {};
+    if (req.body instanceof Buffer) {
+        body = querystring.parse(req.body.toString());
+    } else {
+        body = req.body;
+    }
+
+    const { board_name, board_slug, board_description, board_type } = body;
+    const query = 'INSERT INTO boards (name, slug, description, board_type) VALUES ($1, $2, $3, $4)';
+    const params = [board_name, board_slug, board_description, board_type];
+
+    let client;
+    try {
+        client = await pool.connect();
+        await client.query(query, params);
+        res.redirect('/admin/board_settings');
+    } catch (err) {
+        console.error('DB 삽입 오류:', err.stack);
+        res.status(500).send('게시판 생성에 실패했습니다.');
+    } finally {
+        if (client) client.release();
+    }
 });
 
 // 매물 관리 페이지
-router.get('/listings', (req, res) => {
+router.get('/listings', async (req, res) => {
     const category = req.query.category;
     let query = "SELECT * FROM properties";
     const params = [];
 
     if (category) {
-        query += " WHERE category = ?";
+        query += " WHERE category = $1";
         params.push(category);
     }
 
     query += " ORDER BY created_at DESC";
 
-    db.all(query, params, (err, rows) => {
-        if (err) {
-            console.error('DB 조회 오류:', err.message);
-            return res.status(500).send("매물 정보를 가져오는 데 실패했습니다.");
-        }
+    const client = await pool.connect();
+    try {
+        const result = await client.query(query, params);
         res.render('listings', { 
-            properties: rows, 
+            properties: result.rows, 
             menus: res.locals.menus, 
             currentCategory: category
         });
-    });
+    } catch (err) {
+        console.error('DB 조회 오류:', err.stack);
+        res.status(500).send("매물 정보를 가져오는 데 실패했습니다.");
+    } finally {
+        client.release();
+    }
 });
 
 // 새 매물 등록 페이지
-router.get('/add_property', requireLoginAndLoadMenus, (req, res) => {
+router.get('/add_property', requireLogin, (req, res) => {
     res.render('add_property', { menus: res.locals.menus });
 });
 
 // 새 상업용 매물 등록 페이지
-router.get('/add_commercial_property', requireLoginAndLoadMenus, (req, res) => {
+router.get('/add_commercial_property', requireLogin, (req, res) => {
     res.render('add_commercial_property', { menus: res.locals.menus });
 });
 
 // 새 공장/지산 매물 등록 페이지
-router.get('/add_factory_property', requireLoginAndLoadMenus, (req, res) => {
+router.get('/add_factory_property', requireLogin, (req, res) => {
     res.render('add_factory_property', { menus: res.locals.menus });
 });
 
 // --- 홈페이지 메뉴 관리 ---
-router.get('/admin/menu', (req, res) => {
-    const contentPath = path.join(projectRoot, 'data', 'homepage_content.json');
-    fs.readFile(contentPath, 'utf8', (err, data) => {
-        if (err) {
-            return res.status(500).send('콘텐츠 파일을 읽을 수 없습니다.');
-        }
-        const content = JSON.parse(data);
-        res.render('menu_settings', { menus: res.locals.menus, content: content });
-    });
+router.get('/admin/menu', requireLogin, (req, res) => {
+    res.render('menu_settings', { menus: res.locals.menus, content: res.locals.settings });
 });
 
-router.post('/admin/menu/update', (req, res) => {
-    const contentPath = path.join(projectRoot, 'data', 'homepage_content.json');
-    fs.readFile(contentPath, 'utf8', (err, data) => {
-        if (err) {
-            return res.status(500).send('콘텐츠 파일을 읽을 수 없습니다.');
-        }
-        let content = JSON.parse(data);
-        
-        content.header_nav_links = req.body.links || [];
+// 메뉴 관리 정보 업데이트 (DB 사용)
+router.post('/admin/menu/update', requireLogin, async (req, res) => {
+    // Netlify 환경에서 Buffer로 전달되는 req.body를 파싱합니다.
+    const bodyString = req.body.toString('utf8');
+    const parsedBody = querystring.parse(bodyString);
 
-        fs.writeFile(contentPath, JSON.stringify(content, null, 2), 'utf8', (err) => {
-            if (err) {
-                return res.status(500).send('메뉴 저장에 실패했습니다.');
+    let { link_texts, link_urls } = parsedBody;
+
+    // 입력값이 하나일 경우 문자열로 들어오므로, 배열로 변환합니다.
+    if (typeof link_texts === 'string') link_texts = [link_texts];
+    if (typeof link_urls === 'string') link_urls = [link_urls];
+
+    const links = [];
+    if (link_texts && link_urls && link_texts.length === link_urls.length) {
+        for (let i = 0; i < link_texts.length; i++) {
+            const text = link_texts[i].trim();
+            const url = link_urls[i].trim();
+            if (text !== '' && url !== '') {
+                links.push({ text, url });
             }
-            res.redirect('/admin/menu');
-        });
-    });
+        }
+    }
+
+    const valueToStore = JSON.stringify(links);
+
+    let client;
+    try {
+        client = await pool.connect();
+        await client.query(
+            'INSERT INTO site_settings (key, value) VALUES ($1, $2) ON CONFLICT (key) DO UPDATE SET value = $2',
+            ['header_nav_links', valueToStore]
+        );
+        res.redirect('/admin/menu');
+    } catch (err) {
+        console.error('DB 업데이트 오류:', err.stack);
+        res.status(500).send('메뉴 저장에 실패했습니다.');
+    } finally {
+        if (client) client.release();
+    }
 });
 
 
 // ✅ [신규] 새 매물 추가: 폼에서 전송된 데이터를 DB에 저장
-router.post('/listings/add', upload.array('images', 10), (req, res) => {
-    // 중요: Netlify에서는 /tmp에 저장된 파일은 영구적이지 않으며,
-    // 'uploads/' 경로로 직접 접근할 수 없습니다.
-    // 이 로직은 외부 스토리지(S3 등)와 연동해야 정상 작동합니다.
-    const image_paths = req.files ? req.files.map(file => file.path).join(',') : null;
-    const { category, title, price, address, area, exclusive_area, approval_date, purpose, total_floors, floor, direction, direction_standard, transaction_type, parking, maintenance_fee, maintenance_fee_details, power_supply, hoist, ceiling_height, permitted_business_types, access_road_condition, move_in_date, description, youtube_url } = req.body;
+router.post('/listings/add', async (req, res) => {
+    console.log('--- 매물 등록 요청 시작 ---');
+    console.log('요청 본문:', req.body);
+    console.log('업로드된 파일:', req.files ? req.files.length + '개' : '없음');
+
+    let body = {};
+    if (req.body instanceof Buffer) {
+        body = querystring.parse(req.body.toString());
+    } else {
+        body = req.body;
+    }
+
+    const image_paths = body.image_urls || '';
+    console.log('생성된 이미지 경로 문자열:', image_paths);
+
+    const { category, title, price, address, area, exclusive_area, approval_date, purpose, total_floors, floor, direction, direction_standard, transaction_type, parking, maintenance_fee, maintenance_fee_details, power_supply, hoist, ceiling_height, permitted_business_types, access_road_condition, move_in_date, description, youtube_url } = body;
 
     const query = `INSERT INTO properties (
         category, title, price, address, area, exclusive_area, approval_date, purpose, total_floors, floor, direction, direction_standard, transaction_type, parking, maintenance_fee, maintenance_fee_details, power_supply, hoist, ceiling_height, permitted_business_types, access_road_condition, move_in_date, description, image_path, youtube_url
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25)
+    RETURNING id;`; // RETURNING id 추가하여 삽입된 행의 id를 반환받음
 
-    db.run(query, [
+    const params = [
         category, title, price, address, area, exclusive_area, approval_date, purpose, total_floors, floor, direction, direction_standard, transaction_type, parking, maintenance_fee, maintenance_fee_details, power_supply, hoist, ceiling_height, permitted_business_types, access_road_condition, move_in_date, description, image_paths, youtube_url
-    ], function(err) {
-        if (err) {
-            console.error('DB 삽입 오류:', err.message);
-            res.status(500).send("매물 등록에 실패했습니다.");
-            return;
-        }
+    ];
+
+    console.log('데이터베이스에 매물 정보 삽입 시도...');
+    console.log('쿼리:', query);
+    console.log('파라미터:', params);
+
+    let client;
+    try {
+        console.log('데이터베이스 풀에서 클라이언트 가져오는 중...');
+        client = await pool.connect();
+        console.log('클라이언트 가져오기 성공.');
+
+        const result = await client.query(query, params);
+        console.log('DB 삽입 성공! 삽입된 매물 ID:', result.rows[0].id);
+        
+        console.log('매물 목록 페이지로 리디렉션...');
         res.redirect('/listings');
-    });
+    } catch (err) {
+        console.error('DB 삽입 오류 발생:', err.stack);
+        // 사용자에게 좀 더 구체적인 오류 메시지를 보낼 수 있습니다.
+        res.status(500).send(`매물 등록에 실패했습니다. 서버 로그를 확인해주세요. 오류: ${err.message}`);
+    } finally {
+        if (client) {
+            console.log('데이터베이스 클라이언트 반환.');
+            client.release();
+        }
+        console.log('--- 매물 등록 요청 종료 ---');
+    }
 });
 
 // ✅ [신규] 매물 수정
-router.post('/listings/edit/:id', upload.array('images', 10), (req, res) => {
+router.post('/listings/edit/:id', upload.array('images', 10), async (req, res) => {
     const { id } = req.params;
-    const { category, title, price, address, area, exclusive_area, approval_date, purpose, total_floors, floor, direction, direction_standard, transaction_type, parking, maintenance_fee, maintenance_fee_details, power_supply, hoist, ceiling_height, permitted_business_types, access_road_condition, move_in_date, description, youtube_url } = req.body;
     
-    let image_paths = req.body.existing_image_paths || '';
-    if (req.files && req.files.length > 0) {
-        const new_image_paths = req.files.map(file => file.path).join(',');
-        image_paths = image_paths ? [image_paths, new_image_paths].filter(p => p).join(',') : new_image_paths;
+    // Netlify 환경에서 Buffer로 들어오는 body를 파싱
+    let body = {};
+    if (req.body instanceof Buffer) {
+        body = querystring.parse(req.body.toString());
+    } else {
+        body = req.body;
     }
 
-    const query = `UPDATE properties SET 
-        category = ?, title = ?, price = ?, address = ?, area = ?, exclusive_area = ?, approval_date = ?, purpose = ?, total_floors = ?, floor = ?, direction = ?, direction_standard = ?, transaction_type = ?, parking = ?, maintenance_fee = ?, maintenance_fee_details = ?, power_supply = ?, hoist = ?, ceiling_height = ?, permitted_business_types = ?, access_road_condition = ?, move_in_date = ?, description = ?, image_path = ?, youtube_url = ?
-    WHERE id = ?`;
+    // 삭제할 이미지 처리
+    if (body.deleted_images) {
+        const imagesToDelete = Array.isArray(body.deleted_images) ? body.deleted_images : [body.deleted_images];
+        const fileNamesToDelete = imagesToDelete.map(url => url.split('/').pop());
+        
+        if (fileNamesToDelete.length > 0) {
+            const { data, error } = await supabase.storage
+                .from('property-images')
+                .remove(fileNamesToDelete);
 
-    db.run(query, [
-        category, title, price, address, area, exclusive_area, approval_date, purpose, total_floors, floor, direction, direction_standard, transaction_type, parking, maintenance_fee, maintenance_fee_details, power_supply, hoist, ceiling_height, permitted_business_types, access_road_condition, move_in_date, description, image_paths, youtube_url, id
-    ], function(err) {
-        if (err) {
-            console.error('DB 수정 오류:', err.message);
-            res.status(500).send("매물 수정에 실패했습니다.");
-            return;
+            if (error) {
+                console.error('Supabase 스토리지 삭제 오류:', error);
+                // 오류가 발생해도 일단 진행하도록 설정. 필요시 에러 처리 강화
+            }
         }
+    }
+
+    let imageUrls = body.existing_image_paths ? body.existing_image_paths.split(',').filter(p => p) : [];
+
+    if (req.files) {
+        for (const file of req.files) {
+            const newFileName = `${Date.now()}_${file.originalname}`;
+            const { data, error } = await supabase.storage
+                .from('property-images')
+                .upload(newFileName, file.buffer, {
+                    contentType: file.mimetype,
+                });
+
+            if (error) {
+                console.error('Supabase 스토리지 업로드 오류:', error);
+                return res.status(500).send('이미지 업로드에 실패했습니다.');
+            }
+
+            const { data: { publicUrl } } = supabase.storage
+                .from('property-images')
+                .getPublicUrl(newFileName);
+            imageUrls.push(publicUrl);
+        }
+    }
+
+    const image_paths = imageUrls.join(',');
+    const { category, title, price, address, area, exclusive_area, approval_date, purpose, total_floors, floor, direction, direction_standard, transaction_type, parking, maintenance_fee, maintenance_fee_details, power_supply, hoist, ceiling_height, permitted_business_types, access_road_condition, move_in_date, description, youtube_url } = req.body;
+
+    const query = `UPDATE properties SET 
+        category = $1, title = $2, price = $3, address = $4, area = $5, exclusive_area = $6, approval_date = $7, purpose = $8, total_floors = $9, floor = $10, direction = $11, direction_standard = $12, transaction_type = $13, parking = $14, maintenance_fee = $15, maintenance_fee_details = $16, power_supply = $17, hoist = $18, ceiling_height = $19, permitted_business_types = $20, access_road_condition = $21, move_in_date = $22, description = $23, image_path = $24, youtube_url = $25
+    WHERE id = $26`;
+
+    const params = [
+        category, title, price, address, area, exclusive_area, approval_date, purpose, total_floors, floor, direction, direction_standard, transaction_type, parking, maintenance_fee, maintenance_fee_details, power_supply, hoist, ceiling_height, permitted_business_types, access_road_condition, move_in_date, description, image_paths, youtube_url, id
+    ];
+
+    const client = await pool.connect();
+    try {
+        await client.query(query, params);
         res.redirect('/listings');
-    });
+    } catch (err) {
+        console.error('DB 수정 오류:', err.stack);
+        res.status(500).send("매물 수정에 실패했습니다.");
+    } finally {
+        client.release();
+    }
 });
 
 // ✅ [신규] 매물 삭제
-router.post('/listings/delete/:id', (req, res) => {
+router.post('/listings/delete/:id', async (req, res) => {
     const { id } = req.params;
+    const query = "DELETE FROM properties WHERE id = $1";
 
-    db.get("SELECT image_path FROM properties WHERE id = ?", [id], (err, row) => {
-        if (err) {
-            return res.status(500).send("오류가 발생했습니다.");
-        }
-
-        const query = "DELETE FROM properties WHERE id = ?";
-        db.run(query, id, function(err) {
-            if (err) {
-                console.error('DB 삭제 오류:', err.message);
-                res.status(500).send("매물 삭제에 실패했습니다.");
-                return;
-            }
-            // 중요: Netlify 환경에서는 이 로직이 예상대로 동작하지 않을 수 있습니다.
-            if (row && row.image_path) {
-                 const images = row.image_path.split(',');
-                 images.forEach(p => {
-                    fs.unlink(p, (err) => {
-                        if (err) console.error('이미지 파일 삭제 실패:', err);
-                    });
-                 });
-            }
-            res.redirect('/listings');
-        });
-    });
+    const client = await pool.connect();
+    try {
+        await client.query(query, [id]);
+        res.redirect('/listings');
+    } catch (err) {
+        console.error('DB 삭제 오류:', err.stack);
+        res.status(500).send("매물 삭제에 실패했습니다.");
+    } finally {
+        client.release();
+    }
 });
 
 
-// 매물 상세 페이지
-router.get('/property/:id', (req, res) => {
-    const { id } = req.params;
-    const contentPath = path.join(projectRoot, 'data', 'homepage_content.json');
+// --- 게시판 관련 라우트 ---
 
-    fs.readFile(contentPath, 'utf8', (err, data) => {
-        let content = {};
-        if (!err) {
-            content = JSON.parse(data);
+// 게시판 페이지 (글 목록)
+router.get('/board/:slug', async (req, res) => {
+    const { slug } = req.params;
+    let client;
+    try {
+        client = await pool.connect();
+        const boardResult = await client.query('SELECT * FROM boards WHERE slug = $1', [slug]);
+        if (boardResult.rows.length === 0) {
+            return res.status(404).send('게시판을 찾을 수 없습니다.');
+        }
+        const board = boardResult.rows[0];
+
+        const postsResult = await client.query('SELECT * FROM posts WHERE board_id = $1 ORDER BY created_at DESC', [board.id]);
+        const posts = postsResult.rows;
+
+        res.render('board', { 
+            board, 
+            posts, 
+            user: req.session, 
+            content: res.locals.settings 
+        });
+    } catch (err) {
+        console.error('게시판 페이지 오류:', err);
+        res.status(500).send(`<h1>오류 발생</h1><p>게시판 정보를 가져오는 중 오류가 발생했습니다.</p><pre>${err.stack}</pre>`);
+    } finally {
+        if (client) client.release();
+    }
+});
+
+// 글쓰기 페이지 보여주기
+router.get('/board/:slug/write', requireLogin, async (req, res) => {
+    const { slug } = req.params;
+    let client;
+    try {
+        client = await pool.connect();
+        const boardResult = await client.query('SELECT * FROM boards WHERE slug = $1', [slug]);
+        if (boardResult.rows.length === 0) {
+            return res.status(404).send('게시판을 찾을 수 없습니다.');
+        }
+        const board = boardResult.rows[0];
+        // 이제 board.board_type을 템플릿에서 사용할 수 있습니다.
+        res.render('write', { 
+            board: board, 
+            menus: res.locals.menus, 
+            content: res.locals.settings, 
+            user: req.session 
+        });
+    } catch (err) {
+        console.error('글쓰기 페이지 오류:', err);
+        res.status(500).send('오류가 발생했습니다.');
+    } finally {
+        if (client) client.release();
+    }
+});
+
+const youtubeThumbnail = require('youtube-thumbnail');
+
+// 새 글 작성 (저장)
+router.post('/board/:slug/write', requireLogin, upload.array('attachments', 10), async (req, res) => {
+    const { slug } = req.params;
+    const { title, content, author, youtube_url } = req.body; // youtube_url 추가
+
+    let attachment_path_to_db = null;
+    let thumbnail_url = null; // 썸네일 URL 변수 추가
+    let client;
+    try {
+        client = await pool.connect();
+
+        const boardResult = await client.query('SELECT id, board_type FROM boards WHERE slug = $1', [slug]);
+        if (boardResult.rows.length === 0) {
+            return res.status(404).send('게시판을 찾을 수 없습니다.');
+        }
+        const board = boardResult.rows[0];
+        const boardId = board.id;
+
+        // 유튜브 URL이 있으면 썸네일 추출
+        if (board.board_type === 'youtube' && youtube_url) {
+            try {
+                const thumbnail = youtubeThumbnail(youtube_url);
+                thumbnail_url = thumbnail.high.url;
+            } catch (err) {
+                console.error('유튜브 썸네일 추출 오류:', err);
+                // 썸네일 추출에 실패해도 글쓰기는 계속 진행
+            }
         }
 
-        const query = "SELECT * FROM properties WHERE id = ?";
-        db.get(query, [id], (err, row) => {
-            if (err) {
-                console.error('DB 조회 오류:', err.message);
-                return res.status(500).send("매물 정보를 가져오는 데 실패했습니다.");
-            }
-            if (row) {
-                if (row.address) {
-                    const addressParts = row.address.split(' ');
-                    row.short_address = addressParts.slice(0, 3).join(' ');
+        let attachment_paths = [];
+        if (req.files && req.files.length > 0) {
+            for (const file of req.files) {
+                const originalname_utf8 = Buffer.from(file.originalname, 'latin1').toString('utf8');
+                const originalname_base64 = Buffer.from(originalname_utf8).toString('base64');
+                const newFileName = `${Date.now()}_${originalname_base64}`;
+                const { error: uploadError } = await supabase.storage
+                    .from('attachments')
+                    .upload(newFileName, file.buffer, { contentType: file.mimetype });
+
+                if (uploadError) {
+                    throw new Error(`Supabase upload error: ${uploadError.message}`);
                 }
-                res.render('property_detail', { property: row, content: content });
-            } else {
-                res.status(404).send("매물을 찾을 수 없습니다.");
+
+                const { data: urlData } = supabase.storage.from('attachments').getPublicUrl(newFileName);
+                if (!urlData || !urlData.publicUrl) {
+                    throw new Error('Failed to get public URL from Supabase.');
+                }
+                attachment_paths.push(urlData.publicUrl);
             }
+
+            if (board.board_type === 'gallery') {
+                attachment_path_to_db = JSON.stringify(attachment_paths);
+            } else {
+                attachment_path_to_db = attachment_paths[0];
+            }
+        }
+
+        const query = 'INSERT INTO posts (board_id, title, content, author, attachment_path, youtube_url, thumbnail_url) VALUES ($1, $2, $3, $4, $5, $6, $7)';
+        await client.query(query, [boardId, title, content, author, attachment_path_to_db, youtube_url, thumbnail_url]);
+
+        res.redirect(`/board/${slug}`);
+    } catch (err) {
+        console.error('DB 삽입 오류:', err);
+        res.status(500).send(`글 작성에 실패했습니다. <br><br><strong>오류 정보:</strong><pre>${err.stack}</pre>`);
+    } finally {
+        if (client) client.release();
+    }
+});
+
+// 게시글 상세 페이지
+router.get('/board/:slug/:postId', async (req, res) => {
+    const { slug, postId } = req.params;
+    let client;
+    try {
+        client = await pool.connect();
+        
+        const boardResult = await client.query('SELECT * FROM boards WHERE slug = $1', [slug]);
+        if (boardResult.rows.length === 0) {
+            return res.status(404).send('게시판을 찾을 수 없습니다.');
+        }
+        const board = boardResult.rows[0];
+
+        const postResult = await client.query('SELECT * FROM posts WHERE id = $1 AND board_id = $2', [postId, board.id]);
+        if (postResult.rows.length === 0) {
+            return res.status(404).send('게시글을 찾을 수 없습니다.');
+        }
+        const post = postResult.rows[0];
+
+        res.render('post_detail', {
+            board,
+            post,
+            user: req.session,
+            content: res.locals.settings
         });
-    });
+
+    } catch (err) {
+        console.error('게시글 상세 조회 오류:', err);
+        res.status(500).send('오류가 발생했습니다.');
+    } finally {
+        if (client) client.release();
+    }
+});
+
+
+// 글 수정 페이지 보여주기
+router.get('/board/:slug/:postId/edit', requireLogin, async (req, res) => {
+    const { slug, postId } = req.params;
+    let client;
+    try {
+        client = await pool.connect();
+        const boardResult = await client.query('SELECT * FROM boards WHERE slug = $1', [slug]);
+        if (boardResult.rows.length === 0) {
+            return res.status(404).send('게시판을 찾을 수 없습니다.');
+        }
+        const board = boardResult.rows[0];
+
+        const postResult = await client.query('SELECT * FROM posts WHERE id = $1', [postId]);
+        if (postResult.rows.length === 0) {
+            return res.status(404).send('게시글을 찾을 수 없습니다.');
+        }
+        const post = postResult.rows[0];
+
+        res.render('edit_post', { 
+            board, 
+            post, 
+            menus: res.locals.menus, 
+            content: res.locals.settings 
+        });
+    } catch (err) {
+        console.error('글 수정 페이지 오류:', err);
+        res.status(500).send('오류가 발생했습니다.');
+    } finally {
+        if (client) client.release();
+    }
+});
+
+// 글 수정 (저장)
+router.post('/board/:slug/:postId/edit', requireLogin, upload.single('attachment'), async (req, res) => {
+    const { slug, postId } = req.params;
+    const { title, content, author, delete_attachment } = req.body;
+
+    let client;
+    try {
+        client = await pool.connect();
+
+        const postResult = await client.query('SELECT attachment_path FROM posts WHERE id = $1', [postId]);
+        if (postResult.rows.length === 0) {
+            return res.status(404).send('수정할 게시글을 찾을 수 없습니다.');
+        }
+        let current_attachment_path = postResult.rows[0].attachment_path;
+
+        if (delete_attachment === 'on' && current_attachment_path) {
+            const fileName = current_attachment_path.split('/').pop();
+            await supabase.storage.from('attachments').remove([fileName]);
+            current_attachment_path = null;
+        }
+
+        let attachment_path = current_attachment_path;
+
+        if (req.file) {
+            if (current_attachment_path) {
+                const fileName = current_attachment_path.split('/').pop();
+                await supabase.storage.from('attachments').remove([fileName]);
+            }
+
+            const originalname_utf8 = Buffer.from(req.file.originalname, 'latin1').toString('utf8');
+            const originalname_base64 = Buffer.from(originalname_utf8).toString('base64');
+            const newFileName = `${Date.now()}_${originalname_base64}`;
+            const { error: uploadError } = await supabase.storage
+                .from('attachments')
+                .upload(newFileName, req.file.buffer, { contentType: req.file.mimetype });
+
+            if (uploadError) {
+                throw new Error(`Supabase upload error: ${uploadError.message}`);
+            }
+
+            const { data: urlData } = supabase.storage.from('attachments').getPublicUrl(newFileName);
+            if (!urlData || !urlData.publicUrl) {
+                throw new Error('Failed to get public URL from Supabase.');
+            }
+            attachment_path = urlData.publicUrl;
+        }
+
+        const query = 'UPDATE posts SET title = $1, content = $2, author = $3, attachment_path = $4 WHERE id = $5';
+        const params = [title, content, author, attachment_path, postId];
+        
+        await client.query(query, params);
+        res.redirect(`/board/${slug}`);
+    } catch (err) {
+        console.error('글 수정 최종 오류:', err.stack);
+        res.status(500).send(`글 수정에 실패했습니다. 전문가의 도움이 필요합니다. <br><br><strong>오류 정보:</strong><pre>${err.stack}</pre>`);
+    } finally {
+        if (client) client.release();
+    }
+});
+
+// 글 삭제
+router.post('/board/:slug/:postId/delete', requireLogin, async (req, res) => {
+    const { slug, postId } = req.params;
+    let client;
+    try {
+        client = await pool.connect();
+        await client.query('DELETE FROM posts WHERE id = $1', [postId]);
+        res.redirect(`/board/${slug}`);
+    } catch (err) {
+        console.error('DB 삭제 오류:', err);
+        res.status(500).send('글 삭제에 실패했습니다.');
+    } finally {
+        if (client) client.release();
+    }
+});
+
+// --- End of 게시판 관련 라우트 ---
+
+// 매물 상세 페이지
+router.get('/property/:id', async (req, res) => {
+    const { id } = req.params;
+    let client;
+    try {
+        client = await pool.connect();
+        const result = await client.query("SELECT * FROM properties WHERE id = $1", [id]);
+        const property = result.rows[0];
+
+        if (property) {
+            if (property.address) {
+                property.short_address = property.address.split(' ').slice(0, 3).join(' ');
+            }
+            res.render('property_detail', { property, content: res.locals.settings });
+        } else {
+            res.status(404).send("매물을 찾을 수 없습니다.");
+        }
+    } catch (err) {
+        console.error('DB 조회 오류:', err.stack);
+        res.status(500).send("매물 정보를 가져오는 데 실패했습니다.");
+    } finally {
+        if (client) client.release();
+    }
 });
 
 // API: 특정 매물 정보 가져오기
-router.get('/api/property/:id', requireLoginAndLoadMenus, (req, res) => {
+router.get('/api/property/:id', requireLogin, async (req, res) => {
     const { id } = req.params;
-    const query = "SELECT * FROM properties WHERE id = ?";
+    const query = "SELECT * FROM properties WHERE id = $1";
 
-    db.get(query, [id], (err, row) => {
-        if (err) {
-            console.error('API DB 조회 오류:', err.message);
-            return res.status(500).json({ error: '데이터베이스 오류' });
-        }
-        if (row) {
-            res.json(row);
-        }
-        else {
+    const client = await pool.connect();
+    try {
+        const result = await client.query(query, [id]);
+        if (result.rows.length > 0) {
+            res.json(result.rows[0]);
+        } else {
             res.status(404).json({ error: '매물을 찾을 수 없습니다.' });
         }
-    });
+    } catch (err) {
+        console.error('API DB 조회 오류:', err.stack);
+        res.status(500).json({ error: '데이터베이스 오류' });
+    } finally {
+        client.release();
+    }
 });
 
 // Express 앱에 라우터 마운트
@@ -507,3 +960,24 @@ app.use('/', router);
 
 // --- 서버리스 핸들러 ---
 module.exports.handler = serverless(app);
+
+// 로컬 테스트 환경을 위한 서버 실행 코드
+// 이 코드는 Netlify 배포 시에는 실행되지 않습니다.
+if (require.main === module) {
+  const PORT = process.env.PORT || 8080;
+  app.listen(PORT, () => {
+    console.log(`로컬 서버가 http://localhost:${PORT} 에서 실행 중입니다.`);
+  });
+} else {
+    // Netlify 환경에서만 실행되는 디버깅 코드
+    (async () => {
+        try {
+            console.log('--- Netlify 배포 환경 파일 목록 ---');
+            const files = await getFiles(path.dirname(__filename));
+            console.log(files.join('\n'));
+            console.log('------------------------------------');
+        } catch (err) {
+            console.error('파일 목록을 가져오는 중 오류 발생:', err);
+        }
+    })();
+}
