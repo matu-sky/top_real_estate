@@ -33,7 +33,7 @@
                         <% if (board.board_type === 'youtube') { %>
                             <div class="form-group">
                                 <label for="youtube_url">유튜브 동영상 URL</label>
-                                <input type="url" id="youtube_url" name="youtube_url" value="<%= post.youtube_url || '' %>" class="form-control">
+                                <input type="url" id="youtube_url" name="youtube_url" value="<%= post.youtube_url || '' %>" class="form-control" style="width: 100%;">
                                 <small>유튜브 동영상의 전체 URL을 입력해주세요.</small>
                             </div>
                         <% } %>
