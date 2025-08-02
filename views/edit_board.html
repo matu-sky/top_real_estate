@@ -44,6 +44,15 @@
                             <label for="board_description">게시판 설명</label>
                             <textarea id="board_description" name="board_description" rows="4"><%= board.description %></textarea>
                         </div>
+                        <div class="form-group">
+                            <label for="board_type">게시판 유형</label>
+                            <select id="board_type" name="board_type">
+                                <option value="general" <%= board.board_type === 'general' ? 'selected' : '' %>>일반</option>
+                                <option value="gallery" <%= board.board_type === 'gallery' ? 'selected' : '' %>>갤러리</option>
+                                <option value="news" <%= board.board_type === 'news' ? 'selected' : '' %>>뉴스</option>
+                                <option value="youtube" <%= board.board_type === 'youtube' ? 'selected' : '' %>>유튜브</option>
+                            </select>
+                        </div>
                         <div class="form-actions">
                             <button type="submit" class="btn-primary">수정 완료</button>
                             <a href="/admin/board_settings" class="btn-secondary">취소</a>

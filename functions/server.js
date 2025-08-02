@@ -318,7 +318,7 @@ router.get('/admin/board/edit/:id', requireLogin, async (req, res) => {
     }
 });
 
-// 게시판 정보 업데이트
+// 게시판 정보 업데이트 (v2)
 router.post('/admin/board/update/:id', requireLogin, async (req, res) => {
     const { id } = req.params;
     let body = {};
@@ -328,9 +328,9 @@ router.post('/admin/board/update/:id', requireLogin, async (req, res) => {
         body = req.body;
     }
 
-    const { board_name, board_slug, board_description } = body;
-    const query = 'UPDATE boards SET name = $1, slug = $2, description = $3 WHERE id = $4';
-    const params = [board_name, board_slug, board_description, id];
+    const { board_name, board_slug, board_description, board_type } = body;
+    const query = 'UPDATE boards SET name = $1, slug = $2, description = $3, board_type = $4 WHERE id = $5';
+    const params = [board_name, board_slug, board_description, board_type, id];
 
     let client;
     try {
