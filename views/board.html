@@ -9,7 +9,7 @@
 <body>
     <%- include('partials/header.html') %>
 
-    <main class="board-container">
+    <main class="board-container" <%- board.board_type === 'youtube' ? 'style="padding-top: 0;"' : '' %>>
         <%
             let headerStyle, titleStyle, descriptionStyle;
 
@@ -19,7 +19,7 @@
                     background-image: linear-gradient(rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.7)), url('https://images.unsplash.com/photo-1504711434969-e33886168f5c?q=80&w=2071&auto=format&fit=crop');
                     background-size: cover;
                     background-position: center;
-                    padding: 1rem 2rem 2rem; /* 상단 여백 줄임 */
+                    padding: 4rem 2rem;
                     text-align: center;
                     margin-bottom: 2rem;
                 `;
