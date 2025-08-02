@@ -830,60 +830,84 @@ router.get('/board/:slug/:postId/edit', requireLogin, async (req, res) => {
 });
 
 // 글 수정 (저장)
-router.post('/board/:slug/:postId/edit', requireLogin, upload.single('attachment'), async (req, res) => {
+router.post('/board/:slug/:postId/edit', requireLogin, upload.array('attachments', 10), async (req, res) => {
     const { slug, postId } = req.params;
-    const { title, content, author, delete_attachment } = req.body;
+    const { title, content, author, youtube_url, delete_attachment } = req.body; // youtube_url, delete_attachment 추가
 
     let client;
     try {
         client = await pool.connect();
 
+        const boardResult = await client.query('SELECT id, board_type FROM boards WHERE slug = $1', [slug]);
+        if (boardResult.rows.length === 0) return res.status(404).send('게시판을 찾을 수 없습니다.');
+        const board = boardResult.rows[0];
+
         const postResult = await client.query('SELECT attachment_path FROM posts WHERE id = $1', [postId]);
-        if (postResult.rows.length === 0) {
-            return res.status(404).send('수정할 게시글을 찾을 수 없습니다.');
-        }
+        if (postResult.rows.length === 0) return res.status(404).send('수정할 게시글을 찾을 수 없습니다.');
+        
         let current_attachment_path = postResult.rows[0].attachment_path;
+        let attachment_path_to_db = current_attachment_path;
 
-        if (delete_attachment === 'on' && current_attachment_path) {
-            const fileName = current_attachment_path.split('/').pop();
-            await supabase.storage.from('attachments').remove([fileName]);
-            current_attachment_path = null;
+        // 1. 첨부파일 삭제 로직
+        if (delete_attachment) {
+            const attachments_to_delete = Array.isArray(delete_attachment) ? delete_attachment : [delete_attachment];
+            if (attachments_to_delete.length > 0) {
+                const fileNamesToDelete = attachments_to_delete.map(url => url.split('/').pop());
+                await supabase.storage.from('attachments').remove(fileNamesToDelete);
+
+                if (board.board_type === 'gallery') {
+                    const remaining_attachments = JSON.parse(current_attachment_path || '[]').filter(url => !attachments_to_delete.includes(url));
+                    attachment_path_to_db = JSON.stringify(remaining_attachments);
+                } else {
+                    attachment_path_to_db = null;
+                }
+            }
         }
 
-        let attachment_path = current_attachment_path;
+        // 2. 새 첨부파일 업로드 로직
+        let new_attachment_paths = [];
+        if (req.files && req.files.length > 0) {
+            for (const file of req.files) {
+                const originalname_utf8 = Buffer.from(file.originalname, 'latin1').toString('utf8');
+                const originalname_base64 = Buffer.from(originalname_utf8).toString('base64');
+                const newFileName = `${Date.now()}_${originalname_base64}`;
+                
+                const { error: uploadError } = await supabase.storage.from('attachments').upload(newFileName, file.buffer, { contentType: file.mimetype });
+                if (uploadError) throw new Error(`Supabase upload error: ${uploadError.message}`);
 
-        if (req.file) {
-            if (current_attachment_path) {
-                const fileName = current_attachment_path.split('/').pop();
-                await supabase.storage.from('attachments').remove([fileName]);
+                const { data: urlData } = supabase.storage.from('attachments').getPublicUrl(newFileName);
+                if (!urlData || !urlData.publicUrl) throw new Error('Failed to get public URL.');
+                new_attachment_paths.push(urlData.publicUrl);
             }
 
-            const originalname_utf8 = Buffer.from(req.file.originalname, 'latin1').toString('utf8');
-            const originalname_base64 = Buffer.from(originalname_utf8).toString('base64');
-            const newFileName = `${Date.now()}_${originalname_base64}`;
-            const { error: uploadError } = await supabase.storage
-                .from('attachments')
-                .upload(newFileName, req.file.buffer, { contentType: req.file.mimetype });
-
-            if (uploadError) {
-                throw new Error(`Supabase upload error: ${uploadError.message}`);
+            if (board.board_type === 'gallery') {
+                const existing_attachments = JSON.parse(attachment_path_to_db || '[]');
+                attachment_path_to_db = JSON.stringify([...existing_attachments, ...new_attachment_paths]);
+            } else {
+                attachment_path_to_db = new_attachment_paths[0];
             }
-
-            const { data: urlData } = supabase.storage.from('attachments').getPublicUrl(newFileName);
-            if (!urlData || !urlData.publicUrl) {
-                throw new Error('Failed to get public URL from Supabase.');
+        }
+        
+        // 3. 유튜브 썸네일 추출 로직
+        let thumbnail_url = null;
+        if (board.board_type === 'youtube' && youtube_url) {
+            try {
+                const thumbnail = youtubeThumbnail(youtube_url);
+                thumbnail_url = thumbnail.high.url;
+            } catch (err) {
+                console.error('유튜브 썸네일 추출 오류 (수정):', err);
             }
-            attachment_path = urlData.publicUrl;
         }
 
-        const query = 'UPDATE posts SET title = $1, content = $2, author = $3, attachment_path = $4 WHERE id = $5';
-        const params = [title, content, author, attachment_path, postId];
+        const query = 'UPDATE posts SET title = $1, content = $2, author = $3, attachment_path = $4, youtube_url = $5, thumbnail_url = $6 WHERE id = $7';
+        const params = [title, content, author, attachment_path_to_db, youtube_url, thumbnail_url, postId];
         
         await client.query(query, params);
         res.redirect(`/board/${slug}`);
+
     } catch (err) {
         console.error('글 수정 최종 오류:', err.stack);
-        res.status(500).send(`글 수정에 실패했습니다. 전문가의 도움이 필요합니다. <br><br><strong>오류 정보:</strong><pre>${err.stack}</pre>`);
+        res.status(500).send(`글 수정에 실패했습니다. <br><br><strong>오류 정보:</strong><pre>${err.stack}</pre>`);
     } finally {
         if (client) client.release();
     }

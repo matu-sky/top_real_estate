@@ -29,33 +29,66 @@
                             <label for="content">내용</label>
                             <textarea id="content" name="content" rows="10" required><%= post.content %></textarea>
                         </div>
-                        <div class="form-group">
-                            <label for="attachment">파일 첨부</label>
-                            <input type="file" id="attachment" name="attachment">
-                            <% if (post.attachment_path) { %>
-                                <div class="current-attachment mt-2">
-                                    <% 
-                                        const fileNameWithTimestamp = post.attachment_path.split('/').pop();
-                                        const base64Part = fileNameWithTimestamp.substring(fileNameWithTimestamp.indexOf('_') + 1);
-                                        const decodedFileName = Buffer.from(base64Part, 'base64').toString('utf8');
-                                    %>
-                                    <p><strong>현재 파일:</strong> 
-                                        <a href="<%= post.attachment_path %>" target="_blank">
-                                            <%= decodedFileName %>
-                                        </a>
-                                    </p>
-                                    <% if (decodedFileName.match(/\.(jpeg|jpg|gif|png|webp)$/i)) { %>
-                                        <img src="<%= post.attachment_path %>" alt="첨부 이미지" style="max-width: 200px; margin-top: 10px;">
-                                    <% } %>
-                                    <div class="form-check mt-2">
-                                        <input class="form-check-input" type="checkbox" name="delete_attachment" id="delete_attachment" value="on">
-                                        <label class="form-check-label" for="delete_attachment">
-                                            기존 첨부파일 삭제 (새 파일 첨부 시 자동으로 삭제됩니다)
-                                        </label>
+                        <%# 유튜브 게시판일 경우 %>
+                        <% if (board.board_type === 'youtube') { %>
+                            <div class="form-group">
+                                <label for="youtube_url">유튜브 동영상 URL</label>
+                                <input type="url" id="youtube_url" name="youtube_url" value="<%= post.youtube_url || '' %>" class="form-control">
+                                <small>유튜브 동영상의 전체 URL을 입력해주세요.</small>
+                            </div>
+                        <% } %>
+
+                        <%# 갤러리 또는 뉴스 게시판일 경우 (다중 파일 업로드) %>
+                        <% if (['gallery', 'news'].includes(board.board_type)) { %>
+                            <div class="form-group">
+                                <label for="attachments">이미지 첨부 (여러 개 선택 가능)</label>
+                                <input type="file" id="attachments" name="attachments" multiple class="form-control">
+                            </div>
+                            <% 
+                                let images = [];
+                                if (post.attachment_path) {
+                                    try {
+                                        images = JSON.parse(post.attachment_path);
+                                    } catch (e) {
+                                        images = [post.attachment_path]; 
+                                    }
+                                }
+                                if (!Array.isArray(images)) images = [images];
+                            %>
+                            <% if (images.length > 0 && images[0]) { %>
+                                <div class="current-attachments mt-2">
+                                    <p><strong>현재 첨부된 이미지:</strong></p>
+                                    <div class="image-gallery-edit">
+                                        <% images.forEach(image_url => { %>
+                                            <div class="image-item">
+                                                <img src="<%= image_url %>" alt="첨부 이미지">
+                                                <div class="form-check mt-1">
+                                                    <input class="form-check-input" type="checkbox" name="delete_attachment" value="<%= image_url %>" id="delete_<%= image_url %>">
+                                                    <label class="form-check-label" for="delete_<%= image_url %>">삭제</label>
+                                                </div>
+                                            </div>
+                                        <% }); %>
                                     </div>
                                 </div>
                             <% } %>
-                        </div>
+                        <% } %>
+
+                        <%# 일반 게시판일 경우 (단일 파일 업로드) %>
+                        <% if (board.board_type === 'general') { %>
+                            <div class="form-group">
+                                <label for="attachment">파일 첨부</label>
+                                <input type="file" id="attachment" name="attachments" class="form-control">
+                                <% if (post.attachment_path) { %>
+                                    <div class="current-attachment mt-2">
+                                        <p><strong>현재 파일:</strong> <a href="<%= post.attachment_path %>" target="_blank">파일 보기</a></p>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="delete_attachment" value="<%= post.attachment_path %>" id="delete_attachment">
+                                            <label class="form-check-label" for="delete_attachment">기존 첨부파일 삭제</label>
+                                        </div>
+                                    </div>
+                                <% } %>
+                            </div>
+                        <% } %>
                         <div class="form-actions">
                             <button type="submit" class="btn-primary">수정 완료</button>
                             <a href="/board/<%= board.slug %>" class="btn-secondary">취소</a>
