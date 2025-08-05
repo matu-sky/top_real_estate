@@ -11,10 +11,11 @@
 
     <main class="board-container">
         <%
-            let headerStyle, titleStyle, descriptionStyle;
+            let headerStyle, titleStyle, descriptionStyle, subNavStyle = '';
 
             if (board.board_type === 'youtube') {
-                // 유튜브 게시판: 영자신문 배경, 밝은 오버레이, 검은색 텍스트
+                // 유튜브 게시판: 상단 여백 제거 및 특정 스타일 적용
+                subNavStyle = 'margin-bottom: 0;';
                 headerStyle = `
                     background-image: linear-gradient(rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.7)), url('https://images.unsplash.com/photo-1504711434969-e33886168f5c?q=80&w=2071&auto=format&fit=crop');
                     background-size: cover;
@@ -22,6 +23,7 @@
                     padding: 4rem 2rem;
                     text-align: center;
                     margin-bottom: 2rem;
+                    padding-top: 0;
                 `;
                 titleStyle = `color: #111111; text-shadow: none;`;
                 descriptionStyle = `color: #333333; text-shadow: none;`;
@@ -39,7 +41,7 @@
                 descriptionStyle = `color: #eeeeee; text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);`;
             }
         %>
-        <div class="sub-nav">
+        <div class="sub-nav" style="<%- subNavStyle %>">
             <a href="/board/notice" class="sub-nav-item notice-link">공지사항</a>
             <a href="/board/rearinfo" class="sub-nav-item rearinfo-link">부동산정보</a>
             <a href="/board/realcun" class="sub-nav-item realcun-link">부동산관련상담</a>
