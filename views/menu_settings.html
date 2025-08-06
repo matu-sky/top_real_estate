@@ -19,7 +19,7 @@
             </div>
             <ul class="sidebar-menu">
                 <% menus.forEach(menu => { %>
-                    <li class="<%= menu.url.startsWith('/admin/menu') ? 'active' : '' %>"><a href="<%= menu.url %>"><%= menu.name %></a></li>
+                    <li class="<%= menu.url === '/admin/menu' ? 'active' : '' %>"><a href="<%= menu.url %>"><%= menu.name %></a></li>
                 <% }); %>
             </ul>
             <div class="sidebar-footer">
