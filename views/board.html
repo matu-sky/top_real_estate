@@ -62,23 +62,12 @@
             <% if (user && user.loggedin) { %>
                 <a href="/board/<%= board.slug %>/write" class="btn btn-primary">글쓰기</a>
             <% } %>
+            </div>
         </div>
 
-        <div class="board-header" style="<%- headerStyle %>">
-            <h1 style="<%- titleStyle %>">
-                <%= board.name %>
-            </h1>
-            <p style="<%- descriptionStyle %>">
-                <%= board.description %>
-            </p>
-        </div>
 
-        <div class="container">
-            <div class="board-toolbar">
-            <% if (user && user.loggedin) { %>
-                <a href="/board/<%= board.slug %>/write" class="btn btn-primary">글쓰기</a>
-            <% } %>
-        </div>
+
+
 
         <div class="post-list">
             <% posts.forEach(post => { %>
