@@ -16,7 +16,7 @@
                 <% menus.forEach(menu => { %>
                     <li class="<%= menu.url === '/admin/board_settings' ? 'active' : '' %>"><a href="<%= menu.url %>"><%= menu.name %></a></li>
                 <% }); %>
-                <li><a href="/admin/menu">메뉴 관리</a></li>
+                
             </ul>
             <div class="sidebar-footer">
                 <a href="/logout">로그아웃</a>
