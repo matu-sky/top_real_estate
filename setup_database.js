@@ -44,6 +44,25 @@ async function setupDatabase() {
             );
         }
         console.log('성공: 모든 콘텐츠를 "site_settings" 테이블로 이전했습니다.');
+
+        // 5. 기본 페이지 데이터 삽입
+        const pages = [
+            { slug: 'privacy-policy', title: '개인정보처리방침', content: '<h1>개인정보처리방침</h1><p>내용을 입력해주세요.</p>' },
+            { slug: 'reject-email-collection', title: '이메일무단수집거부', content: '<h1>이메일무단수집거부</h1><p>내용을 입력해주세요.</p>' },
+            { slug: 'terms-of-service', title: '이용약관', content: '<h1>이용약관</h1><p>내용을 입력해주세요.</p>' },
+            { slug: 'lifestyle-1', title: '라이프스타일 제안 1', content: '<h1>라이프스타일 제안 1</h1><p>내용을 입력해주세요.</p>' },
+            { slug: 'lifestyle-2', title: '라이프스타일 제안 2', content: '<h1>라이프스타일 제안 2</h1><p>내용을 입력해주세요.</p>' },
+            { slug: 'lifestyle-3', title: '라이프스타일 제안 3', content: '<h1>라이프스타일 제안 3</h1><p>내용을 입력해주세요.</p>' }
+        ];
+
+        for (const page of pages) {
+            await client.query(
+                'INSERT INTO pages (slug, title, content) VALUES ($1, $2, $3) ON CONFLICT (slug) DO NOTHING',
+                [page.slug, page.title, page.content]
+            );
+        }
+        console.log('성공: 기본 페이지 데이터를 "pages" 테이블에 삽입했습니다.');
+
         console.log('--------------------------------------------------');
         console.log('데이터베이스 설정 및 데이터 이전이 완료되었습니다.');
         console.log('--------------------------------------------------');
