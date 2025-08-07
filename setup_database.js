@@ -47,17 +47,17 @@ async function setupDatabase() {
 
         // 5. 기본 페이지 데이터 삽입
         const pages = [
-            { slug: 'privacy-policy', title: '개인정보처리방침', content: '<h1>개인정보처리방침</h1><p>내용을 입력해주세요.</p>' },
-            { slug: 'reject-email-collection', title: '이메일무단수집거부', content: '<h1>이메일무단수집거부</h1><p>내용을 입력해주세요.</p>' },
-            { slug: 'terms-of-service', title: '이용약관', content: '<h1>이용약관</h1><p>내용을 입력해주세요.</p>' },
-            { slug: 'lifestyle-1', title: '라이프스타일 제안 1', content: '<h1>라이프스타일 제안 1</h1><p>내용을 입력해주세요.</p>' },
-            { slug: 'lifestyle-2', title: '라이프스타일 제안 2', content: '<h1>라이프스타일 제안 2</h1><p>내용을 입력해주세요.</p>' },
-            { slug: 'lifestyle-3', title: '라이프스타일 제안 3', content: '<h1>라이프스타일 제안 3</h1><p>내용을 입력해주세요.</p>' }
+            { slug: 'privacy-policy', title: '개인정보처리방침', content: '<p>개인정보처리방침에 대한 내용을 이곳에 입력해주세요.</p>' },
+            { slug: 'reject-email-collection', title: '이메일무단수집거부', content: '<p>본 웹사이트에 게시된 이메일 주소가 전자우편 수집 프로그램이나<br>그 밖의 기술적 장치를 이용하여 무단으로 수집되는 것을 거부하며,<br>이를 위반 시 <strong>정보통신망 이용촉진 및 정보보호 등에 관한 법률</strong>에 의해<br>형사 처벌됨을 유념하시기 바랍니다.</p>' },
+            { slug: 'terms-of-service', title: '이용약관', content: '<p>이용약관에 대한 내용을 이곳에 입력해주세요.</p>' },
+            { slug: 'lifestyle-1', title: '라이프스타일 제안 1', content: '<p>첫 번째 라이프스타일 제안에 대한 내용을 이곳에 입력해주세요.</p>' },
+            { slug: 'lifestyle-2', title: '라이프스타일 제안 2', content: '<p>두 번째 라이프스타일 제안에 대한 내용을 이곳에 입력해주세요.</p>' },
+            { slug: 'lifestyle-3', title: '라이프스타일 제안 3', content: '<p>세 번째 라이프스타일 제안에 대한 내용을 이곳에 입력해주세요.</p>' }
         ];
 
         for (const page of pages) {
             await client.query(
-                'INSERT INTO pages (slug, title, content) VALUES ($1, $2, $3) ON CONFLICT (slug) DO NOTHING',
+                'INSERT INTO pages (slug, title, content) VALUES ($1, $2, $3) ON CONFLICT (slug) DO UPDATE SET title = EXCLUDED.title, content = EXCLUDED.content, updated_at = CURRENT_TIMESTAMP',
                 [page.slug, page.title, page.content]
             );
         }
