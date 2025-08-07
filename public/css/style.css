@@ -510,6 +510,55 @@ footer {
 .btn-sm-danger:hover { background-color: #fdf2f2; }
 
 
+/* --- 정책 페이지 스타일 --- */
+.policy-page-section {
+    background-color: var(--light-gray-bg);
+    padding: 60px 0;
+}
+
+.document-card {
+    background-color: #fff;
+    padding: 50px 60px;
+    border-radius: 12px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+    border: 1px solid var(--border-color);
+}
+
+.document-card h1 {
+    font-size: 2.5rem;
+    margin-bottom: 30px;
+    color: var(--primary-color);
+    padding-bottom: 20px;
+    border-bottom: 2px solid var(--border-color);
+}
+
+.document-card h2 {
+    font-size: 1.8rem;
+    margin-top: 40px;
+    margin-bottom: 20px;
+    color: var(--primary-color);
+}
+
+.document-card p, .document-card li {
+    line-height: 1.8;
+    color: #333;
+}
+
+.document-card strong {
+    color: var(--secondary-color);
+    font-weight: 500;
+}
+
+/* 이메일무단수집거부 페이지 전용 */
+.document-card.text-center {
+    text-align: center;
+}
+.document-card .icon {
+    font-size: 4rem;
+    color: var(--primary-color);
+    margin-bottom: 20px;
+}
+
 /* --- 반응형 --- */
 @media (max-width: 1200px) {
     .listing-grid { grid-template-columns: repeat(2, 1fr); }
