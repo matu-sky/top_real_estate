@@ -128,7 +128,7 @@ nav a:hover {
     background: #fff;
     text-decoration: none;
     color: var(--text-color);
-    border-radius: 12px;
+    border-radius: 0;
     overflow: hidden;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
     transition: all 0.3s ease-in-out;
