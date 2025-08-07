@@ -118,6 +118,7 @@ nav a:hover {
 /* --- 최신 등록 매물 섹션 (디자인 개선됨) --- */
 .listing-section {
     background-color: var(--light-gray-bg);
+    padding-top: 0;
 }
 .listing-grid {
     display: grid;
