@@ -77,6 +77,20 @@
                     <% } else { %>
                         <p>현재 등록된 매물이 없습니다.</p>
                     <% } %>
+
+                    <% if (youtubePost) { %>
+                        <a href="/board/<%= youtubePost.board_slug %>/<%= youtubePost.id %>" class="listing-card">
+                            <div class="image-wrapper">
+                                <span class="tag">동영상</span>
+                                <img src="<%= youtubePost.thumbnail_url %>" alt="<%= youtubePost.title %>">
+                            </div>
+                            <div class="listing-info">
+                                <h3><%= youtubePost.title %></h3>
+                                <p class="details">동영상 갤러리</p>
+                                <p class="price">바로가기</p>
+                            </div>
+                        </a>
+                    <% } %>
                 </div>
             </div>
         </section>

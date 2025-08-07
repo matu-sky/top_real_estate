@@ -145,13 +145,23 @@ router.get('/', async (req, res) => {
     let client;
     try {
         client = await pool.connect();
-        const propertiesResult = await client.query("SELECT * FROM properties ORDER BY created_at DESC LIMIT 4");
+        const propertiesResult = await client.query("SELECT * FROM properties ORDER BY created_at DESC LIMIT 3");
         const properties = propertiesResult.rows.map(row => {
             if (row.address) {
                 row.short_address = row.address.split(' ').slice(0, 3).join(' ');
             }
             return row;
         });
+
+        const youtubePostResult = await client.query(`
+            SELECT p.id, p.title, p.thumbnail_url, b.slug as board_slug
+            FROM posts p
+            JOIN boards b ON p.board_id = b.id
+            WHERE b.slug = 'utube'
+            ORDER BY p.created_at DESC
+            LIMIT 1;
+        `);
+        const youtubePost = youtubePostResult.rows[0];
 
         const recentPostsResult = await client.query(`
             SELECT p.id, p.title, p.created_at, b.slug as board_slug, b.name as board_name
@@ -166,6 +176,7 @@ router.get('/', async (req, res) => {
         res.render('index', { 
             content: res.locals.settings, 
             properties, 
+            youtubePost, 
             recentPosts 
         });
     } catch (err) {
@@ -173,6 +184,7 @@ router.get('/', async (req, res) => {
         res.render('index', { 
             content: res.locals.settings, 
             properties: [], 
+            youtubePost: null, 
             recentPosts: [] 
         });
     } finally {
