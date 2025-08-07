@@ -382,6 +382,7 @@ footer {
 }
 .sub-nav-item:hover {
     color: var(--primary-color);
+    border-bottom-color: var(--primary-color);
 }
 .sub-nav-item.active {
     color: var(--primary-color);
