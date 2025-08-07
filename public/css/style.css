@@ -103,6 +103,9 @@ nav a:hover {
 .section-title p { font-size: 1.1rem; color: #6c757d; margin: 0; }
 
 /* --- 라이프스타일 제안 섹션 --- */
+#lifestyle {
+    padding-bottom: 0;
+}
 .lifestyle-grid { display: grid; grid-template-columns: repeat(3, 1fr); }
 .lifestyle-card { position: relative; color: #fff; min-height: 450px; display: flex; flex-direction: column; justify-content: flex-end; padding: 30px; overflow: hidden; text-decoration: none; }
 .lifestyle-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0) 50%); z-index: 1; transition: background 0.3s; }
