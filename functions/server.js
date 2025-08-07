@@ -122,7 +122,8 @@ async function loadSettings(req, res, next) {
             { name: '매물 관리', url: '/listings' },
             { name: '게시판 설정', url: '/admin/board_settings' },
             { name: '주거용 매물등록', url: '/add_property' },
-            { name: '메뉴 관리', url: '/admin/menu' }
+            { name: '메뉴 관리', url: '/admin/menu' },
+            { name: '페이지 관리', url: '/admin/pages' }
         ];
         next();
     } catch (err) {
@@ -459,6 +460,103 @@ router.get('/add_factory_property', requireLogin, (req, res) => {
 });
 
 // --- 홈페이지 메뉴 관리 ---
+
+// --- 페이지 관리 ---
+router.get('/admin/pages', requireLogin, async (req, res) => {
+    let client;
+    try {
+        client = await pool.connect();
+        const result = await client.query('SELECT * FROM pages ORDER BY created_at DESC');
+        res.render('page_management', { menus: res.locals.menus, pages: result.rows });
+    } catch (err) {
+        console.error('DB 조회 오류:', err.stack);
+        res.status(500).send('페이지 목록을 가져오는 데 실패했습니다.');
+    } finally {
+        if (client) client.release();
+    }
+});
+
+router.get('/admin/pages/edit/:id', requireLogin, async (req, res) => {
+    const { id } = req.params;
+    let client;
+    try {
+        client = await pool.connect();
+        const result = await client.query('SELECT * FROM pages WHERE id = $1', [id]);
+        if (result.rows.length === 0) {
+            return res.status(404).send('페이지를 찾을 수 없습니다.');
+        }
+        res.render('edit_page', { menus: res.locals.menus, page: result.rows[0] });
+    } catch (err) {
+        console.error('DB 조회 오류:', err.stack);
+        res.status(500).send('페이지 정보를 가져오는 데 실패했습니다.');
+    } finally {
+        if (client) client.release();
+    }
+});
+
+router.post('/admin/pages/update/:id', requireLogin, async (req, res) => {
+    const { id } = req.params;
+    let body = {};
+    if (req.body instanceof Buffer) {
+        body = querystring.parse(req.body.toString());
+    } else {
+        body = req.body;
+    }
+    const { title, content } = body;
+    const query = 'UPDATE pages SET title = $1, content = $2, updated_at = CURRENT_TIMESTAMP WHERE id = $3';
+    const params = [title, content, id];
+
+    let client;
+    try {
+        client = await pool.connect();
+        await client.query(query, params);
+        res.redirect('/admin/pages');
+    } catch (err) {
+        console.error('DB 업데이트 오류:', err.stack);
+        res.status(500).send('페이지 업데이트에 실패했습니다.');
+    } finally {
+        if (client) client.release();
+    }
+});
+
+router.post('/admin/pages/delete/:id', requireLogin, async (req, res) => {
+    const { id } = req.params;
+    let client;
+    try {
+        client = await pool.connect();
+        await client.query('DELETE FROM pages WHERE id = $1', [id]);
+        res.redirect('/admin/pages');
+    } catch (err) {
+        console.error('DB 삭제 오류:', err.stack);
+        res.status(500).send('페이지 삭제에 실패했습니다.');
+    } finally {
+        if (client) client.release();
+    }
+});
+
+// --- End of 페이지 관리 ---
+
+// --- 동적 페이지 라우트 ---
+router.get('/page/:slug', async (req, res) => {
+    const { slug } = req.params;
+    let client;
+    try {
+        client = await pool.connect();
+        const result = await client.query('SELECT * FROM pages WHERE slug = $1', [slug]);
+        if (result.rows.length === 0) {
+            return res.status(404).send('페이지를 찾을 수 없습니다.');
+        }
+        res.render('page', { content: res.locals.settings, page: result.rows[0] });
+    } catch (err) {
+        console.error('DB 조회 오류:', err.stack);
+        res.status(500).send('페이지를 가져오는 데 실패했습니다.');
+    } finally {
+        if (client) client.release();
+    }
+});
+
+// --- 홈페이지 메뉴 관리 ---
+
 router.get('/admin/menu', requireLogin, (req, res) => {
     res.render('menu_settings', { menus: res.locals.menus, content: res.locals.settings });
 });

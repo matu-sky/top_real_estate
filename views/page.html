@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>라이프스타일 제안 3 | 탑 부동산</title>
+    <title><%= page.title %> | 탑 부동산</title>
     <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
@@ -12,9 +12,10 @@
     <main class="policy-page-section">
         <div class="container">
             <div class="document-card">
-                <h1>라이프스타일 제안 3</h1>
-                <p>이곳에 세 번째 라이프스타일 제안에 대한 내용을 자유롭게 작성해주세요.</p>
-                <!-- 예시: 이미지, 텍스트, 매물 목록 등 -->
+                <h1><%= page.title %></h1>
+                <div class="page-content">
+                    <%- page.content %>
+                </div>
             </div>
         </div>
     </main>

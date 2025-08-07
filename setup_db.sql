@@ -88,3 +88,47 @@ CREATE POLICY "Allow all access for posts" ON public.posts
     FOR ALL
     USING (true)
     WITH CHECK (true);
+
+CREATE TABLE IF NOT EXISTS public.pages (
+    id BIGSERIAL PRIMARY KEY,
+    slug TEXT NOT NULL UNIQUE,
+    title TEXT NOT NULL,
+    content TEXT,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);
+
+ALTER TABLE public.pages ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow public read access for pages" ON public.pages;
+CREATE POLICY "Allow public read access for pages" ON public.pages
+    FOR SELECT
+    USING (true);
+
+DROP POLICY IF EXISTS "Allow all access for pages" ON public.pages;
+CREATE POLICY "Allow all access for pages" ON public.pages
+    FOR ALL
+    USING (true)
+    WITH CHECK (true);
+
+CREATE TABLE IF NOT EXISTS public.pages (
+    id BIGSERIAL PRIMARY KEY,
+    slug TEXT NOT NULL UNIQUE,
+    title TEXT NOT NULL,
+    content TEXT,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);
+
+ALTER TABLE public.pages ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow public read access for pages" ON public.pages;
+CREATE POLICY "Allow public read access for pages" ON public.pages
+    FOR SELECT
+    USING (true);
+
+DROP POLICY IF EXISTS "Allow all access for pages" ON public.pages;
+CREATE POLICY "Allow all access for pages" ON public.pages
+    FOR ALL
+    USING (true)
+    WITH CHECK (true);
