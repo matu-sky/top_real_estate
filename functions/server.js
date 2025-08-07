@@ -107,6 +107,7 @@ async function loadSettings(req, res, next) {
             dbMenus = [
                 { text: '라이프스타일 제안', url: '/#lifestyle' },
                 { text: '최신 매물', url: '/#recent-listings' },
+                { text: '커뮤니티센터', url: '/board/notice' },
                 { text: '컨설팅 상담신청', url: '/#about' },
                 { text: '오시는 길', url: '/#location' }
             ];
