@@ -684,6 +684,12 @@ router.post('/request_contact/submit', (req, res) => {
 
 // --- 게시판 관련 라우트 ---
 
+// 라이프스타일 제안 페이지
+router.get('/lifestyle/:id', (req, res) => {
+    const { id } = req.params;
+    res.render(`lifestyle-${id}`, { content: res.locals.settings });
+});
+
 // 개인정보처리방침 페이지
 router.get('/privacy-policy', (req, res) => {
     res.render('privacy-policy', { content: res.locals.settings });
