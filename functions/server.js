@@ -546,7 +546,12 @@ router.get('/page/:slug', async (req, res) => {
         if (result.rows.length === 0) {
             return res.status(404).send('페이지를 찾을 수 없습니다.');
         }
-        res.render('page', { content: res.locals.settings, page: result.rows[0] });
+        const page = result.rows[0];
+        // HTML 엔티티를 문자로 변환 (예: &lt;p&gt; -> <p>)
+        if (page.content) {
+            page.content = page.content.replace(/&lt;/g, '<').replace(/&gt;/g, '>');
+        }
+        res.render('page', { content: res.locals.settings, page });
     } catch (err) {
         console.error('DB 조회 오류:', err.stack);
         res.status(500).send('페이지를 가져오는 데 실패했습니다.');
