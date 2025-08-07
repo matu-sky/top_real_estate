@@ -684,6 +684,21 @@ router.post('/request_contact/submit', (req, res) => {
 
 // --- 게시판 관련 라우트 ---
 
+// 개인정보처리방침 페이지
+router.get('/privacy-policy', (req, res) => {
+    res.render('privacy-policy', { content: res.locals.settings });
+});
+
+// 이메일무단수집거부 페이지
+router.get('/reject-email-collection', (req, res) => {
+    res.render('reject-email-collection', { content: res.locals.settings });
+});
+
+// 이용약관 페이지
+router.get('/terms-of-service', (req, res) => {
+    res.render('terms-of-service', { content: res.locals.settings });
+});
+
 // 게시판 페이지 (글 목록)
 router.get('/board/:slug', async (req, res) => {
     const { slug } = req.params;

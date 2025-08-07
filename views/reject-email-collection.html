@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>이메일무단수집거부 | 탑 부동산</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .policy-container { padding-top: 60px; padding-bottom: 80px; text-align: center; }
+        .policy-container h1 { font-size: 2.5rem; margin-bottom: 30px; }
+        .policy-container p { line-height: 1.8; color: #333; font-size: 1.1rem; max-width: 700px; margin: 0 auto; }
+        .policy-container .icon { font-size: 4rem; color: var(--primary-color); margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+    <%- include('partials/header.html') %>
+
+    <main class="container policy-container">
+        <div class="icon">✉️</div>
+        <h1>이메일무단수집거부</h1>
+        <p>
+            본 웹사이트에 게시된 이메일 주소가 전자우편 수집 프로그램이나<br>
+            그 밖의 기술적 장치를 이용하여 무단으로 수집되는 것을 거부하며,<br>
+            이를 위반 시 <strong>정보통신망 이용촉진 및 정보보호 등에 관한 법률</strong>에 의해<br>
+            형사 처벌됨을 유념하시기 바랍니다.
+        </p>
+    </main>
+
+    <%- include('partials/footer.html') %>
+</body>
+</html>
