@@ -373,9 +373,9 @@ footer {
 }
 .sub-nav-item {
     padding: 10px 20px;
-    font-size: 1.1rem;
+    font-size: 1rem;
     font-weight: 500;
-    color: #6c757d;
+    color: #000000;
     text-decoration: none;
     border-bottom: 3px solid transparent;
     transition: all 0.3s ease;
