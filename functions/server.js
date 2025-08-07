@@ -144,17 +144,36 @@ router.get('/', async (req, res) => {
     let client;
     try {
         client = await pool.connect();
-        const result = await client.query("SELECT * FROM properties ORDER BY created_at DESC LIMIT 4");
-        const properties = result.rows.map(row => {
+        const propertiesResult = await client.query("SELECT * FROM properties ORDER BY created_at DESC LIMIT 4");
+        const properties = propertiesResult.rows.map(row => {
             if (row.address) {
                 row.short_address = row.address.split(' ').slice(0, 3).join(' ');
             }
             return row;
         });
-        res.render('index', { content: res.locals.settings, properties });
+
+        const recentPostsResult = await client.query(`
+            SELECT p.id, p.title, p.created_at, b.slug as board_slug, b.name as board_name
+            FROM posts p
+            JOIN boards b ON p.board_id = b.id
+            WHERE b.slug IN ('notice', 'rearinfo')
+            ORDER BY p.created_at DESC
+            LIMIT 5;
+        `);
+        const recentPosts = recentPostsResult.rows;
+
+        res.render('index', { 
+            content: res.locals.settings, 
+            properties, 
+            recentPosts 
+        });
     } catch (err) {
         console.error('DB 조회 오류:', err.stack);
-        res.render('index', { content: res.locals.settings, properties: [] });
+        res.render('index', { 
+            content: res.locals.settings, 
+            properties: [], 
+            recentPosts: [] 
+        });
     } finally {
         if (client) client.release();
     }
