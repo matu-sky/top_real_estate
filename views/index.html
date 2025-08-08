@@ -62,7 +62,7 @@
                 <div class="listing-grid">
                     <% if (properties && properties.length > 0) { %>
                         <% properties.forEach(function(property) { %>
-                            <a href="/property/<%= property.id %>" class="listing-card">
+                            <a href="<%= property.is_placeholder ? '#' : '/property/' + property.id %>" class="listing-card <%= property.is_placeholder ? 'placeholder' : '' %>">
                                 <div class="image-wrapper">
                                     <span class="tag"><%= property.category %></span>
                                     <img src="<%= property.image_path ? property.image_path.split(',')[0] : '/images/default_property.jpg' %>" alt="<%= property.title %>">

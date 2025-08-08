@@ -150,16 +150,29 @@ router.get('/', async (req, res) => {
         const commercialResult = await client.query("SELECT * FROM properties WHERE category = '상업용' ORDER BY created_at DESC LIMIT 1");
         const industrialResult = await client.query("SELECT * FROM properties WHERE category = '공업용' ORDER BY created_at DESC LIMIT 1");
 
-        const properties = [
-            ...residentialResult.rows,
-            ...commercialResult.rows,
-            ...industrialResult.rows
-        ].map(row => {
-            if (row.address) {
-                row.short_address = row.address.split(' ').slice(0, 3).join(' ');
+        const properties = [];
+        const categories = ['주거용', '상업용', '공업용'];
+        const results = [residentialResult, commercialResult, industrialResult];
+
+        for (let i = 0; i < categories.length; i++) {
+            if (results[i].rows.length > 0) {
+                const property = results[i].rows[0];
+                if (property.address) {
+                    property.short_address = property.address.split(' ').slice(0, 3).join(' ');
+                }
+                properties.push(property);
+            } else {
+                properties.push({
+                    id: 0, // Placeholder ID
+                    title: `${categories[i]} 매물 없음`,
+                    category: categories[i],
+                    price: '-',
+                    short_address: '등록된 매물이 없습니다.',
+                    image_path: '/images/default_property.jpg',
+                    is_placeholder: true
+                });
             }
-            return row;
-        });
+        }
 
         const youtubePostResult = await client.query(`
             SELECT p.id, p.title, p.thumbnail_url, b.slug as board_slug
