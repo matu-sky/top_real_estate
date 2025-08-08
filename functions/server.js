@@ -194,6 +194,12 @@ router.get('/', async (req, res) => {
         `);
         const recentPosts = recentPostsResult.rows;
 
+        // Modify lifestyle section titles
+        if (res.locals.settings) {
+            res.locals.settings.lifestyle_section_title = '라이프스타일별 제안';
+            res.locals.settings.lifestyle_section_subtitle = '당신의 목표와 꿈에 맞는 최적의 제안을 만나보세요.';
+        }
+
         res.render('index', { 
             content: res.locals.settings, 
             properties, 
