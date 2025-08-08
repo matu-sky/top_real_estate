@@ -631,6 +631,12 @@ footer {
     align-items: flex-start;
 }
 
+@media (max-width: 992px) {
+    .location-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
 .map-wrapper {
     width: 100%;
     height: 400px; /* 지도 높이 지정 */
