@@ -131,7 +131,7 @@
         <!-- 4. 같은 카테고리의 다른 매물 -->
         <% if (relatedProperties && relatedProperties.length > 0) { %>
             <div class="related-properties-section">
-                <h2>같은 카테고리의 다른 매물</h2>
+                <h2><%= property.category %> 다른 매물</h2>
                 <div class="related-properties-list">
                     <% relatedProperties.forEach(function(p) { %>
                         <a href="/property/<%= p.id %>" class="related-property-item">
