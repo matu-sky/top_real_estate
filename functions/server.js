@@ -1128,7 +1128,31 @@ router.get('/property/:id', async (req, res) => {
             if (property.address) {
                 property.short_address = property.address.split(' ').slice(0, 3).join(' ');
             }
-            res.render('property_detail', { property, content: res.locals.settings });
+
+            const page = parseInt(req.query.page, 10) || 1;
+            const limit = 5;
+            const offset = (page - 1) * limit;
+
+            const countResult = await client.query(
+                "SELECT COUNT(*) FROM properties WHERE category = $1 AND id != $2",
+                [property.category, id]
+            );
+            const totalCount = parseInt(countResult.rows[0].count, 10);
+            const totalPages = Math.ceil(totalCount / limit);
+
+            const relatedPropertiesResult = await client.query(
+                "SELECT * FROM properties WHERE category = $1 AND id != $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4",
+                [property.category, id, limit, offset]
+            );
+            const relatedProperties = relatedPropertiesResult.rows;
+
+            res.render('property_detail', { 
+                property, 
+                relatedProperties, 
+                content: res.locals.settings,
+                currentPage: page,
+                totalPages
+            });
         } else {
             res.status(404).send("매물을 찾을 수 없습니다.");
         }

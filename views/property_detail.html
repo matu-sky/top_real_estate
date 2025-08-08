@@ -127,6 +127,43 @@
                 </div>
             </div>
         <% } %>
+
+        <!-- 4. 같은 카테고리의 다른 매물 -->
+        <% if (relatedProperties && relatedProperties.length > 0) { %>
+            <div class="related-properties-section">
+                <h2>같은 카테고리의 다른 매물</h2>
+                <div class="related-properties-list">
+                    <% relatedProperties.forEach(function(p) { %>
+                        <a href="/property/<%= p.id %>" class="related-property-item">
+                            <div class="related-property-image">
+                                <img src="<%= p.image_path ? p.image_path.split(',')[0] : '/images/default_property.jpg' %>" alt="<%= p.title %>">
+                            </div>
+                            <div class="related-property-info">
+                                <h3><%= p.title %></h3>
+                                <p class="price"><%= p.price %></p>
+                                <p class="address"><%= p.address %></p>
+                            </div>
+                        </a>
+                    <% }); %>
+                </div>
+
+                <% if (totalPages > 1) { %>
+                    <div class="pagination">
+                        <% if (currentPage > 1) { %>
+                            <a href="?page=<%= currentPage - 1 %>" class="page-link">이전</a>
+                        <% } %>
+
+                        <% for (let i = 1; i <= totalPages; i++) { %>
+                            <a href="?page=<%= i %>" class="page-link <%= i === currentPage ? 'active' : '' %>"><%= i %></a>
+                        <% } %>
+
+                        <% if (currentPage < totalPages) { %>
+                            <a href="?page=<%= currentPage + 1 %>" class="page-link">다음</a>
+                        <% } %>
+                    </div>
+                <% } %>
+            </div>
+        <% } %>
     </main>
 
     <%- include('partials/footer.html') %>

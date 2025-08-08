@@ -740,3 +740,100 @@ footer {
         grid-template-columns: 1fr; /* 모바일에서는 1단으로 변경 */
     }
 }
+
+/* --- 관련 매물 섹션 --- */
+.related-properties-section {
+    margin-top: 80px;
+    padding-top: 50px;
+    border-top: 1px solid var(--border-color);
+}
+
+.related-properties-section h2 {
+    font-size: 1.8rem;
+    margin-bottom: 30px;
+}
+
+.related-properties-list {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.related-property-item {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    padding: 20px;
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    text-decoration: none;
+    color: var(--text-color);
+    transition: all 0.3s ease;
+}
+
+.related-property-item:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(13, 44, 84, 0.1);
+    border-color: var(--primary-color);
+}
+
+.related-property-image {
+    width: 150px;
+    height: 100px;
+    flex-shrink: 0;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.related-property-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.related-property-info h3 {
+    font-size: 1.2rem;
+    margin: 0 0 10px 0;
+}
+
+.related-property-info .price {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--primary-color);
+    margin-bottom: 8px;
+}
+
+.related-property-info .address {
+    font-size: 0.9rem;
+    color: #6c757d;
+    margin: 0;
+}
+
+/* --- 페이지네이션 --- */
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 40px;
+    gap: 10px;
+}
+
+.page-link {
+    padding: 10px 15px;
+    border: 1px solid var(--border-color);
+    color: var(--primary-color);
+    text-decoration: none;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+}
+
+.page-link:hover {
+    background-color: var(--light-gray-bg);
+    border-color: var(--primary-color);
+}
+
+.page-link.active {
+    background-color: var(--primary-color);
+    color: #fff;
+    border-color: var(--primary-color);
+}
