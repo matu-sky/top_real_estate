@@ -148,10 +148,10 @@ router.get('/', async (req, res) => {
         client = await pool.connect();
         const residentialResult = await client.query("SELECT * FROM properties WHERE category = '주거용' ORDER BY created_at DESC LIMIT 1");
         const commercialResult = await client.query("SELECT * FROM properties WHERE category = '상업용' ORDER BY created_at DESC LIMIT 1");
-        const industrialResult = await client.query("SELECT * FROM properties WHERE category = '공업용' ORDER BY created_at DESC LIMIT 1");
+        const industrialResult = await client.query("SELECT * FROM properties WHERE category = '공장/지산' ORDER BY created_at DESC LIMIT 1");
 
         const properties = [];
-        const categories = ['주거용', '상업용', '공업용'];
+        const categories = ['주거용', '상업용', '공장/지산'];
         const results = [residentialResult, commercialResult, industrialResult];
 
         for (let i = 0; i < categories.length; i++) {
