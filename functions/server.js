@@ -12,6 +12,28 @@ const readdir = util.promisify(fs.readdir);
 const nodemailer = require('nodemailer');
 
 const app = express();
+
+// MIDDLEWARE - 가장 먼저 실행되도록 순서 조정
+app.use(express.urlencoded({ extended: true }));
+app.use(express.json()); 
+
+// 모든 요청을 로깅하는 미들웨어 (디버깅용)
+app.use((req, res, next) => {
+    console.log(`--- INCOMING REQUEST ---`);
+    console.log(`[${new Date().toISOString()}] ${req.method} ${req.originalUrl}`);
+    console.log(`Headers: ${JSON.stringify(req.headers, null, 2)}`);
+    // req.body가 버퍼일 수 있으므로, 안전하게 문자열로 변환하여 로깅
+    if (req.body) {
+        if (req.body instanceof Buffer) {
+            console.log(`Body: ${req.body.toString()}`);
+        } else {
+            console.log(`Body: ${JSON.stringify(req.body)}`);
+        }
+    }
+    console.log(`----------------------`);
+    next();
+});
+
 const projectRoot = path.resolve(__dirname, '..');
 
 // --- Nodemailer 설정 ---
@@ -60,8 +82,6 @@ const supabase = createClient(supabaseUrl, supabaseAnonKey);
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
-app.use(express.urlencoded({ extended: true }));
-app.use(express.json()); // JSON 요청 본문을 파싱하기 위해 추가
 app.use(session({
     secret: 'your-secret-key',
     resave: false,
@@ -380,7 +400,22 @@ router.get('/request_contact', (req, res) => {
 });
 
 router.post('/request_contact/submit', async (req, res) => {
-    const { type, name, contact_method, email, phone } = req.body;
+    console.log('--- NEW REQUEST RECEIVED ---');
+    console.log('Request Headers:', JSON.stringify(req.headers, null, 2));
+    console.log('Request Body:', req.body.toString());
+    console.log('--------------------------');
+
+    let body = req.body;
+    // serverless-http 환경에서 JSON body가 버퍼로 들어오는 경우 수동 파싱
+    if (req.body instanceof Buffer) {
+        try {
+            body = JSON.parse(req.body.toString());
+        } catch (e) {
+            return res.status(400).json({ success: false, message: 'Invalid JSON format.' });
+        }
+    }
+
+    const { type, name, contact_method, email, phone } = body;
     const contact_info = contact_method === 'email' ? email : phone;
 
     const query = `
