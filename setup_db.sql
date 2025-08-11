@@ -73,12 +73,26 @@ CREATE TABLE IF NOT EXISTS public.consultation_requests (
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE IF NOT EXISTS public.consultation_details (
+    id BIGSERIAL PRIMARY KEY,
+    request_id BIGINT NOT NULL REFERENCES public.consultation_requests(id) ON DELETE CASCADE,
+    property_type TEXT,
+    desired_area TEXT,
+    budget TEXT,
+    rooms TEXT,
+    business_type TEXT,
+    required_area TEXT,
+    other_requests TEXT,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Enable Row Level Security for all tables
 ALTER TABLE public.properties ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.boards ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.posts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.pages ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.consultation_requests ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.consultation_details ENABLE ROW LEVEL SECURITY;
 
 -- Policies for properties
 DROP POLICY IF EXISTS "Allow public read access" ON public.properties;
@@ -107,6 +121,10 @@ CREATE POLICY "Allow all access for pages" ON public.pages FOR ALL USING (true) 
 -- Policies for consultation_requests
 DROP POLICY IF EXISTS "Allow all access for consultation_requests" ON public.consultation_requests;
 CREATE POLICY "Allow all access for consultation_requests" ON public.consultation_requests FOR ALL USING (true) WITH CHECK (true);
+
+-- Policies for consultation_details
+DROP POLICY IF EXISTS "Allow all access for consultation_details" ON public.consultation_details;
+CREATE POLICY "Allow all access for consultation_details" ON public.consultation_details FOR ALL USING (true) WITH CHECK (true);
 
 
 -- Insert initial data
