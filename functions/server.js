@@ -120,6 +120,7 @@ async function loadSettings(req, res, next) {
         // 관리자 페이지 사이드바 메뉴
         res.locals.menus = [
             { name: '대시보드', url: '/dashboard' },
+            { name: '상담 신청 관리', url: '/admin/consultations' },
             { name: '홈페이지 관리', url: '/admin' },
             { name: '매물 관리', url: '/listings' },
             { name: '게시판 설정', url: '/admin/board_settings' },
@@ -568,6 +569,21 @@ router.post('/admin/pages/delete/:id', requireLogin, async (req, res) => {
     }
 });
 
+// --- 상담 신청 관리 ---
+router.get('/admin/consultations', requireLogin, async (req, res) => {
+    let client;
+    try {
+        client = await pool.connect();
+        const result = await client.query('SELECT * FROM consultation_requests ORDER BY created_at DESC');
+        res.render('admin_consultations', { menus: res.locals.menus, requests: result.rows });
+    } catch (err) {
+        console.error('DB 조회 오류 (상담 신청 목록):', err.stack);
+        res.status(500).send('상담 신청 목록을 가져오는 데 실패했습니다.');
+    } finally {
+        if (client) client.release();
+    }
+});
+
 // --- End of 페이지 관리 ---
 
 // --- 동적 페이지 라우트 ---
@@ -800,22 +816,33 @@ router.get('/request_contact', (req, res) => {
     res.render('request_contact', { type, content: res.locals.settings });
 });
 
-router.post('/request_contact/submit', (req, res) => {
+router.post('/request_contact/submit', async (req, res) => {
     const { type, name, contact_method, email, phone } = req.body;
+    const contact_info = contact_method === 'email' ? email : phone;
 
-    console.log('--- 새로운 상담 접수 ---');
-    console.log('상담 유형:', type);
-    console.log('고객 성함:', name);
-    console.log('선호 연락 방식:', contact_method);
-    if (contact_method === 'email') {
-        console.log('이메일:', email);
-    } else if (contact_method === 'sms') {
-        console.log('휴대폰 번호:', phone);
+    const query = `
+        INSERT INTO consultation_requests (consultation_type, customer_name, contact_method, contact_info)
+        VALUES ($1, $2, $3, $4)
+    `;
+    const params = [type, name, contact_method, contact_info];
+
+    let client;
+    try {
+        client = await pool.connect();
+        await client.query(query, params);
+        console.log('--- 새로운 상담 접수 (DB 저장 완료) ---');
+        console.log('상담 유형:', type);
+        console.log('고객 성함:', name);
+        console.log('선호 연락 방식:', contact_method);
+        console.log('연락처:', contact_info);
+        console.log('------------------------------------');
+        res.json({ success: true, message: '상담 신청이 정상적으로 접수되었습니다.' });
+    } catch (err) {
+        console.error('DB 삽입 오류 (상담 신청):', err.stack);
+        res.status(500).json({ success: false, message: '상담 신청 접수 중 오류가 발생했습니다.' });
+    } finally {
+        if (client) client.release();
     }
-    console.log('--------------------------');
-
-    // 성공했다는 JSON 응답을 클라이언트로 보냄
-    res.json({ success: true, message: '상담 신청이 정상적으로 접수되었습니다.' });
 });
 
 
