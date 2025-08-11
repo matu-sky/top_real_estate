@@ -32,12 +32,13 @@
             </form>
         </main>
     </div>
+    <script src="https://cdn.tiny.cloud/1/no-api-key/tinymce/7/tinymce.min.js" referrerpolicy="origin"></script>
     <script>
-        ClassicEditor
-            .create(document.querySelector('#content'))
-            .catch(error => {
-                console.error(error);
-            });
+        tinymce.init({
+            selector: 'textarea#content',
+            plugins: 'code table lists image link',
+            toolbar: 'undo redo | blocks | bold italic | alignleft aligncenter alignright | indent outdent | bullist numlist | code | table | image | link'
+        });
     </script>
 </body>
 </html>
