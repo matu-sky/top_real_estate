@@ -30,7 +30,7 @@
                         <tbody>
                             <% requests.forEach(function(request) { %>
                                 <tr>
-                                    <td><%= new Date(request.created_at).toLocaleString('ko-KR') %></td>
+                                    <td><%= new Date(request.created_at).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' }) %></td>
                                     <td><%= request.consultation_type %></td>
                                     <td><%= request.customer_name %></td>
                                     <td><%= request.contact_method %></td>

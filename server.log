@@ -1,0 +1,30 @@
+[dotenv@17.2.1] injecting env (7) from .env -- tip: 🔐 prevent building .env in docker: https://dotenvx.com/prebuild
+로컬 서버가 http://localhost:8080 에서 실행 중입니다.
+--- 새로운 상담 접수 (DB 저장 완료) ---
+Request ID: 10
+상세 정보 입력 요청 이메일 발송 완료: {
+  "accepted": [
+    "bongsang1962@gmail.com"
+  ],
+  "rejected": [],
+  "ehlo": [
+    "SIZE 35882577",
+    "8BITMIME",
+    "AUTH LOGIN PLAIN XOAUTH2 PLAIN-CLIENTTOKEN OAUTHBEARER XOAUTH",
+    "ENHANCEDSTATUSCODES",
+    "PIPELINING",
+    "CHUNKING",
+    "SMTPUTF8"
+  ],
+  "envelopeTime": 407,
+  "messageTime": 410,
+  "messageSize": 1643,
+  "response": "250 2.0.0 OK  1754890089 d9443c01a7336-242be41cc16sm77012845ad.52 - gsmtp",
+  "envelope": {
+    "from": "bongsang1962@gmail.com",
+    "to": [
+      "bongsang1962@gmail.com"
+    ]
+  },
+  "messageId": "<741f449e-3162-fb0e-fb4b-a661a41ec641@gmail.com>"
+}

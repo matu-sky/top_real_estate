@@ -61,6 +61,7 @@ const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
 app.use(express.urlencoded({ extended: true }));
+app.use(express.json()); // JSON 요청 본문을 파싱하기 위해 추가
 app.use(session({
     secret: 'your-secret-key',
     resave: false,
@@ -416,9 +417,9 @@ router.post('/request_contact/submit', async (req, res) => {
 
             transporter.sendMail(mailOptions, (error, info) => {
                 if (error) {
-                    console.error('이메일 발송 오류:', error);
+                    console.error('이메일 발송 오류:', JSON.stringify(error, null, 2));
                 } else {
-                    console.log('상세 정보 입력 요청 이메일 발송 완료:', info.response);
+                    console.log('상세 정보 입력 요청 이메일 발송 완료:', JSON.stringify(info, null, 2));
                 }
             });
         }
