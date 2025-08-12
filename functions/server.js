@@ -343,6 +343,51 @@ router.use('/dashboard', requireLogin);
 router.use('/listings', requireLogin);
 router.use('/add_property', requireLogin);
 
+router.get('/add_property', requireLogin, (req, res) => {
+    res.render('add_property', { menus: res.locals.menus });
+});
+
+router.post('/listings/add', requireLogin, async (req, res) => {
+    const body = req.body;
+    let client;
+
+    try {
+        client = await pool.connect();
+
+        const fields = [
+            'title', 'price', 'category', 'area', 'address', 'exclusive_area',
+            'approval_date', 'purpose', 'total_floors', 'floor', 'direction',
+            'direction_standard', 'transaction_type', 'parking', 'maintenance_fee',
+            'move_in_date', 'description', 'youtube_url', 'image_path'
+        ];
+        
+        const placeholders = fields.map((_, i) => `${i + 1}`).join(', ');
+        const columnNames = fields.join(', ');
+        
+        const values = fields.map(field => {
+            if (field === 'image_path') {
+                return body.image_urls || null;
+            }
+            return body[field] || null;
+        });
+
+        const query = `
+            INSERT INTO properties (${columnNames})
+            VALUES (${placeholders})
+        `;
+
+        await client.query(query, values);
+
+        res.status(200).send('매물 등록에 성공했습니다.');
+
+    } catch (err) {
+        console.error('DB 삽입 오류 (새 매물):', err.stack);
+        res.status(500).send('매물 등록 중 오류가 발생했습니다.');
+    } finally {
+        if (client) client.release();
+    }
+});
+
 router.get('/listings', requireLogin, async (req, res) => {
     const { category } = req.query;
     let client;
