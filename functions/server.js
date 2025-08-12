@@ -354,14 +354,13 @@ router.post('/listings/add', requireLogin, upload.array('images', 10), async (re
     try {
         client = await pool.connect();
         
-        // 1. Handle image uploads to Supabase
         const newImagePaths = [];
         if (req.files && req.files.length > 0) {
             for (const file of req.files) {
                 const newFileName = `${Date.now()}_${file.originalname}`;
                 const { data, error } = await supabase.storage
-                    .from('images')
-                    .upload(`properties/${newFileName}`, file.buffer, {
+                    .from('property-images')
+                    .upload(newFileName, file.buffer, {
                         contentType: file.mimetype,
                         cacheControl: '3600',
                         upsert: false,
@@ -369,12 +368,14 @@ router.post('/listings/add', requireLogin, upload.array('images', 10), async (re
                 if (error) {
                     throw new Error(`Supabase 업로드 실패: ${error.message}`);
                 }
-                newImagePaths.push(`${supabaseUrl}/storage/v1/object/public/images/properties/${newFileName}`);
+                const { data: { publicUrl } } = supabase.storage
+                    .from('property-images')
+                    .getPublicUrl(newFileName);
+                newImagePaths.push(publicUrl);
             }
         }
         const image_path = newImagePaths.join(',');
 
-        // 2. Insert into database
         const query = `
             INSERT INTO properties (
                 title, price, category, area, address, exclusive_area,
@@ -474,18 +475,16 @@ router.post('/listings/delete/:id', requireLogin, async (req, res) => {
     let client;
     try {
         client = await pool.connect();
-        // First, get the image paths to delete them from Supabase
         const selectResult = await client.query('SELECT image_path FROM properties WHERE id = $1', [id]);
         if (selectResult.rows.length > 0) {
             const image_path = selectResult.rows[0].image_path;
             if (image_path) {
                 const imagePaths = image_path.split(',');
-                const filePaths = imagePaths.map(p => `properties/${p.substring(p.lastIndexOf('/') + 1)}`);
+                const filePaths = imagePaths.map(p => p.substring(p.lastIndexOf('/') + 1));
                 
-                const { error } = await supabase.storage.from('images').remove(filePaths);
+                const { error } = await supabase.storage.from('property-images').remove(filePaths);
                 if (error) {
                     console.error('Supabase 스토리지 삭제 오류:', error);
-                    // Continue with DB deletion even if storage deletion fails
                 }
             }
         }
@@ -508,17 +507,16 @@ router.post('/listings/edit/:id', requireLogin, upload.array('images', 10), asyn
 
     try {
         client = await pool.connect();
-        await client.query('BEGIN'); // Start transaction
+        await client.query('BEGIN');
 
-        // 1. Handle image deletions
         let existing_image_paths = (body.existing_image_paths && body.existing_image_paths.length > 0) ? body.existing_image_paths.split(',') : [];
         try {
             if (body.deleted_images) {
                 const deleted_images = Array.isArray(body.deleted_images) ? body.deleted_images : [body.deleted_images];
-                const filePathsToDelete = deleted_images.map(p => `properties/${p.substring(p.lastIndexOf('/') + 1)}`);
+                const filePathsToDelete = deleted_images.map(p => p.substring(p.lastIndexOf('/') + 1));
                 
                 if (filePathsToDelete.length > 0) {
-                    const { error } = await supabase.storage.from('images').remove(filePathsToDelete);
+                    const { error } = await supabase.storage.from('property-images').remove(filePathsToDelete);
                     if (error) throw new Error(`Supabase 이미지 삭제 실패: ${error.message}`);
                 }
                 existing_image_paths = existing_image_paths.filter(p => !deleted_images.includes(p));
@@ -527,15 +525,14 @@ router.post('/listings/edit/:id', requireLogin, upload.array('images', 10), asyn
             throw new Error(`이미지 삭제 중 오류: ${e.message}`);
         }
 
-        // 2. Handle new image uploads
         const newImagePaths = [];
         try {
             if (req.files && req.files.length > 0) {
                 for (const file of req.files) {
                     const newFileName = `${Date.now()}_${file.originalname}`;
                     const { error } = await supabase.storage
-                        .from('images')
-                        .upload(`properties/${newFileName}`, file.buffer, {
+                        .from('property-images')
+                        .upload(newFileName, file.buffer, {
                             contentType: file.mimetype,
                             cacheControl: '3600',
                             upsert: false,
@@ -543,7 +540,10 @@ router.post('/listings/edit/:id', requireLogin, upload.array('images', 10), asyn
                     if (error) {
                         throw new Error(`Supabase 업로드 실패: ${error.message}`);
                     }
-                    newImagePaths.push(`${supabaseUrl}/storage/v1/object/public/images/properties/${newFileName}`);
+                    const { data: { publicUrl } } = supabase.storage
+                        .from('property-images')
+                        .getPublicUrl(newFileName);
+                    newImagePaths.push(publicUrl);
                 }
             }
         } catch (e) {
@@ -552,7 +552,6 @@ router.post('/listings/edit/:id', requireLogin, upload.array('images', 10), asyn
         
         const allImagePaths = [...existing_image_paths, ...newImagePaths].join(',');
 
-        // 3. Update database
         try {
             const fields = [
                 'title', 'price', 'category', 'area', 'address', 'exclusive_area',
@@ -575,11 +574,11 @@ router.post('/listings/edit/:id', requireLogin, upload.array('images', 10), asyn
             throw new Error(`데이터베이스 업데이트 중 오류: ${e.message}`);
         }
 
-        await client.query('COMMIT'); // Commit transaction
+        await client.query('COMMIT');
         res.redirect('/listings');
 
     } catch (err) {
-        if (client) await client.query('ROLLBACK'); // Rollback on error
+        if (client) await client.query('ROLLBACK');
         console.error('DB 업데이트 오류 (매물 수정):', err.stack);
         res.status(500).send(err.message || '매물 수정 중 오류가 발생했습니다.');
     } finally {
