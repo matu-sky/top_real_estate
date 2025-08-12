@@ -404,7 +404,7 @@ router.post('/listings/delete/:id', requireLogin, async (req, res) => {
             const image_path = selectResult.rows[0].image_path;
             if (image_path) {
                 const imagePaths = image_path.split(',');
-                const filePaths = imagePaths.map(p => p.substring(p.lastIndexOf('/') + 1));
+                const filePaths = imagePaths.map(p => `properties/${p.substring(p.lastIndexOf('/') + 1)}`);
                 
                 const { error } = await supabase.storage.from('images').remove(filePaths);
                 if (error) {
@@ -437,7 +437,7 @@ router.post('/listings/edit/:id', requireLogin, upload.array('images', 10), asyn
         let existing_image_paths = body.existing_image_paths ? body.existing_image_paths.split(',') : [];
         if (body.deleted_images) {
             const deleted_images = Array.isArray(body.deleted_images) ? body.deleted_images : [body.deleted_images];
-            const filePathsToDelete = deleted_images.map(p => p.substring(p.lastIndexOf('/') + 1));
+            const filePathsToDelete = deleted_images.map(p => `properties/${p.substring(p.lastIndexOf('/') + 1)}`);
             
             if (filePathsToDelete.length > 0) {
                 const { error } = await supabase.storage.from('images').remove(filePathsToDelete);
