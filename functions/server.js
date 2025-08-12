@@ -432,66 +432,80 @@ router.post('/listings/edit/:id', requireLogin, upload.array('images', 10), asyn
 
     try {
         client = await pool.connect();
+        await client.query('BEGIN'); // Start transaction
 
         // 1. Handle image deletions
-        let existing_image_paths = body.existing_image_paths ? body.existing_image_paths.split(',') : [];
-        if (body.deleted_images) {
-            const deleted_images = Array.isArray(body.deleted_images) ? body.deleted_images : [body.deleted_images];
-            const filePathsToDelete = deleted_images.map(p => `properties/${p.substring(p.lastIndexOf('/') + 1)}`);
-            
-            if (filePathsToDelete.length > 0) {
-                const { error } = await supabase.storage.from('images').remove(filePathsToDelete);
-                if (error) console.error('Supabase 스토리지 일부 이미지 삭제 오류:', error);
+        let existing_image_paths = (body.existing_image_paths && body.existing_image_paths.length > 0) ? body.existing_image_paths.split(',') : [];
+        try {
+            if (body.deleted_images) {
+                const deleted_images = Array.isArray(body.deleted_images) ? body.deleted_images : [body.deleted_images];
+                const filePathsToDelete = deleted_images.map(p => `properties/${p.substring(p.lastIndexOf('/') + 1)}`);
+                
+                if (filePathsToDelete.length > 0) {
+                    const { error } = await supabase.storage.from('images').remove(filePathsToDelete);
+                    if (error) throw new Error(`Supabase 이미지 삭제 실패: ${error.message}`);
+                }
+                existing_image_paths = existing_image_paths.filter(p => !deleted_images.includes(p));
             }
-            // Update existing_image_paths by removing the deleted ones
-            existing_image_paths = existing_image_paths.filter(p => !deleted_images.includes(p));
+        } catch (e) {
+            throw new Error(`이미지 삭제 중 오류: ${e.message}`);
         }
 
         // 2. Handle new image uploads
         const newImagePaths = [];
-        if (req.files && req.files.length > 0) {
-            for (const file of req.files) {
-                const newFileName = `${Date.now()}_${file.originalname}`;
-                const { data, error } = await supabase.storage
-                    .from('images/properties')
-                    .upload(newFileName, file.buffer, {
-                        contentType: file.mimetype,
-                        cacheControl: '3600',
-                        upsert: false,
-                    });
-                if (error) {
-                    throw new Error(`Supabase 업로드 실패: ${error.message}`);
+        try {
+            if (req.files && req.files.length > 0) {
+                for (const file of req.files) {
+                    const newFileName = `${Date.now()}_${file.originalname}`;
+                    const { error } = await supabase.storage
+                        .from('images/properties')
+                        .upload(newFileName, file.buffer, {
+                            contentType: file.mimetype,
+                            cacheControl: '3600',
+                            upsert: false,
+                        });
+                    if (error) {
+                        throw new Error(`Supabase 업로드 실패: ${error.message}`);
+                    }
+                    newImagePaths.push(`${supabaseUrl}/storage/v1/object/public/images/properties/${newFileName}`);
                 }
-                newImagePaths.push(`${supabaseUrl}/storage/v1/object/public/images/properties/${newFileName}`);
             }
+        } catch (e) {
+            throw new Error(`이미지 업로드 중 오류: ${e.message}`);
         }
         
         const allImagePaths = [...existing_image_paths, ...newImagePaths].join(',');
 
         // 3. Update database
-        const fields = [
-            'title', 'price', 'category', 'area', 'address', 'exclusive_area',
-            'approval_date', 'purpose', 'total_floors', 'floor', 'direction',
-            'direction_standard', 'transaction_type', 'parking', 'maintenance_fee',
-            'move_in_date', 'description', 'youtube_url'
-        ];
-        
-        const setClauses = fields.map((field, i) => `${field} = ${i + 1}`).join(', ');
-        const values = fields.map(field => body[field] || null);
+        try {
+            const fields = [
+                'title', 'price', 'category', 'area', 'address', 'exclusive_area',
+                'approval_date', 'purpose', 'total_floors', 'floor', 'direction',
+                'direction_standard', 'transaction_type', 'parking', 'maintenance_fee',
+                'move_in_date', 'description', 'youtube_url'
+            ];
+            
+            const setClauses = fields.map((field, i) => `${field} = ${i + 1}`).join(', ');
+            const values = fields.map(field => body[field] || null);
 
-        const query = `
-            UPDATE properties SET ${setClauses}, image_path = ${fields.length + 1}
-            WHERE id = ${fields.length + 2}
-        `;
-        const queryParams = [...values, allImagePaths, id];
+            const query = `
+                UPDATE properties SET ${setClauses}, image_path = ${fields.length + 1}
+                WHERE id = ${fields.length + 2}
+            `;
+            const queryParams = [...values, allImagePaths, id];
 
-        await client.query(query, queryParams);
+            await client.query(query, queryParams);
+        } catch (e) {
+            throw new Error(`데이터베이스 업데이트 중 오류: ${e.message}`);
+        }
 
+        await client.query('COMMIT'); // Commit transaction
         res.redirect('/listings');
 
     } catch (err) {
+        if (client) await client.query('ROLLBACK'); // Rollback on error
         console.error('DB 업데이트 오류 (매물 수정):', err.stack);
-        res.status(500).send('매물 수정 중 오류가 발생했습니다.');
+        res.status(500).send(err.message || '매물 수정 중 오류가 발생했습니다.');
     } finally {
         if (client) client.release();
     }
