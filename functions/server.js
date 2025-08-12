@@ -268,6 +268,48 @@ router.get('/property/:id', async (req, res) => {
     }
 });
 
+router.get('/board/:board_slug/:post_id', async (req, res) => {
+    const { board_slug, post_id } = req.params;
+    let client;
+
+    try {
+        client = await pool.connect();
+
+        const postQuery = `
+            SELECT p.*, b.name as board_name, b.slug as board_slug, b.board_type
+            FROM posts p
+            JOIN boards b ON p.board_id = b.id
+            WHERE p.id = $1 AND b.slug = $2
+        `;
+        const postResult = await client.query(postQuery, [post_id, board_slug]);
+
+        if (postResult.rows.length === 0) {
+            return res.status(404).send('게시글을 찾을 수 없습니다.');
+        }
+
+        const post = postResult.rows[0];
+        const board = {
+            name: post.board_name,
+            slug: post.board_slug,
+            board_type: post.board_type
+        };
+
+        res.render('post_detail', {
+            content: res.locals.settings,
+            board: board,
+            post: post,
+            menus: res.locals.menus,
+            user: req.session // Pass session to the template
+        });
+
+    } catch (err) {
+        console.error('DB 조회 오류 (게시글 상세):', err.stack);
+        res.status(500).send('게시글 정보를 불러오는 데 실패했습니다.');
+    } finally {
+        if (client) client.release();
+    }
+});
+
 router.get('/login', (req, res) => {
     res.render('login');
 });
