@@ -351,10 +351,6 @@ router.get('/add_commercial_property', requireLogin, (req, res) => {
     res.render('add_commercial_property', { menus: res.locals.menus });
 });
 
-router.get('/add_factory_property', requireLogin, (req, res) => {
-    res.render('add_factory_property', { menus: res.locals.menus });
-});
-
 router.post('/listings/add', requireLogin, upload.array('images', 10), async (req, res) => {
     const body = req.body;
     let client;
