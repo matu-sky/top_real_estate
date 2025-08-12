@@ -17,12 +17,12 @@
                 </header>
 
                 <form id="add-property-form" action="/listings/add" method="POST" enctype="multipart/form-data">
+                    <input type="hidden" name="category" value="공장/지산">
                     <div class="card">
                         <div class="card-header"><h4>기본 정보</h4></div>
                         <div class="card-body form-grid">
                             <div class="form-group"><label for="title">제목</label><input type="text" id="title" name="title" placeholder="예) 군포 SK벤티움 지식산업센터" required></div>
                             <div class="form-group"><label for="price">가격</label><input type="text" id="price" name="price" placeholder="예) 매매 12억"></div>
-                            <div class="form-group"><label for="category">구분</label><select id="category" name="category" required><option value="주거용">주거용</option><option value="상업용">상업용</option><option value="공장/지산" selected>공장/지산</option></select></div>
                             <div class="form-group"><label for="area">평수</label><input type="number" id="area" name="area" placeholder="예) 80"></div>
                         </div>
                     </div>
@@ -49,7 +49,7 @@
                             <div class="form-group"><label for="power_supply">사용전력(kW)</label><input type="text" id="power_supply" name="power_supply" placeholder="예) 100kW"></div>
                             <div class="form-group"><label for="access_road_condition">진입로 사정</label><input type="text" id="access_road_condition" name="access_road_condition" placeholder="예) 40피트 트레일러 진입 가능"></div>
                             <div class="form-group full-width"><label for="description">물건 상세</label><textarea id="description" name="description" rows="8" placeholder="매물에 대한 상세한 설명을 입력하세요."></textarea></div>
-                            <div class="form-group full-width"><label for="images">파일 업로드</label><input type="file" id="images" name="images" multiple><div id="image-preview-container"></div></div>
+                            <div class="form-group full-width"><label for="images">파일 업로드</label><input type="file" id="images" name="images" multiple></div>
                         </div>
                     </div>
                     <div class="form-actions">
@@ -59,100 +59,5 @@
             </div>
         </main>
     </div>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script>
-        const supabaseUrl = 'https://ofpxyfyudgddvvyvvsnq.supabase.co';
-        const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9mcHh5Znl1ZGdkZHZ2eXZ2c25xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM1Mzk1OTIsImV4cCI6MjA2OTExNTU5Mn0.Bl31ss5czUUvPcvGAxmfRL9P7wf7ZfTEpZqpxwhKcsg';
-        const supabase = window.supabase.createClient(supabaseUrl, supabaseAnonKey);
-
-        const form = document.getElementById('add-property-form');
-        const imageInput = document.getElementById('images');
-        const previewContainer = document.getElementById('image-preview-container');
-        let selectedFiles = []; // File 객체를 저장할 배열
-
-        imageInput.addEventListener('change', () => {
-            // 새로 선택된 파일들을 기존 목록에 추가
-            Array.from(imageInput.files).forEach(file => selectedFiles.push(file));
-            updateImagePreview();
-        });
-
-        function updateImagePreview() {
-            previewContainer.innerHTML = ''; // 미리보기 초기화
-            selectedFiles.forEach((file, index) => {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    const previewItem = document.createElement('div');
-                    previewItem.className = 'image-preview-item';
-
-                    const img = document.createElement('img');
-                    img.src = e.target.result;
-                    previewItem.appendChild(img);
-
-                    const fileName = document.createElement('span');
-                    fileName.textContent = file.name;
-                    previewItem.appendChild(fileName);
-
-                    const deleteBtn = document.createElement('button');
-                    deleteBtn.textContent = 'X';
-                    deleteBtn.className = 'delete-preview-btn';
-                    deleteBtn.type = 'button';
-                    deleteBtn.onclick = () => {
-                        selectedFiles.splice(index, 1); // 목록에서 파일 제거
-                        updateImagePreview(); // 미리보기 업데이트
-                    };
-                    previewItem.appendChild(deleteBtn);
-
-                    previewContainer.appendChild(previewItem);
-                };
-                reader.readAsDataURL(file);
-            });
-        }
-
-        form.addEventListener('submit', async (event) => {
-            event.preventDefault();
-
-            let imageUrls = [];
-            if (selectedFiles.length > 0) {
-                for (const file of selectedFiles) {
-                    const newFileName = `${Date.now()}_${file.name}`;
-                    const { data, error } = await supabase.storage
-                        .from('property-images')
-                        .upload(newFileName, file);
-
-                    if (error) {
-                        console.error('Image upload error:', error);
-                        alert('이미지 업로드에 실패했습니다.');
-                        return;
-                    }
-
-                    const { data: { publicUrl } } = supabase.storage
-                        .from('property-images')
-                        .getPublicUrl(newFileName);
-                    imageUrls.push(publicUrl);
-                }
-            }
-
-            const formData = new FormData(form);
-            formData.delete('images');
-
-            const body = new URLSearchParams();
-            for (const pair of formData.entries()) {
-                body.append(pair[0], pair[1]);
-            }
-            body.append('image_urls', imageUrls.join(','));
-
-            const response = await fetch('/listings/add', {
-                method: 'POST',
-                body: body
-            });
-
-            if (response.ok) {
-                window.location.href = '/listings';
-            } else {
-                const errorText = await response.text();
-                alert(`매물 등록에 실패했습니다. ${errorText}`);
-            }
-        });
-    </script>
 </body>
 </html>
