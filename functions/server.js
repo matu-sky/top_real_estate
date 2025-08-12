@@ -255,7 +255,9 @@ router.get('/property/:id', async (req, res) => {
             content: res.locals.settings,
             property: property,
             relatedProperties: relatedProperties,
-            menus: res.locals.menus
+            menus: res.locals.menus,
+            totalPages: 1,
+            currentPage: 1
         });
 
     } catch (err) {
