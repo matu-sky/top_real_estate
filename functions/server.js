@@ -343,6 +343,160 @@ router.use('/dashboard', requireLogin);
 router.use('/listings', requireLogin);
 router.use('/add_property', requireLogin);
 
+router.get('/listings', requireLogin, async (req, res) => {
+    const { category } = req.query;
+    let client;
+
+    try {
+        client = await pool.connect();
+        let query = 'SELECT * FROM properties ORDER BY created_at DESC';
+        const params = [];
+
+        if (category) {
+            query = 'SELECT * FROM properties WHERE category = $1 ORDER BY created_at DESC';
+            params.push(category);
+        }
+
+        const result = await client.query(query, params);
+        
+        res.render('listings', {
+            menus: res.locals.menus,
+            properties: result.rows,
+            currentCategory: category || null
+        });
+
+    } catch (err) {
+        console.error('DB 조회 오류 (매물 목록):', err.stack);
+        res.status(500).send('매물 목록을 불러오는 데 실패했습니다.');
+    } finally {
+        if (client) client.release();
+    }
+});
+
+// For fetching property data for the edit modal
+router.get('/api/property/:id', requireLogin, async (req, res) => {
+    const { id } = req.params;
+    let client;
+    try {
+        client = await pool.connect();
+        const result = await client.query('SELECT * FROM properties WHERE id = $1', [id]);
+        if (result.rows.length === 0) {
+            return res.status(404).json({ message: '매물을 찾을 수 없습니다.' });
+        }
+        res.json(result.rows[0]);
+    } catch (err) {
+        console.error('API DB 조회 오류:', err.stack);
+        res.status(500).json({ message: '서버 오류' });
+    } finally {
+        if (client) client.release();
+    }
+});
+
+// For handling property deletion
+router.post('/listings/delete/:id', requireLogin, async (req, res) => {
+    const { id } = req.params;
+    let client;
+    try {
+        client = await pool.connect();
+        // First, get the image paths to delete them from Supabase
+        const selectResult = await client.query('SELECT image_path FROM properties WHERE id = $1', [id]);
+        if (selectResult.rows.length > 0) {
+            const image_path = selectResult.rows[0].image_path;
+            if (image_path) {
+                const imagePaths = image_path.split(',');
+                const filePaths = imagePaths.map(p => p.substring(p.lastIndexOf('/') + 1));
+                
+                const { error } = await supabase.storage.from('images').remove(filePaths);
+                if (error) {
+                    console.error('Supabase 스토리지 삭제 오류:', error);
+                    // Continue with DB deletion even if storage deletion fails
+                }
+            }
+        }
+
+        await client.query('DELETE FROM properties WHERE id = $1', [id]);
+        res.redirect('/listings');
+    } catch (err) {
+        console.error('DB 삭제 오류:', err.stack);
+        res.status(500).send('매물 삭제 중 오류가 발생했습니다.');
+    } finally {
+        if (client) client.release();
+    }
+});
+
+// For handling property edit submission
+router.post('/listings/edit/:id', requireLogin, upload.array('images', 10), async (req, res) => {
+    const { id } = req.params;
+    const body = req.body;
+    let client;
+
+    try {
+        client = await pool.connect();
+
+        // 1. Handle image deletions
+        let existing_image_paths = body.existing_image_paths ? body.existing_image_paths.split(',') : [];
+        if (body.deleted_images) {
+            const deleted_images = Array.isArray(body.deleted_images) ? body.deleted_images : [body.deleted_images];
+            const filePathsToDelete = deleted_images.map(p => p.substring(p.lastIndexOf('/') + 1));
+            
+            if (filePathsToDelete.length > 0) {
+                const { error } = await supabase.storage.from('images').remove(filePathsToDelete);
+                if (error) console.error('Supabase 스토리지 일부 이미지 삭제 오류:', error);
+            }
+            // Update existing_image_paths by removing the deleted ones
+            existing_image_paths = existing_image_paths.filter(p => !deleted_images.includes(p));
+        }
+
+        // 2. Handle new image uploads
+        const newImagePaths = [];
+        if (req.files && req.files.length > 0) {
+            for (const file of req.files) {
+                const newFileName = `${Date.now()}_${file.originalname}`;
+                const { data, error } = await supabase.storage
+                    .from('images/properties')
+                    .upload(newFileName, file.buffer, {
+                        contentType: file.mimetype,
+                        cacheControl: '3600',
+                        upsert: false,
+                    });
+                if (error) {
+                    throw new Error(`Supabase 업로드 실패: ${error.message}`);
+                }
+                newImagePaths.push(`${supabaseUrl}/storage/v1/object/public/images/properties/${newFileName}`);
+            }
+        }
+        
+        const allImagePaths = [...existing_image_paths, ...newImagePaths].join(',');
+
+        // 3. Update database
+        const fields = [
+            'title', 'price', 'category', 'area', 'address', 'exclusive_area',
+            'approval_date', 'purpose', 'total_floors', 'floor', 'direction',
+            'direction_standard', 'transaction_type', 'parking', 'maintenance_fee',
+            'move_in_date', 'description', 'youtube_url'
+        ];
+        
+        const setClauses = fields.map((field, i) => `${field} = ${i + 1}`).join(', ');
+        const values = fields.map(field => body[field] || null);
+
+        const query = `
+            UPDATE properties SET ${setClauses}, image_path = ${fields.length + 1}
+            WHERE id = ${fields.length + 2}
+        `;
+        const queryParams = [...values, allImagePaths, id];
+
+        await client.query(query, queryParams);
+
+        res.redirect('/listings');
+
+    } catch (err) {
+        console.error('DB 업데이트 오류 (매물 수정):', err.stack);
+        res.status(500).send('매물 수정 중 오류가 발생했습니다.');
+    } finally {
+        if (client) client.release();
+    }
+});
+
 router.get('/admin', (req, res) => {
     res.render('admin', { content: res.locals.settings, menus: res.locals.menus });
 });
