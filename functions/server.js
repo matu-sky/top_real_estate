@@ -360,8 +360,8 @@ router.post('/listings/add', requireLogin, upload.array('images', 10), async (re
             for (const file of req.files) {
                 const newFileName = `${Date.now()}_${file.originalname}`;
                 const { data, error } = await supabase.storage
-                    .from('images/properties')
-                    .upload(newFileName, file.buffer, {
+                    .from('images')
+                    .upload(`properties/${newFileName}`, file.buffer, {
                         contentType: file.mimetype,
                         cacheControl: '3600',
                         upsert: false,
@@ -534,8 +534,8 @@ router.post('/listings/edit/:id', requireLogin, upload.array('images', 10), asyn
                 for (const file of req.files) {
                     const newFileName = `${Date.now()}_${file.originalname}`;
                     const { error } = await supabase.storage
-                        .from('images/properties')
-                        .upload(newFileName, file.buffer, {
+                        .from('images')
+                        .upload(`properties/${newFileName}`, file.buffer, {
                             contentType: file.mimetype,
                             cacheControl: '3600',
                             upsert: false,
