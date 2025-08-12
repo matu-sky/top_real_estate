@@ -485,12 +485,12 @@ router.post('/listings/edit/:id', requireLogin, upload.array('images', 10), asyn
                 'move_in_date', 'description', 'youtube_url'
             ];
             
-            const setClauses = fields.map((field, i) => `${field} = ${i + 1}`).join(', ');
+            const setClauses = fields.map((field, i) => `${field} = $${i + 1}`).join(', ');
             const values = fields.map(field => body[field] || null);
 
             const query = `
-                UPDATE properties SET ${setClauses}, image_path = ${fields.length + 1}
-                WHERE id = ${fields.length + 2}
+                UPDATE properties SET ${setClauses}, image_path = $${fields.length + 1}
+                WHERE id = $${fields.length + 2}
             `;
             const queryParams = [...values, allImagePaths, id];
 
