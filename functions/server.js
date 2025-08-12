@@ -228,6 +228,44 @@ router.get('/page/:slug', (req, res) => {
     });
 });
 
+router.get('/property/:id', async (req, res) => {
+    const { id } = req.params;
+    let client;
+
+    try {
+        client = await pool.connect();
+        const propertyResult = await client.query('SELECT * FROM properties WHERE id = $1', [id]);
+
+        if (propertyResult.rows.length === 0) {
+            return res.status(404).send('매물을 찾을 수 없습니다.');
+        }
+
+        const property = propertyResult.rows[0];
+        if (property.address) {
+            property.short_address = property.address.split(' ').slice(0, 3).join(' ');
+        }
+
+        const relatedResult = await client.query(
+            'SELECT * FROM properties WHERE category = $1 AND id != $2 ORDER BY created_at DESC LIMIT 4',
+            [property.category, id]
+        );
+        const relatedProperties = relatedResult.rows;
+
+        res.render('property_detail', {
+            content: res.locals.settings,
+            property: property,
+            relatedProperties: relatedProperties,
+            menus: res.locals.menus
+        });
+
+    } catch (err) {
+        console.error('DB 조회 오류 (매물 상세):', err.stack);
+        res.status(500).send('매물 정보를 불러오는 데 실패했습니다.');
+    } finally {
+        if (client) client.release();
+    }
+});
+
 router.get('/login', (req, res) => {
     res.render('login');
 });
