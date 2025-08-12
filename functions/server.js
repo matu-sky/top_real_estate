@@ -354,27 +354,37 @@ router.post('/listings/add', requireLogin, async (req, res) => {
     try {
         client = await pool.connect();
 
-        const fields = [
-            'title', 'price', 'category', 'area', 'address', 'exclusive_area',
-            'approval_date', 'purpose', 'total_floors', 'floor', 'direction',
-            'direction_standard', 'transaction_type', 'parking', 'maintenance_fee',
-            'move_in_date', 'description', 'youtube_url', 'image_path'
-        ];
-        
-        const placeholders = fields.map((_, i) => `${i + 1}`).join(', ');
-        const columnNames = fields.join(', ');
-        
-        const values = fields.map(field => {
-            if (field === 'image_path') {
-                return body.image_urls || null;
-            }
-            return body[field] || null;
-        });
-
         const query = `
-            INSERT INTO properties (${columnNames})
-            VALUES (${placeholders})
+            INSERT INTO properties (
+                title, price, category, area, address, exclusive_area,
+                approval_date, purpose, total_floors, floor, direction,
+                direction_standard, transaction_type, parking, maintenance_fee,
+                move_in_date, description, youtube_url, image_path
+            )
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
         `;
+
+        const values = [
+            body.title || null,
+            body.price || null,
+            body.category || null,
+            body.area || null,
+            body.address || null,
+            body.exclusive_area || null,
+            body.approval_date || null,
+            body.purpose || null,
+            body.total_floors || null,
+            body.floor || null,
+            body.direction || null,
+            body.direction_standard || null,
+            body.transaction_type || null,
+            body.parking || null,
+            body.maintenance_fee || null,
+            body.move_in_date || null,
+            body.description || null,
+            body.youtube_url || null,
+            body.image_urls || null // from client-side JS
+        ];
 
         await client.query(query, values);
 
@@ -382,7 +392,7 @@ router.post('/listings/add', requireLogin, async (req, res) => {
 
     } catch (err) {
         console.error('DB 삽입 오류 (새 매물):', err.stack);
-        res.status(500).send('매물 등록 중 오류가 발생했습니다.');
+        res.status(500).send(`매물 등록 중 오류가 발생했습니다: ${err.message}`);
     } finally {
         if (client) client.release();
     }
