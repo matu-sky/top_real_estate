@@ -347,13 +347,34 @@ router.get('/add_property', requireLogin, (req, res) => {
     res.render('add_property', { menus: res.locals.menus });
 });
 
-router.post('/listings/add', requireLogin, async (req, res) => {
+router.post('/listings/add', requireLogin, upload.array('images', 10), async (req, res) => {
     const body = req.body;
     let client;
 
     try {
         client = await pool.connect();
+        
+        // 1. Handle image uploads to Supabase
+        const newImagePaths = [];
+        if (req.files && req.files.length > 0) {
+            for (const file of req.files) {
+                const newFileName = `${Date.now()}_${file.originalname}`;
+                const { data, error } = await supabase.storage
+                    .from('images/properties')
+                    .upload(newFileName, file.buffer, {
+                        contentType: file.mimetype,
+                        cacheControl: '3600',
+                        upsert: false,
+                    });
+                if (error) {
+                    throw new Error(`Supabase 업로드 실패: ${error.message}`);
+                }
+                newImagePaths.push(`${supabaseUrl}/storage/v1/object/public/images/properties/${newFileName}`);
+            }
+        }
+        const image_path = newImagePaths.join(',');
 
+        // 2. Insert into database
         const query = `
             INSERT INTO properties (
                 title, price, category, area, address, exclusive_area,
@@ -383,12 +404,12 @@ router.post('/listings/add', requireLogin, async (req, res) => {
             body.move_in_date || null,
             body.description || null,
             body.youtube_url || null,
-            body.image_urls || null // from client-side JS
+            image_path || null
         ];
 
         await client.query(query, values);
 
-        res.status(200).send('매물 등록에 성공했습니다.');
+        res.redirect('/listings');
 
     } catch (err) {
         console.error('DB 삽입 오류 (새 매물):', err.stack);
