@@ -641,6 +641,59 @@ router.post('/admin/menu/update', requireLogin, async (req, res) => {
 });
 
 
+} finally {
+        if (client) client.release();
+    }
+});
+
+// --- 퀵메뉴 관리 ---
+router.get('/admin/quick-menu', requireLogin, (req, res) => {
+    res.render('quick_menu_settings', { 
+        menus: res.locals.menus, 
+        content: res.locals.settings 
+    });
+});
+
+router.post('/admin/quick-menu/update', requireLogin, async (req, res) => {
+    let body = {};
+    if (req.body instanceof Buffer) {
+        body = querystring.parse(req.body.toString());
+    } else {
+        body = req.body;
+    }
+    
+    const { link_texts, link_urls } = body;
+    const newLinks = [];
+
+    if (link_texts && link_urls) {
+        const texts = Array.isArray(link_texts) ? link_texts : [link_texts];
+        const urls = Array.isArray(link_urls) ? link_urls : [link_urls];
+
+        for (let i = 0; i < texts.length; i++) {
+            if (texts[i] && urls[i]) {
+                newLinks.push({ text: texts[i], url: urls[i] });
+            }
+        }
+    }
+
+    const valueToStore = JSON.stringify(newLinks);
+    let client;
+    try {
+        client = await pool.connect();
+        await client.query(
+            "INSERT INTO site_settings (key, value) VALUES ('quick_menu_links', $1) ON CONFLICT (key) DO UPDATE SET value = $1",
+            [valueToStore]
+        );
+        res.redirect('/admin/quick-menu');
+    } catch (err) {
+        console.error('DB 업데이트 오류 (퀵메뉴):', err.stack);
+        res.status(500).send('퀵메뉴 저장에 실패했습니다.');
+    } finally {
+        if (client) client.release();
+    }
+});
+
+
 // ✅ [신규] 새 매물 추가: 폼에서 전송된 데이터를 DB에 저장
 router.post('/listings/add', async (req, res) => {
     console.log('--- 매물 등록 요청 시작 ---');

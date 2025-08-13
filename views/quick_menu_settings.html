@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>퀵메뉴 관리 | 관리자</title>
+    <link rel="stylesheet" href="/css/admin_style.css">
+    <style>
+        .menu-item { display: flex; align-items: center; gap: 10px; margin-bottom: 15px; }
+        .menu-item input { flex-grow: 1; }
+        .menu-item .btn-danger { background-color: #dc3545; }
+    </style>
+</head>
+<body>
+    <div class="admin-container">
+        <%- include('partials/admin_sidebar.html') %>
+
+        <main class="main-content">
+            <form action="/admin/quick-menu/update" method="POST">
+                <header class="content-header">
+                    <h2>퀵메뉴 관리</h2>
+                    <button type="submit" class="btn save">퀵메뉴 저장하기</button>
+                </header>
+
+                <div class="card">
+                    <div class="card-header"><h4>퀵메뉴 항목</h4></div>
+                    <div class="card-body" id="menu-list">
+                        <% if (content.quick_menu_links) { %>
+                            <% content.quick_menu_links.forEach((link) => { %>
+                                <div class="menu-item">
+                                    <input type="text" name="link_texts" value="<%= link.text %>" placeholder="메뉴 이름">
+                                    <input type="text" name="link_urls" value="<%= link.url %>" placeholder="연결 URL">
+                                    <button type="button" class="btn btn-danger" onclick="removeItem(this)">삭제</button>
+                                </div>
+                            <% }); %>
+                        <% } %>
+                    </div>
+                    <div class="card-footer" style="text-align: right;">
+                        <button type="button" class="btn" id="add-item-btn">새 항목 추가</button>
+                    </div>
+                </div>
+            </form>
+        </main>
+    </div>
+
+    <script>
+        const menuList = document.getElementById('menu-list');
+        const addItemBtn = document.getElementById('add-item-btn');
+
+        addItemBtn.addEventListener('click', () => {
+            const newItem = document.createElement('div');
+            newItem.className = 'menu-item';
+            newItem.innerHTML = `
+                <input type="text" name="link_texts" placeholder="메뉴 이름">
+                <input type="text" name="link_urls" placeholder="연결 URL">
+                <button type="button" class="btn btn-danger" onclick="removeItem(this)">삭제</button>
+            `;
+            menuList.appendChild(newItem);
+        });
+
+        function removeItem(button) {
+            button.closest('.menu-item').remove();
+        }
+    </script>
+</body>
+</html>
