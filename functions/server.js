@@ -267,6 +267,39 @@ router.get('/property/:id', async (req, res) => {
     }
 });
 
+router.get('/board/:board_slug', async (req, res) => {
+    const { board_slug } = req.params;
+    let client;
+    try {
+        client = await pool.connect();
+
+        const boardResult = await client.query('SELECT * FROM boards WHERE slug = $1', [board_slug]);
+        if (boardResult.rows.length === 0) {
+            return res.status(404).send('게시판을 찾을 수 없습니다.');
+        }
+        const board = boardResult.rows[0];
+
+        const postsResult = await client.query(
+            'SELECT * FROM posts WHERE board_id = $1 ORDER BY created_at DESC',
+            [board.id]
+        );
+        const posts = postsResult.rows;
+
+        res.render('board', {
+            content: res.locals.settings,
+            board: board,
+            posts: posts,
+            menus: res.locals.menus
+        });
+
+    } catch (err) {
+        console.error('DB 조회 오류 (게시판):', err.stack);
+        res.status(500).send('게시판 정보를 불러오는 데 실패했습니다.');
+    } finally {
+        if (client) client.release();
+    }
+});
+
 router.get('/board/:board_slug/:post_id', async (req, res) => {
     const { board_slug, post_id } = req.params;
     let client;
