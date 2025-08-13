@@ -681,6 +681,13 @@ router.get('/admin/board_settings', async (req, res) => {
     }
 });
 
+router.get('/admin/menu', requireLogin, (req, res) => {
+    res.render('menu_settings', {
+        content: res.locals.settings,
+        menus: res.locals.menus
+    });
+});
+
 // --- 상세 상담 폼 관련 ---
 router.get('/consultation/form/:requestId', async (req, res) => {
     const { requestId } = req.params;
