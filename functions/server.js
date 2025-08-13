@@ -537,7 +537,9 @@ router.post('/listings/edit/:id', requireLogin, upload.array('images', 10), asyn
         try {
             if (req.files && req.files.length > 0) {
                 for (const file of req.files) {
-                    const newFileName = `${Date.now()}_${file.originalname}`;
+                    const originalname_utf8 = Buffer.from(file.originalname, 'latin1').toString('utf8');
+                    const originalname_base64 = Buffer.from(originalname_utf8).toString('base64');
+                    const newFileName = `${Date.now()}_${originalname_base64}`;
                     const { error } = await supabase.storage
                         .from('property-images')
                         .upload(newFileName, file.buffer, {
