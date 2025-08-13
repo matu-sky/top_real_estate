@@ -289,7 +289,8 @@ router.get('/board/:board_slug', async (req, res) => {
             content: res.locals.settings,
             board: board,
             posts: posts,
-            menus: res.locals.menus
+            menus: res.locals.menus,
+            user: req.session
         });
 
     } catch (err) {
