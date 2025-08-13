@@ -897,30 +897,22 @@ router.post('/request_contact/submit', async (req, res) => {
     }
 });
 
-router.get('/admin/pages', requireLogin, (req, res) => {
-    const pagesContentPath = path.resolve(projectRoot, 'data', 'pages_content.json');
-
-    fs.readFile(pagesContentPath, 'utf8', (err, data) => {
-        if (err) {
-            console.error('페이지 콘텐츠 파일 읽기 오류:', err);
-            return res.status(500).send('페이지 데이터를 불러오는 중 오류가 발생했습니다.');
-        }
-        try {
-            const pagesObject = JSON.parse(data);
-            const pagesArray = Object.keys(pagesObject).map(slug => ({
-                slug: slug,
-                ...pagesObject[slug]
-            }));
-            res.render('page_management', {
-                content: res.locals.settings,
-                menus: res.locals.menus,
-                pages: pagesArray
-            });
-        } catch (parseErr) {
-            console.error('페이지 콘텐츠 JSON 파싱 오류:', parseErr);
-            res.status(500).send('페이지 데이터를 불러오는 중 오류가 발생했습니다.');
-        }
-    });
+router.get('/admin/pages', requireLogin, async (req, res) => {
+    let client;
+    try {
+        client = await pool.connect();
+        const result = await client.query('SELECT slug, title, updated_at FROM pages ORDER BY title');
+        res.render('page_management', {
+            content: res.locals.settings,
+            menus: res.locals.menus,
+            pages: result.rows
+        });
+    } catch (err) {
+        console.error('DB 조회 오류 (페이지 목록):', err.stack);
+        res.status(500).send('페이지 목록을 불러오는 데 실패했습니다.');
+    } finally {
+        if (client) client.release();
+    }
 });
 
 app.use('/', router);
