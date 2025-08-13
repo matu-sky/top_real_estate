@@ -897,6 +897,28 @@ router.post('/request_contact/submit', async (req, res) => {
     }
 });
 
+router.get('/admin/pages', requireLogin, (req, res) => {
+    const pagesContentPath = path.resolve(projectRoot, 'data', 'pages_content.json');
+
+    fs.readFile(pagesContentPath, 'utf8', (err, data) => {
+        if (err) {
+            console.error('페이지 콘텐츠 파일 읽기 오류:', err);
+            return res.status(500).send('페이지 데이터를 불러오는 중 오류가 발생했습니다.');
+        }
+        try {
+            const pages = JSON.parse(data);
+            res.render('page_management', {
+                content: res.locals.settings,
+                menus: res.locals.menus,
+                pages: pages
+            });
+        } catch (parseErr) {
+            console.error('페이지 콘텐츠 JSON 파싱 오류:', parseErr);
+            res.status(500).send('페이지 데이터를 불러오는 중 오류가 발생했습니다.');
+        }
+    });
+});
+
 app.use('/', router);
 module.exports.handler = serverless(app);
 
