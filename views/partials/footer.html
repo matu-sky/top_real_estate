@@ -27,10 +27,8 @@
 </footer>
 
 <!-- 퀵메뉴 (플로팅 버튼) -->
-<% if (content.quick_menu_links && content.quick_menu_links.length > 0) { %>
 <div class="quick-menu">
-    <% content.quick_menu_links.forEach(link => { %>
-        <a href="<%= link.url %>"><%= link.text %></a>
-    <% }); %>
+    <a href="#">매물상담</a>
+    <a href="#">매물등록</a>
+    <a href="#">오시는길</a>
 </div>
-<% } %>
