@@ -688,6 +688,38 @@ router.get('/admin/menu', requireLogin, (req, res) => {
     });
 });
 
+router.post('/admin/menu/update', requireLogin, async (req, res) => {
+    const { link_texts, link_urls } = req.body;
+    const newLinks = [];
+
+    if (link_texts && link_urls) {
+        const texts = Array.isArray(link_texts) ? link_texts : [link_texts];
+        const urls = Array.isArray(link_urls) ? link_urls : [link_urls];
+
+        for (let i = 0; i < texts.length; i++) {
+            if (texts[i] && urls[i]) {
+                newLinks.push({ text: texts[i], url: urls[i] });
+            }
+        }
+    }
+
+    let client;
+    try {
+        client = await pool.connect();
+        const newLinksJson = JSON.stringify(newLinks);
+        await client.query(
+            "UPDATE site_settings SET value = $1 WHERE key = 'header_nav_links'",
+            [newLinksJson]
+        );
+        res.redirect('/admin/menu');
+    } catch (err) {
+        console.error('DB 업데이트 오류 (메뉴):', err.stack);
+        res.status(500).send('메뉴 업데이트에 실패했습니다.');
+    } finally {
+        if (client) client.release();
+    }
+});
+
 // --- 상세 상담 폼 관련 ---
 router.get('/consultation/form/:requestId', async (req, res) => {
     const { requestId } = req.params;
