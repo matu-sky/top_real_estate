@@ -107,6 +107,7 @@ async function loadSettings(req, res, next) {
             dbMenus = [
                 { text: '라이프스타일 제안', url: '/#lifestyle' },
                 { text: '최신 매물', url: '/#recent-listings' },
+                { text: '전체 매물', url: '/properties' },
                 { text: '커뮤니티센터', url: '/board/notice' },
                 { text: '컨설팅 상담신청', url: '/#about' },
                 { text: '오시는 길', url: '/#location' }
@@ -146,13 +147,33 @@ router.get('/', async (req, res) => {
     let client;
     try {
         client = await pool.connect();
-        const propertiesResult = await client.query("SELECT * FROM properties ORDER BY created_at DESC LIMIT 3");
-        const properties = propertiesResult.rows.map(row => {
-            if (row.address) {
-                row.short_address = row.address.split(' ').slice(0, 3).join(' ');
+        const residentialResult = await client.query("SELECT * FROM properties WHERE category = '주거용' ORDER BY created_at DESC LIMIT 1");
+        const commercialResult = await client.query("SELECT * FROM properties WHERE category = '상업용' ORDER BY created_at DESC LIMIT 1");
+        const industrialResult = await client.query("SELECT * FROM properties WHERE category = '공장/지산' ORDER BY created_at DESC LIMIT 1");
+
+        const properties = [];
+        const categories = ['주거용', '상업용', '공장/지산'];
+        const results = [residentialResult, commercialResult, industrialResult];
+
+        for (let i = 0; i < categories.length; i++) {
+            if (results[i].rows.length > 0) {
+                const property = results[i].rows[0];
+                if (property.address) {
+                    property.short_address = property.address.split(' ').slice(0, 3).join(' ');
+                }
+                properties.push(property);
+            } else {
+                properties.push({
+                    id: 0, // Placeholder ID
+                    title: `${categories[i]} 매물 없음`,
+                    category: categories[i],
+                    price: '-',
+                    short_address: '등록된 매물이 없습니다.',
+                    image_path: '/images/default_property.jpg',
+                    is_placeholder: true
+                });
             }
-            return row;
-        });
+        }
 
         const youtubePostResult = await client.query(`
             SELECT p.id, p.title, p.thumbnail_url, b.slug as board_slug
@@ -1108,7 +1129,31 @@ router.get('/property/:id', async (req, res) => {
             if (property.address) {
                 property.short_address = property.address.split(' ').slice(0, 3).join(' ');
             }
-            res.render('property_detail', { property, content: res.locals.settings });
+
+            const page = parseInt(req.query.page, 10) || 1;
+            const limit = 5;
+            const offset = (page - 1) * limit;
+
+            const countResult = await client.query(
+                "SELECT COUNT(*) FROM properties WHERE category = $1 AND id != $2",
+                [property.category, id]
+            );
+            const totalCount = parseInt(countResult.rows[0].count, 10);
+            const totalPages = Math.ceil(totalCount / limit);
+
+            const relatedPropertiesResult = await client.query(
+                "SELECT * FROM properties WHERE category = $1 AND id != $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4",
+                [property.category, id, limit, offset]
+            );
+            const relatedProperties = relatedPropertiesResult.rows;
+
+            res.render('property_detail', { 
+                property, 
+                relatedProperties, 
+                content: res.locals.settings,
+                currentPage: page,
+                totalPages
+            });
         } else {
             res.status(404).send("매물을 찾을 수 없습니다.");
         }
@@ -1119,6 +1164,60 @@ router.get('/property/:id', async (req, res) => {
         if (client) client.release();
     }
 });
+
+// 전체 매물 보기 페이지
+router.get('/properties', async (req, res) => {
+    let client;
+    try {
+        client = await pool.connect();
+        const page = parseInt(req.query.page, 10) || 1;
+        const limit = 9; // 한 페이지에 9개씩 표시
+        const offset = (page - 1) * limit;
+        const category = req.query.category || '';
+        const searchQuery = req.query.search || '';
+
+        let whereClauses = [];
+        const params = [];
+
+        if (category) {
+            params.push(category);
+            whereClauses.push(`category = ${params.length}`);
+        }
+        if (searchQuery) {
+            params.push(`%${searchQuery}%`);
+            whereClauses.push(`(title ILIKE ${params.length} OR address ILIKE ${params.length})`);
+        }
+
+        const whereCondition = whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')}` : '';
+
+        // 매물 수 계산
+        const countQuery = `SELECT COUNT(*) FROM properties ${whereCondition}`;
+        const countResult = await client.query(countQuery, params);
+        const totalCount = parseInt(countResult.rows[0].count, 10);
+        const totalPages = Math.ceil(totalCount / limit);
+
+        // 매물 목록 조회
+        const propertiesQuery = `SELECT * FROM properties ${whereCondition} ORDER BY created_at DESC LIMIT ${params.length + 1} OFFSET ${params.length + 2}`;
+        const propertiesResult = await client.query(propertiesQuery, [...params, limit, offset]);
+        const properties = propertiesResult.rows;
+
+        res.render('properties', {
+            content: res.locals.settings,
+            properties,
+            currentPage: page,
+            totalPages,
+            currentCategory: category,
+            searchQuery
+        });
+
+    } catch (err) {
+        console.error('전체 매물 조회 오류:', err.stack);
+        res.status(500).send('매물 정보를 가져오는 데 실패했습니다.');
+    } finally {
+        if (client) client.release();
+    }
+});
+
 
 // API: 특정 매물 정보 가져오기
 router.get('/api/property/:id', requireLogin, async (req, res) => {
