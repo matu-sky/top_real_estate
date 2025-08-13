@@ -723,8 +723,14 @@ router.get('/admin/menu', requireLogin, (req, res) => {
 });
 
 router.post('/admin/menu/update', requireLogin, async (req, res) => {
-    console.log('수신된 메뉴 데이터:', req.body);
-    const { link_texts, link_urls } = req.body;
+    let body = {};
+    if (req.body instanceof Buffer) {
+        body = querystring.parse(req.body.toString());
+    } else {
+        body = req.body;
+    }
+
+    const { link_texts, link_urls } = body;
     const newLinks = [];
 
     if (link_texts && link_urls) {
