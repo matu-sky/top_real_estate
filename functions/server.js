@@ -640,12 +640,6 @@ router.post('/admin/menu/update', requireLogin, async (req, res) => {
     }
 });
 
-
-} finally {
-        if (client) client.release();
-    }
-});
-
 // --- 퀵메뉴 관리 ---
 router.get('/admin/quick-menu', requireLogin, (req, res) => {
     res.render('quick_menu_settings', { 
