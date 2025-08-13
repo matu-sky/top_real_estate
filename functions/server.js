@@ -906,11 +906,15 @@ router.get('/admin/pages', requireLogin, (req, res) => {
             return res.status(500).send('페이지 데이터를 불러오는 중 오류가 발생했습니다.');
         }
         try {
-            const pages = JSON.parse(data);
+            const pagesObject = JSON.parse(data);
+            const pagesArray = Object.keys(pagesObject).map(slug => ({
+                slug: slug,
+                ...pagesObject[slug]
+            }));
             res.render('page_management', {
                 content: res.locals.settings,
                 menus: res.locals.menus,
-                pages: pages
+                pages: pagesArray
             });
         } catch (parseErr) {
             console.error('페이지 콘텐츠 JSON 파싱 오류:', parseErr);
