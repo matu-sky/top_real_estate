@@ -684,8 +684,8 @@ router.post('/listings/add', upload.array('images', 10), async (req, res) => {
     const { category, title, price, address, approval_date, purpose, direction, direction_standard, transaction_type, maintenance_fee_details, power_supply, hoist, ceiling_height, permitted_business_types, access_road_condition, move_in_date, description, youtube_url } = body;
 
     // 데이터 클렌징 및 유효성 검사
-    const parseToInt = (value) => (value === '' || value === undefined || value === null) ? null : parseInt(value, 10);
-    const parseFloat = (value) => (value === '' || value === undefined || value === null) ? null : parseFloat(value);
+    const parseToInt = (value) => (value === '' || value === undefined || value === null) ? null : Number.parseInt(value, 10);
+    const parseFloat = (value) => (value === '' || value === undefined || value === null) ? null : Number.parseFloat(value);
 
     const area = parseToInt(body.area);
     const exclusive_area = parseFloat(body.exclusive_area);
