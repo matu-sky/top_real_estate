@@ -732,6 +732,7 @@ router.post('/listings/add', upload.array('images', 10), async (req, res) => {
 });
 
 // ✅ [신규] 매물 수정
+// ✅ [신규] 매물 수정
 router.post('/listings/edit/:id', upload.array('images', 10), async (req, res) => {
     const { id } = req.params;
     
@@ -784,7 +785,18 @@ router.post('/listings/edit/:id', upload.array('images', 10), async (req, res) =
     }
 
     const image_paths = imageUrls.join(',');
-    const { category, title, price, address, area, exclusive_area, approval_date, purpose, total_floors, floor, direction, direction_standard, transaction_type, parking, maintenance_fee, maintenance_fee_details, power_supply, hoist, ceiling_height, permitted_business_types, access_road_condition, move_in_date, description, youtube_url } = req.body;
+    const { category, title, price, address, approval_date, purpose, direction, direction_standard, transaction_type, maintenance_fee_details, power_supply, hoist, ceiling_height, permitted_business_types, access_road_condition, move_in_date, description, youtube_url } = body;
+
+    // 데이터 클렌징 및 유효성 검사
+    const parseToInt = (value) => (value === '' || value === undefined || value === null) ? null : Number.parseInt(value, 10);
+    const parseFloat = (value) => (value === '' || value === undefined || value === null) ? null : Number.parseFloat(value);
+
+    const area = parseToInt(body.area);
+    const exclusive_area = parseFloat(body.exclusive_area);
+    const total_floors = parseToInt(body.total_floors);
+    const floor = parseToInt(body.floor);
+    const parking = parseToInt(body.parking);
+    const maintenance_fee = parseToInt(body.maintenance_fee);
 
     const query = `UPDATE properties SET 
         category = $1, title = $2, price = $3, address = $4, area = $5, exclusive_area = $6, approval_date = $7, purpose = $8, total_floors = $9, floor = $10, direction = $11, direction_standard = $12, transaction_type = $13, parking = $14, maintenance_fee = $15, maintenance_fee_details = $16, power_supply = $17, hoist = $18, ceiling_height = $19, permitted_business_types = $20, access_road_condition = $21, move_in_date = $22, description = $23, image_path = $24, youtube_url = $25
