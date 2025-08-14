@@ -642,7 +642,8 @@ router.post('/admin/menu/update', requireLogin, async (req, res) => {
 
 
 // ✅ [신규] 새 매물 추가: 폼에서 전송된 데이터를 DB에 저장
-router.post('/listings/add', async (req, res) => {
+// ✅ [신규] 새 매물 추가: 폼에서 전송된 데이터를 DB에 저장
+router.post('/listings/add', upload.array('images', 10), async (req, res) => {
     console.log('--- 매물 등록 요청 시작 ---');
     console.log('요청 본문:', req.body);
     console.log('업로드된 파일:', req.files ? req.files.length + '개' : '없음');
@@ -654,7 +655,29 @@ router.post('/listings/add', async (req, res) => {
         body = req.body;
     }
 
-    const image_paths = body.image_urls || '';
+    const imageUrls = [];
+    if (req.files) {
+        for (const file of req.files) {
+            const originalname_utf8 = Buffer.from(file.originalname, 'latin1').toString('utf8');
+            const newFileName = `${Date.now()}_${originalname_utf8}`;
+            const { data, error } = await supabase.storage
+                .from('property-images')
+                .upload(newFileName, file.buffer, {
+                    contentType: file.mimetype,
+                });
+
+            if (error) {
+                console.error('Supabase 스토리지 업로드 오류:', error);
+                return res.status(500).send('이미지 업로드에 실패했습니다.');
+            }
+
+            const { data: { publicUrl } } = supabase.storage
+                .from('property-images')
+                .getPublicUrl(newFileName);
+            imageUrls.push(publicUrl);
+        }
+    }
+    const image_paths = imageUrls.join(',');
     console.log('생성된 이미지 경로 문자열:', image_paths);
 
     const { category, title, price, address, area, exclusive_area, approval_date, purpose, total_floors, floor, direction, direction_standard, transaction_type, parking, maintenance_fee, maintenance_fee_details, power_supply, hoist, ceiling_height, permitted_business_types, access_road_condition, move_in_date, description, youtube_url } = body;
