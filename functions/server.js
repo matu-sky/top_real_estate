@@ -643,6 +643,7 @@ router.post('/admin/menu/update', requireLogin, async (req, res) => {
 
 // ✅ [신규] 새 매물 추가: 폼에서 전송된 데이터를 DB에 저장
 // ✅ [신규] 새 매물 추가: 폼에서 전송된 데이터를 DB에 저장
+// ✅ [신규] 새 매물 추가: 폼에서 전송된 데이터를 DB에 저장
 router.post('/listings/add', upload.array('images', 10), async (req, res) => {
     console.log('--- 매물 등록 요청 시작 ---');
     console.log('요청 본문:', req.body);
@@ -680,7 +681,18 @@ router.post('/listings/add', upload.array('images', 10), async (req, res) => {
     const image_paths = imageUrls.join(',');
     console.log('생성된 이미지 경로 문자열:', image_paths);
 
-    const { category, title, price, address, area, exclusive_area, approval_date, purpose, total_floors, floor, direction, direction_standard, transaction_type, parking, maintenance_fee, maintenance_fee_details, power_supply, hoist, ceiling_height, permitted_business_types, access_road_condition, move_in_date, description, youtube_url } = body;
+    const { category, title, price, address, approval_date, purpose, direction, direction_standard, transaction_type, maintenance_fee_details, power_supply, hoist, ceiling_height, permitted_business_types, access_road_condition, move_in_date, description, youtube_url } = body;
+
+    // 데이터 클렌징 및 유효성 검사
+    const parseToInt = (value) => (value === '' || value === undefined || value === null) ? null : parseInt(value, 10);
+    const parseFloat = (value) => (value === '' || value === undefined || value === null) ? null : parseFloat(value);
+
+    const area = parseToInt(body.area);
+    const exclusive_area = parseFloat(body.exclusive_area);
+    const total_floors = parseToInt(body.total_floors);
+    const floor = parseToInt(body.floor);
+    const parking = parseToInt(body.parking);
+    const maintenance_fee = parseToInt(body.maintenance_fee);
 
     const query = `INSERT INTO properties (
         category, title, price, address, area, exclusive_area, approval_date, purpose, total_floors, floor, direction, direction_standard, transaction_type, parking, maintenance_fee, maintenance_fee_details, power_supply, hoist, ceiling_height, permitted_business_types, access_road_condition, move_in_date, description, image_path, youtube_url
