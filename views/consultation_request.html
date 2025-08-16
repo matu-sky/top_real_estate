@@ -29,21 +29,26 @@
             grid-template-columns: repeat(3, 1fr);
             gap: 20px;
         }
-        .email-field-group {
+        .email-field-group, .phone-field-group {
             display: flex;
             align-items: center;
             gap: 8px;
         }
         .email-field-group input[type="text"],
-        .email-field-group select {
+        .email-field-group select,
+        .phone-field-group input[type="text"] {
             flex: 1;
         }
+        .phone-field-group input[type="text"] {
+            text-align: center;
+        }
+
         /* 모바일 화면 대응 */
         @media (max-width: 768px) {
             .form-row {
                 grid-template-columns: 1fr;
             }
-            .email-field-group {
+            .email-field-group, .phone-field-group {
                 flex-wrap: wrap;
             }
         }
@@ -59,7 +64,7 @@
                 <p style="font-size: 0.9rem; color: #6c757d;">아래 폼을 작성해주시면, 전문 담당자가 신속하게 검토 후 연락드리겠습니다.</p>
             </div>
 
-            <form id="consultationForm" action="#" method="POST" onsubmit="assembleEmail()">
+            <form id="consultationForm" action="#" method="POST" onsubmit="prepareFormSubmit()">
                 <div class="form-group">
                     <label>매물 구분 *</label>
                     <div class="checkbox-group">
@@ -97,8 +102,15 @@
                     </div>
     
                     <div class="form-group">
-                        <label for="phone">전화번호 *</label>
-                        <input type="tel" id="phone" name="phone" placeholder="'-' 없이 숫자만 입력" required>
+                        <label for="phone1">전화번호 *</label>
+                        <div class="phone-field-group">
+                            <input type="text" id="phone1" maxlength="3" required>
+                            <span>-</span>
+                            <input type="text" id="phone2" maxlength="4" required>
+                            <span>-</span>
+                            <input type="text" id="phone3" maxlength="4" required>
+                        </div>
+                        <input type="hidden" id="phone" name="phone">
                     </div>
     
                     <div class="form-group">
@@ -173,13 +185,51 @@
             }
         }
 
+        function assemblePhone() {
+            const phone1 = document.getElementById('phone1').value;
+            const phone2 = document.getElementById('phone2').value;
+            const phone3 = document.getElementById('phone3').value;
+            const finalPhoneInput = document.getElementById('phone');
+
+            if (phone1 && phone2 && phone3) {
+                finalPhoneInput.value = `${phone1}-${phone2}-${phone3}`;
+            } else {
+                finalPhoneInput.value = '';
+            }
+        }
+
+        function prepareFormSubmit() {
+            assembleEmail();
+            assemblePhone();
+            // 여기에 reCAPTCHA 로직 등을 추가할 수 있습니다.
+            return true; // 실제 폼 제출 계속
+        }
+
         document.addEventListener('DOMContentLoaded', function() {
+            // URL 파라미터로 문의 유형 자동 선택
             const urlParams = new URLSearchParams(window.location.search);
             const inquiryType = urlParams.get('type');
             if (inquiryType) {
                 const selectElement = document.getElementById('inquiry_type');
                 selectElement.value = inquiryType;
             }
+
+            // 전화번호 필드 자동 포커스 이동
+            const phone1 = document.getElementById('phone1');
+            const phone2 = document.getElementById('phone2');
+            const phone3 = document.getElementById('phone3');
+
+            phone1.addEventListener('keyup', function() {
+                if (this.value.length === 3) {
+                    phone2.focus();
+                }
+            });
+
+            phone2.addEventListener('keyup', function() {
+                if (this.value.length === 4) {
+                    phone3.focus();
+                }
+            });
         });
     </script>
 </body>
