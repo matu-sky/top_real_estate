@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>상담문의 | 탑 부동산</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/admin_style.css"> <!-- 폼 스타일 재사용 -->
+    <style>
+        .form-container {
+            max-width: 800px;
+            margin: 60px auto;
+            padding: 40px;
+            background-color: #fff;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+        }
+        .checkbox-group {
+            display: flex;
+            gap: 20px;
+            margin-top: 10px;
+        }
+        .checkbox-group label {
+            font-weight: normal;
+        }
+    </style>
+</head>
+<body>
+    <%- include('partials/header.html') %>
+
+    <main class="container">
+        <div class="form-container">
+            <div class="section-title" style="margin-bottom: 30px;">
+                <h2>상담문의</h2>
+                <p style="font-size: 0.9rem; color: #6c757d;">아래 폼을 작성해주시면, 전문 담당자가 신속하게 검토 후 연락드리겠습니다.</p>
+            </div>
+
+            <form id="consultationForm" action="#" method="POST">
+                <div class="form-group">
+                    <label for="name">이름 *</label>
+                    <input type="text" id="name" name="name" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="phone">전화번호 *</label>
+                    <input type="tel" id="phone" name="phone" placeholder="'-' 없이 숫자만 입력" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="email">이메일</label>
+                    <input type="email" id="email" name="email">
+                </div>
+
+                <div class="form-group">
+                    <label for="inquiry_type">문의 유형 *</label>
+                    <select id="inquiry_type" name="inquiry_type" required>
+                        <option value="">선택하세요</option>
+                        <option value="매도/임대">매도/임대</option>
+                        <option value="매수/임차">매수/임차</option>
+                        <option value="양도양수">양도양수</option>
+                        <option value="기타일반">기타일반</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>매물 구분 *</label>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="prop_residential" name="property_type" value="주거용">
+                        <label for="prop_residential">주거용</label>
+                        <input type="checkbox" id="prop_commercial" name="property_type" value="상업용">
+                        <label for="prop_commercial">상업용</label>
+                        <input type="checkbox" id="prop_factory" name="property_type" value="공장/지산">
+                        <label for="prop_factory">공장/지산</label>
+                        <input type="checkbox" id="prop_other" name="property_type" value="기타">
+                        <label for="prop_other">기타</label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="message">상세 문의 내용</label>
+                    <textarea id="message" name="message" rows="8"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <input type="checkbox" id="privacy_policy" name="privacy_policy" required>
+                    <label for="privacy_policy">개인정보 수집 및 이용에 동의합니다. *</label>
+                </div>
+
+                <button type="submit" class="btn-primary" style="width: 100%; padding: 15px;">문의 접수하기</button>
+            </form>
+        </div>
+    </main>
+
+    <%- include('partials/footer.html') %>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const inquiryType = urlParams.get('type');
+            if (inquiryType) {
+                const selectElement = document.getElementById('inquiry_type');
+                selectElement.value = inquiryType;
+            }
+        });
+    </script>
+</body>
+</html>

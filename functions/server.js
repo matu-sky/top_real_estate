@@ -117,6 +117,11 @@ async function loadSettings(req, res, next) {
         // res.locals.settings에 최종 메뉴를 다시 할당하여 템플릿에서 일관되게 사용
         res.locals.settings.header_nav_links = dbMenus;
 
+        // 개발 중: 상담문의 링크 임시 추가
+        if (process.env.NODE_ENV !== 'production') {
+            res.locals.settings.header_nav_links.push({ text: '상담문의', url: '/consultation-request' });
+        }
+
         // 관리자 페이지 사이드바 메뉴
         res.locals.menus = [
             { name: '대시보드', url: '/dashboard' },
@@ -124,7 +129,8 @@ async function loadSettings(req, res, next) {
             { name: '매물 관리', url: '/listings' },
             { name: '게시판 설정', url: '/admin/board_settings' },
             { name: '메뉴 관리', url: '/admin/menu' },
-            { name: '페이지 관리', url: '/admin/pages' }
+            { name: '페이지 관리', url: '/admin/pages' },
+            { name: '문의보기', url: '/admin/inquiries' } // 임시 추가
         ];
         next();
     } catch (err) {
@@ -660,7 +666,7 @@ router.post('/listings/add', upload.array('images', 10), async (req, res) => {
     if (req.files) {
         for (const file of req.files) {
             const originalname_utf8 = Buffer.from(file.originalname, 'latin1').toString('utf8');
-            const newFileName = `${Date.now()}_${originalname_utf8}`;
+            const newFileName = `${Date.now()}_${encodeURIComponent(originalname_utf8)}`;
             const { data, error } = await supabase.storage
                 .from('property-images')
                 .upload(newFileName, file.buffer, {
@@ -833,6 +839,17 @@ router.post('/listings/delete/:id', async (req, res) => {
     } finally {
         client.release();
     }
+});
+
+
+// --- 상담문의 (임시) ---
+router.get('/consultation-request', (req, res) => {
+    res.render('consultation_request', { content: res.locals.settings });
+});
+
+router.get('/admin/inquiries', requireLogin, (req, res) => {
+    // TODO: DB에서 문의 내역 조회 후 렌더링
+    res.send("<html><body><h1>접수된 문의 내역 (구현 예정)</h1><a href=\"/admin\">관리자 홈으로</a></body></html>");
 });
 
 
