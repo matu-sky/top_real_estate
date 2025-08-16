@@ -117,11 +117,6 @@ async function loadSettings(req, res, next) {
         // res.locals.settings에 최종 메뉴를 다시 할당하여 템플릿에서 일관되게 사용
         res.locals.settings.header_nav_links = dbMenus;
 
-        // 개발 중: 상담문의 링크 임시 추가
-        if (process.env.NODE_ENV !== 'production') {
-            res.locals.settings.header_nav_links.push({ text: '상담문의', url: '/consultation-request' });
-        }
-
         // 관리자 페이지 사이드바 메뉴
         res.locals.menus = [
             { name: '대시보드', url: '/dashboard' },
