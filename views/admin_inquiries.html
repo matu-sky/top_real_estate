@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>접수된 문의 관리</title>
+    <link rel="stylesheet" href="/css/admin_style.css">
+</head>
+<body>
+    <div class="admin-container">
+        <%- include('partials/admin_sidebar.html', { menus: menus }) %>
+        <div class="admin-content">
+            <div class="admin-header">
+                <h1>접수된 문의 내역</h1>
+                <p>고객이 상담문의 폼을 통해 접수한 내역입니다.</p>
+            </div>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>접수일</th>
+                            <th>이름</th>
+                            <th>연락처</th>
+                            <th>문의 유형</th>
+                            <th>제목</th>
+                            <th>상세보기</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% if (inquiries && inquiries.length > 0) { %>
+                            <% inquiries.forEach(function(inquiry) { %>
+                                <tr>
+                                    <td><%= new Date(inquiry.created_at).toLocaleDateString('ko-KR') %></td>
+                                    <td><%= inquiry.name %></td>
+                                    <td><%= inquiry.phone %></td>
+                                    <td><%= inquiry.inquiry_type %></td>
+                                    <td><%= inquiry.title %></td>
+                                    <td><a href="/admin/inquiry/<%= inquiry.id %>" class="btn-secondary btn-sm">보기</a></td>
+                                </tr>
+                            <% }); %>
+                        <% } else { %>
+                            <tr>
+                                <td colspan="6" style="text-align: center; padding: 40px;">접수된 문의가 없습니다.</td>
+                            </tr>
+                        <% } %>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

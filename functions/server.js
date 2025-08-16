@@ -842,14 +842,91 @@ router.post('/listings/delete/:id', async (req, res) => {
 });
 
 
-// --- 상담문의 (임시) ---
+// --- 상담문의 기능 ---
 router.get('/consultation-request', (req, res) => {
     res.render('consultation_request', { content: res.locals.settings });
 });
 
-router.get('/admin/inquiries', requireLogin, (req, res) => {
-    // TODO: DB에서 문의 내역 조회 후 렌더링
-    res.send("<html><body><h1>접수된 문의 내역 (구현 예정)</h1><a href=\"/admin\">관리자 홈으로</a></body></html>");
+router.get('/consultation-thanks', (req, res) => {
+    res.render('consultation_thanks', { content: res.locals.settings });
+});
+
+router.post('/consultation-request/submit', async (req, res) => {
+    let client;
+    try {
+        let body = {};
+        if (req.body instanceof Buffer) {
+            body = querystring.parse(req.body.toString());
+        } else {
+            body = req.body;
+        }
+
+        const {
+            name, phone, email, inquiry_type, title, message
+        } = body;
+        
+        let property_types = body.property_type;
+        if (Array.isArray(property_types)) {
+            property_types = property_types.join(', ');
+        } else if (property_types === undefined) {
+            property_types = '';
+        }
+
+        const query = `
+            INSERT INTO inquiries (name, phone, email, property_types, inquiry_type, title, message)
+            VALUES ($1, $2, $3, $4, $5, $6, $7)
+        `;
+        const params = [name, phone, email, property_types, inquiry_type, title, message];
+
+        client = await pool.connect();
+        await client.query(query, params);
+        
+        res.redirect('/consultation-thanks');
+
+    } catch (err) {
+        console.error('DB 삽입 오류:', err.stack);
+        res.status(500).send('문의 접수 중 오류가 발생했습니다.');
+    } finally {
+        if (client) client.release();
+    }
+});
+
+router.get('/admin/inquiries', requireLogin, async (req, res) => {
+    let client;
+    try {
+        client = await pool.connect();
+        const result = await client.query('SELECT * FROM inquiries ORDER BY created_at DESC');
+        res.render('admin_inquiries', { 
+            inquiries: result.rows,
+            menus: res.locals.menus
+        });
+    } catch (err) {
+        console.error('DB 조회 오류:', err.stack);
+        res.status(500).send('문의 내역을 불러오는 데 실패했습니다.');
+    } finally {
+        if (client) client.release();
+    }
+});
+
+router.get('/admin/inquiry/:id', requireLogin, async (req, res) => {
+    const { id } = req.params;
+    let client;
+    try {
+        client = await pool.connect();
+        const result = await client.query('SELECT * FROM inquiries WHERE id = $1', [id]);
+        if (result.rows.length === 0) {
+            return res.status(404).send('문의 내역을 찾을 수 없습니다.');
+        }
+        res.render('inquiry_detail', {
+            inquiry: result.rows[0],
+            menus: res.locals.menus
+        });
+    } catch (err) {
+        console.error('DB 조회 오류:', err.stack);
+        res.status(500).send('문의 내역을 불러오는 데 실패했습니다.');
+    } finally {
+        if (client) client.release();
+    }
 });
 
 
