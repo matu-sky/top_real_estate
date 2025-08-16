@@ -23,6 +23,17 @@
         .checkbox-group label {
             font-weight: normal;
         }
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+        /* 모바일 화면 대응 */
+        @media (max-width: 768px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
     </style>
 </head>
 <body>
@@ -37,18 +48,17 @@
 
             <form id="consultationForm" action="#" method="POST">
                 <div class="form-group">
-                    <label for="name">이름 *</label>
-                    <input type="text" id="name" name="name" required>
-                </div>
-
-                <div class="form-group">
-                    <label for="phone">전화번호 *</label>
-                    <input type="tel" id="phone" name="phone" placeholder="'-' 없이 숫자만 입력" required>
-                </div>
-
-                <div class="form-group">
-                    <label for="email">이메일</label>
-                    <input type="email" id="email" name="email">
+                    <label>매물 구분 *</label>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="prop_residential" name="property_type" value="주거용">
+                        <label for="prop_residential">주거용</label>
+                        <input type="checkbox" id="prop_commercial" name="property_type" value="상업용">
+                        <label for="prop_commercial">상업용</label>
+                        <input type="checkbox" id="prop_factory" name="property_type" value="공장/지산">
+                        <label for="prop_factory">공장/지산</label>
+                        <input type="checkbox" id="prop_other" name="property_type" value="기타">
+                        <label for="prop_other">기타</label>
+                    </div>
                 </div>
 
                 <div class="form-group">
@@ -63,16 +73,24 @@
                 </div>
 
                 <div class="form-group">
-                    <label>매물 구분 *</label>
-                    <div class="checkbox-group">
-                        <input type="checkbox" id="prop_residential" name="property_type" value="주거용">
-                        <label for="prop_residential">주거용</label>
-                        <input type="checkbox" id="prop_commercial" name="property_type" value="상업용">
-                        <label for="prop_commercial">상업용</label>
-                        <input type="checkbox" id="prop_factory" name="property_type" value="공장/지산">
-                        <label for="prop_factory">공장/지산</label>
-                        <input type="checkbox" id="prop_other" name="property_type" value="기타">
-                        <label for="prop_other">기타</label>
+                    <label for="title">제목 *</label>
+                    <input type="text" id="title" name="title" required>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="name">이름 *</label>
+                        <input type="text" id="name" name="name" required>
+                    </div>
+    
+                    <div class="form-group">
+                        <label for="phone">전화번호 *</label>
+                        <input type="tel" id="phone" name="phone" placeholder="'-' 없이 숫자만 입력" required>
+                    </div>
+    
+                    <div class="form-group">
+                        <label for="email">이메일</label>
+                        <input type="email" id="email" name="email">
                     </div>
                 </div>
 
