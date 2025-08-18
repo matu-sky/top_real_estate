@@ -33,16 +33,11 @@ const app = express();
 
 // --- Nodemailer 트랜스포터 설정 ---
 const transporter = nodemailer.createTransport({
-    host: process.env.EMAIL_HOST,
-    port: 465,
-    secure: true, // SSL 사용
+    service: 'gmail',
     auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS,
     },
-    tls: {
-        rejectUnauthorized: false
-    }
 });
 
 const { Pool } = require('pg');
@@ -965,8 +960,8 @@ router.post('/consultation-request/submit', async (req, res) => {
 
         // --- 관리자에게 이메일 알림 발송 ---
         const mailOptions = {
-            from: process.env.EMAIL_USER,
-            to: process.env.EMAIL_USER, // Admin's email
+            from: `"탑부동산" <${process.env.EMAIL_USER}>`,
+            to: 'jbs-sky@naver.com', // Admin's email
             subject: '새로운 상담문의가 도착했습니다.',
             html: `
                 <h1>새로운 상담문의 접수</h1>
