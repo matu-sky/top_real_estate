@@ -1,3 +1,4 @@
+const path = require('path');
 require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
 console.log('--- Netlify Function Environment ---');
 console.log('Attempting to read SUPABASE_URL:', process.env.SUPABASE_URL ? 'Found' : 'Not Found');
@@ -6,7 +7,6 @@ console.log('Type of SUPABASE_URL:', typeof process.env.SUPABASE_URL);
 console.log('Type of SUPABASE_ANON_KEY:', typeof process.env.SUPABASE_ANON_KEY);
 console.log('------------------------------------');
 const express = require('express');
-const path = require('path');
 const session = require('express-session');
 const multer = require('multer');
 const serverless = require('serverless-http');
