@@ -94,6 +94,18 @@ nav a:hover {
     font-weight: 700;
 }
 
+.header-auth .header-admin-link {
+    border: 1px solid var(--border-color);
+    padding: 5px 10px;
+    border-radius: 5px;
+    background-color: var(--light-gray-bg);
+    margin-left: 10px;
+}
+.header-auth .header-admin-link:hover {
+    background-color: var(--border-color);
+    color: var(--primary-color);
+}
+
 .mobile-menu-btn { display: none; font-size: 1.8rem; cursor: pointer; }
 
 /* --- 히어로 섹션 --- */

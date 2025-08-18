@@ -17,6 +17,7 @@
         <div class="header-auth">
             <% if (user && user.loggedin) { %>
                 <span>관리자님</span>
+                <a href="/dashboard" class="header-admin-link">관리자 페이지</a>
                 <a href="/logout">로그아웃</a>
             <% } else { %>
                 <a href="/login">로그인</a>
