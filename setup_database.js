@@ -38,7 +38,7 @@ async function setupDatabase() {
             const valueToStore = (typeof value === 'object' && value !== null) ? JSON.stringify(value) : value;
             
             await client.query(
-                'INSERT INTO site_settings (key, value) VALUES ($1, $2) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value',
+                'INSERT INTO site_settings (key, value) VALUES ($1, $2) ON CONFLICT (key) DO NOTHING',
                 [key, valueToStore]
             );
         }
@@ -56,11 +56,11 @@ async function setupDatabase() {
 
         for (const page of pages) {
             await client.query(
-                'UPDATE pages SET title = $1, content = $2, updated_at = CURRENT_TIMESTAMP WHERE slug = $3',
-                [page.title, page.content, page.slug]
+                'INSERT INTO pages (slug, title, content) VALUES ($1, $2, $3) ON CONFLICT (slug) DO NOTHING',
+                [page.slug, page.title, page.content]
             );
         }
-        console.log('성공: 기본 페이지 데이터를 "pages" 테이블에 삽입했습니다.');
+        console.log('성공: 기본 페이지 데이터를 "pages" 테이블에 삽입했습니다. (기존 데이터는 덮어쓰지 않음)');
 
         console.log('--------------------------------------------------');
         console.log('데이터베이스 설정 및 데이터 이전이 완료되었습니다.');
