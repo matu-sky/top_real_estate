@@ -232,7 +232,10 @@ router.post('/login', (req, res) => {
     console.log('Login attempt with parsed body:', body); // 디버깅 로그 수정
     const { username, password } = body;
 
-    if (username === 'as123' && password === 'asd123') {
+    const adminUsername = process.env.ADMIN_USERNAME || 'as123';
+    const adminPassword = process.env.ADMIN_PASSWORD || 'asd123';
+
+    if (username === adminUsername && password === adminPassword) {
         req.session.loggedin = true;
         res.redirect('/admin');
     } else {
