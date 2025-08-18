@@ -127,6 +127,7 @@ async function loadSettings(req, res, next) {
             { name: '페이지 관리', url: '/admin/pages' },
             { name: '문의보기', url: '/admin/inquiries' } // 임시 추가
         ];
+        res.locals.user = { loggedin: req.session.loggedin };
         next();
     } catch (err) {
         console.error('설정 로드 오류:', err);
