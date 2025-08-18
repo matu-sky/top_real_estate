@@ -33,12 +33,15 @@ const app = express();
 // --- Nodemailer 트랜스포터 설정 ---
 const transporter = nodemailer.createTransport({
     host: process.env.EMAIL_HOST,
-    port: process.env.EMAIL_PORT,
-    secure: false, // true for 465, false for other ports
+    port: 465,
+    secure: true, // SSL 사용
     auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS,
     },
+    tls: {
+        rejectUnauthorized: false
+    }
 });
 const projectRoot = path.resolve(__dirname, '..');
 
