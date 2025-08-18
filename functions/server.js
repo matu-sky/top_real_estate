@@ -44,7 +44,6 @@ const transporter = nodemailer.createTransport({
         rejectUnauthorized: false
     }
 });
-const projectRoot = path.resolve(__dirname, '..');
 
 const { Pool } = require('pg');
 const pool = new Pool({
