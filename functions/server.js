@@ -31,15 +31,6 @@ async function getFiles(dir) {
 
 const app = express();
 
-// --- Nodemailer 트랜스포터 설정 ---
-const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-    },
-});
-
 const { Pool } = require('pg');
 const pool = new Pool({
     host: process.env.PG_HOST,
@@ -958,6 +949,15 @@ router.post('/consultation-request/submit', async (req, res) => {
         client = await pool.connect();
         await client.query(query, params);
 
+        // --- Nodemailer 트랜스포터 설정 (이메일 발송 직전에 생성) ---
+        const transporter = nodemailer.createTransport({
+            service: 'gmail',
+            auth: {
+                user: process.env.EMAIL_USER,
+                pass: process.env.EMAIL_PASS,
+            },
+        });
+
         // --- 관리자에게 이메일 알림 발송 ---
         const mailOptions = {
             from: `"탑부동산" <${process.env.EMAIL_USER}>`,
@@ -987,7 +987,7 @@ router.post('/consultation-request/submit', async (req, res) => {
 
     } catch (err) {
         console.error('DB 삽입 오류:', err.stack);
-        res.status(500).send(`<pre>${err.stack}</pre>`);
+        res.status(500).send('문의 접수 중 오류가 발생했습니다.');
     } finally {
         if (client) client.release();
     }
