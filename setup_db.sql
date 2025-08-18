@@ -86,6 +86,13 @@ CREATE TABLE IF NOT EXISTS public.consultation_details (
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE IF NOT EXISTS public.users (
+    id BIGSERIAL PRIMARY KEY,
+    username TEXT NOT NULL UNIQUE,
+    password_hash TEXT NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Enable Row Level Security for all tables
 ALTER TABLE public.properties ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.boards ENABLE ROW LEVEL SECURITY;
@@ -93,6 +100,7 @@ ALTER TABLE public.posts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.pages ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.consultation_requests ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.consultation_details ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
 
 -- Policies for properties
 DROP POLICY IF EXISTS "Allow public read access" ON public.properties;
@@ -126,6 +134,10 @@ CREATE POLICY "Allow all access for consultation_requests" ON public.consultatio
 DROP POLICY IF EXISTS "Allow all access for consultation_details" ON public.consultation_details;
 CREATE POLICY "Allow all access for consultation_details" ON public.consultation_details FOR ALL USING (true) WITH CHECK (true);
 
+-- Policies for users
+DROP POLICY IF EXISTS "Allow all access for users" ON public.users;
+CREATE POLICY "Allow all access for users" ON public.users FOR ALL USING (true) WITH CHECK (true);
+
 
 -- Insert initial data
 INSERT INTO pages (slug, title, content) VALUES
@@ -145,3 +157,7 @@ INSERT INTO boards (name, slug, description, board_type) VALUES
 ('동영상 갤러리', 'utube', '관련 동영상을 공유하는 곳입니다.', 'youtube'),
 ('부동산 정보', 'rearinfo', '부동산 관련 전문 정보를 제공합니다.', 'general')
 ON CONFLICT (slug) DO NOTHING;
+
+INSERT INTO users (username, password_hash) VALUES
+('as123', '$2b$10$b3oaK7S1LOb94MvJeI6M7.fo6X.WeOcm6S9GjySWmckEFEO0.TqFa')
+ON CONFLICT (username) DO NOTHING;

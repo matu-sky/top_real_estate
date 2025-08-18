@@ -11,6 +11,7 @@ const session = require('express-session');
 const multer = require('multer');
 const serverless = require('serverless-http');
 const querystring = require('querystring');
+const bcrypt = require('bcrypt');
 const fs = require('fs');
 const util = require('util');
 const readdir = util.promisify(fs.readdir);
@@ -125,7 +126,8 @@ async function loadSettings(req, res, next) {
             { name: '게시판 설정', url: '/admin/board_settings' },
             { name: '메뉴 관리', url: '/admin/menu' },
             { name: '페이지 관리', url: '/admin/pages' },
-            { name: '문의보기', url: '/admin/inquiries' } // 임시 추가
+            { name: '문의보기', url: '/admin/inquiries' },
+            { name: '계정 설정', url: '/admin/settings' }
         ];
         res.locals.user = { loggedin: req.session.loggedin };
         next();
@@ -221,25 +223,36 @@ router.get('/login', (req, res) => {
 });
 
 // 로그인 처리
-router.post('/login', (req, res) => {
-    // Netlify 환경에서 Buffer로 들어오는 body를 파싱
+router.post('/login', async (req, res) => {
     let body = {};
     if (req.body instanceof Buffer) {
         body = querystring.parse(req.body.toString());
     } else {
         body = req.body;
     }
-    console.log('Login attempt with parsed body:', body); // 디버깅 로그 수정
     const { username, password } = body;
-
-    const adminUsername = process.env.ADMIN_USERNAME || 'as123';
-    const adminPassword = process.env.ADMIN_PASSWORD || 'asd123';
-
-    if (username === adminUsername && password === adminPassword) {
-        req.session.loggedin = true;
-        res.redirect('/admin');
-    } else {
-        res.send('Incorrect Username and/or Password!');
+    let client;
+    try {
+        client = await pool.connect();
+        const result = await client.query('SELECT * FROM users WHERE username = $1', [username]);
+        if (result.rows.length > 0) {
+            const user = result.rows[0];
+            const match = await bcrypt.compare(password, user.password_hash);
+            if (match) {
+                req.session.loggedin = true;
+                req.session.username = username; // Store username in session
+                res.redirect('/admin');
+            } else {
+                res.send('Incorrect Username and/or Password!');
+            }
+        } else {
+            res.send('Incorrect Username and/or Password!');
+        }
+    } catch (err) {
+        console.error('Login error:', err);
+        res.status(500).send('An error occurred during login.');
+    } finally {
+        if (client) client.release();
     }
 });
 
@@ -307,6 +320,60 @@ router.get('/logout', (req, res) => {
         }
         res.redirect('/');
     });
+});
+
+// 계정 설정 페이지 보여주기
+router.get('/admin/settings', requireLogin, async (req, res) => {
+    let client;
+    try {
+        client = await pool.connect();
+        const result = await client.query('SELECT username FROM users WHERE username = $1', [req.session.username]);
+        if (result.rows.length > 0) {
+            res.render('admin_settings', { user: result.rows[0], menus: res.locals.menus });
+        } else {
+            res.status(404).send('User not found.');
+        }
+    } catch (err) {
+        console.error('Error fetching user for settings page:', err);
+        res.status(500).send('Error loading settings page.');
+    } finally {
+        if (client) client.release();
+    }
+});
+
+// 계정 설정 업데이트
+router.post('/admin/settings', requireLogin, async (req, res) => {
+    let body = {};
+    if (req.body instanceof Buffer) {
+        body = querystring.parse(req.body.toString());
+    } else {
+        body = req.body;
+    }
+    const { username, new_password, confirm_password } = body;
+    const currentUsername = req.session.username;
+
+    if (new_password && new_password !== confirm_password) {
+        return res.status(400).send('Passwords do not match.');
+    }
+
+    let client;
+    try {
+        client = await pool.connect();
+        if (new_password) {
+            const saltRounds = 10;
+            const password_hash = await bcrypt.hash(new_password, saltRounds);
+            await client.query('UPDATE users SET username = $1, password_hash = $2 WHERE username = $3', [username, password_hash, currentUsername]);
+        } else {
+            await client.query('UPDATE users SET username = $1 WHERE username = $2', [username, currentUsername]);
+        }
+        req.session.username = username; // Update session username
+        res.redirect('/admin/settings');
+    } catch (err) {
+        console.error('Error updating user settings:', err);
+        res.status(500).send('Error updating settings.');
+    } finally {
+        if (client) client.release();
+    }
 });
 
 // 대시보드 페이지
