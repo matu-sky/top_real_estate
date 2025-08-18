@@ -15,6 +15,7 @@ const bcrypt = require('bcrypt');
 const fs = require('fs');
 const util = require('util');
 const readdir = util.promisify(fs.readdir);
+const { getYouTubeVideoId, getYouTubeThumbnailUrl } = require('./utils.js');
 
 // 디버깅: 재귀적으로 디렉토리 목록을 가져오는 함수
 async function getFiles(dir) {
@@ -1082,7 +1083,7 @@ router.get('/board/:slug/write', requireLogin, async (req, res) => {
     }
 });
 
-const youtubeThumbnail = require('youtube-thumbnail');
+
 
 // 새 글 작성 (저장)
 router.post('/board/:slug/write', requireLogin, upload.array('attachments', 10), async (req, res) => {
@@ -1104,13 +1105,8 @@ router.post('/board/:slug/write', requireLogin, upload.array('attachments', 10),
 
         // 유튜브 URL이 있으면 썸네일 추출
         if (board.board_type === 'youtube' && youtube_url) {
-            try {
-                const thumbnail = youtubeThumbnail(youtube_url);
-                thumbnail_url = thumbnail.high.url;
-            } catch (err) {
-                console.error('유튜브 썸네일 추출 오류:', err);
-                // 썸네일 추출에 실패해도 글쓰기는 계속 진행
-            }
+            const videoId = getYouTubeVideoId(youtube_url);
+            thumbnail_url = getYouTubeThumbnailUrl(videoId);
         }
 
         let attachment_paths = [];
@@ -1282,12 +1278,8 @@ router.post('/board/:slug/:postId/edit', requireLogin, upload.array('attachments
         // 3. 유튜브 썸네일 추출 로직
         let thumbnail_url = null;
         if (board.board_type === 'youtube' && youtube_url) {
-            try {
-                const thumbnail = youtubeThumbnail(youtube_url);
-                thumbnail_url = thumbnail.high.url;
-            } catch (err) {
-                console.error('유튜브 썸네일 추출 오류 (수정):', err);
-            }
+            const videoId = getYouTubeVideoId(youtube_url);
+            thumbnail_url = getYouTubeThumbnailUrl(videoId);
         }
 
         const query = 'UPDATE posts SET title = $1, content = $2, author = $3, attachment_path = $4, youtube_url = $5, thumbnail_url = $6 WHERE id = $7';
