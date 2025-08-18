@@ -1,5 +1,6 @@
 const path = require('path');
-require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
+const projectRoot = path.resolve(__dirname, '..');
+require('dotenv').config({ path: path.join(projectRoot, '.env') });
 console.log('--- Netlify Function Environment ---');
 console.log('Attempting to read SUPABASE_URL:', process.env.SUPABASE_URL ? 'Found' : 'Not Found');
 console.log('Attempting to read SUPABASE_ANON_KEY:', process.env.SUPABASE_ANON_KEY ? 'Found' : 'Not Found');
@@ -992,15 +993,7 @@ router.post('/consultation-request/submit', async (req, res) => {
 
     } catch (err) {
         console.error('DB 삽입 오류:', err.stack);
-        const debugInfo = `
-            <hr>
-            <h3>Debugging Info:</h3>
-            <p><strong>EMAIL_HOST:</strong> ${process.env.EMAIL_HOST}</p>
-            <p><strong>EMAIL_PORT:</strong> ${process.env.EMAIL_PORT}</p>
-            <p><strong>EMAIL_USER:</strong> ${process.env.EMAIL_USER}</p>
-            <hr>
-        `;
-        res.status(500).send(`<pre>${err.stack}</pre>${debugInfo}`);
+        res.status(500).send('문의 접수 중 오류가 발생했습니다.');
     } finally {
         if (client) client.release();
     }
