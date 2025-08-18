@@ -16,6 +16,7 @@ const fs = require('fs');
 const util = require('util');
 const readdir = util.promisify(fs.readdir);
 const { getYouTubeVideoId, getYouTubeThumbnailUrl } = require('./utils.js');
+const nodemailer = require('nodemailer');
 
 // 디버깅: 재귀적으로 디렉토리 목록을 가져오는 함수
 async function getFiles(dir) {
@@ -28,6 +29,17 @@ async function getFiles(dir) {
 }
 
 const app = express();
+
+// --- Nodemailer 트랜스포터 설정 ---
+const transporter = nodemailer.createTransport({
+    host: process.env.EMAIL_HOST,
+    port: process.env.EMAIL_PORT,
+    secure: false, // true for 465, false for other ports
+    auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+    },
+});
 const projectRoot = path.resolve(__dirname, '..');
 
 const { Pool } = require('pg');
@@ -947,6 +959,31 @@ router.post('/consultation-request/submit', async (req, res) => {
 
         client = await pool.connect();
         await client.query(query, params);
+
+        // --- 관리자에게 이메일 알림 발송 ---
+        const mailOptions = {
+            from: process.env.EMAIL_USER,
+            to: process.env.EMAIL_USER, // Admin's email
+            subject: '새로운 상담문의가 도착했습니다.',
+            html: `
+                <h1>새로운 상담문의 접수</h1>
+                <p>홈페이지를 통해 새로운 상담문의가 접수되었습니다.</p>
+                <h2>문의 내용</h2>
+                <ul>
+                    <li><strong>성함:</strong> ${name}</li>
+                    <li><strong>연락처:</strong> ${phone}</li>
+                    <li><strong>이메일:</strong> ${email}</li>
+                    <li><strong>관심분야:</strong> ${property_types}</li>
+                    <li><strong>문의유형:</strong> ${inquiry_type}</li>
+                    <li><strong>제목:</strong> ${title}</li>
+                </ul>
+                <h2>메시지</h2>
+                <p>${message}</p>
+            `
+        };
+
+        await transporter.sendMail(mailOptions);
+        console.log('Admin notification email sent successfully.');
         
         res.redirect('/consultation-thanks');
 
