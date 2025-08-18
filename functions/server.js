@@ -987,7 +987,7 @@ router.post('/consultation-request/submit', async (req, res) => {
 
     } catch (err) {
         console.error('DB 삽입 오류:', err.stack);
-        res.status(500).send('문의 접수 중 오류가 발생했습니다.');
+        res.status(500).send(`<pre>${err.stack}</pre>`);
     } finally {
         if (client) client.release();
     }
