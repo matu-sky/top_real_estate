@@ -19,6 +19,7 @@ const readdir = util.promisify(fs.readdir);
 const { getYouTubeVideoId, getYouTubeThumbnailUrl } = require('./utils.js');
 const { generateSitemap } = require('./sitemapGenerator.js');
 const nodemailer = require('nodemailer');
+const fs = require('fs'); // fs 모듈 추가
 
 // 디버깅: 재귀적으로 디렉토리 목록을 가져오는 함수
 async function getFiles(dir) {
@@ -147,6 +148,22 @@ const router = express.Router();
 
 // 모든 요청에 대해 설정 로드 미들웨어 적용
 router.use(loadSettings);
+
+// sitemap.xml 라우트
+router.get('/sitemap.xml', (req, res) => {
+    const sitemapPath = path.join('/tmp', 'sitemap.xml');
+    fs.readFile(sitemapPath, (err, data) => {
+        if (err) {
+            // 파일이 없는 경우, 새로 생성하도록 유도
+            if (err.code === 'ENOENT') {
+                return res.status(404).send('Sitemap not found. Please generate it first via the admin panel.');
+            }
+            return res.status(500).send(err);
+        }
+        res.header('Content-Type', 'application/xml');
+        res.send(data);
+    });
+});
 
 // 메인 페이지
 router.get('/', async (req, res) => {
