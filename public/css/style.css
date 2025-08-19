@@ -991,3 +991,43 @@ footer {
     color: #fff;
     border-color: var(--primary-color);
 }
+
+/* --- 관련 사이트 섹션 --- */
+.related-sites-section {
+    padding: 40px 0;
+    background-color: var(--light-gray-bg);
+    border-top: 1px solid var(--border-color);
+}
+
+.related-sites-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 15px;
+}
+
+.site-link, .site-link-no-href {
+    display: block;
+    padding: 12px;
+    text-align: center;
+    text-decoration: none;
+    color: #333;
+    background-color: #fff;
+    border: 1px solid var(--border-color);
+    border-radius: 0; /* Sharp corners */
+    transition: all 0.2s ease-in-out;
+    font-size: 0.9rem;
+}
+
+.site-link:hover {
+    background-color: var(--primary-color);
+    color: #fff;
+    border-color: var(--primary-color);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.site-link-no-href {
+    color: #999;
+    background-color: #f0f0f0;
+    cursor: not-allowed;
+}
