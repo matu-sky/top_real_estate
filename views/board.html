@@ -112,10 +112,12 @@
                         <div class="post-text-content" style="flex-grow: 1;">
                             <h3><a href="/board/<%= board.slug %>/<%= post.id %>"><%= post.title %></a></h3>
                             <p class="post-card-snippet">
-                                <% if (post.content) { %>
-                                    <%= post.content.substring(0, 100) %><% if (post.content.length > 100) { %>...<% } %>
-                                <% } %>
-                            </p>
+                                    <% if (post.content) { 
+                                        const strippedContent = post.content.replace(/<[^>]*>?/gm, '');
+                                    %>
+                                        <%- strippedContent.substring(0, 100) %><% if (strippedContent.length > 100) { %>...<% } %>
+                                    <% } %>
+                                </p>
                             <div class="post-card-meta">
                                 <span><strong>작성자:</strong> <%= post.author %></span>
                                 <span><strong>작성일:</strong> <%= new Date(post.created_at).toLocaleDateString('ko-KR') %></span>
