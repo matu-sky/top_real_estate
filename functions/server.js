@@ -17,6 +17,7 @@ const fs = require('fs');
 const util = require('util');
 const readdir = util.promisify(fs.readdir);
 const { getYouTubeVideoId, getYouTubeThumbnailUrl } = require('./utils.js');
+const { generateSitemap } = require('./sitemapGenerator.js');
 const nodemailer = require('nodemailer');
 
 // 디버깅: 재귀적으로 디렉토리 목록을 가져오는 함수
@@ -375,6 +376,20 @@ router.post('/admin/settings', requireLogin, async (req, res) => {
         res.status(500).send('Error updating settings.');
     } finally {
         if (client) client.release();
+    }
+});
+
+// 사이트맵 생성 라우트
+router.get('/admin/generate-sitemap', requireLogin, async (req, res) => {
+    try {
+        const result = await generateSitemap();
+        if (result.success) {
+            res.send(`Sitemap generated successfully at ${result.path}. <a href="/sitemap.xml">View Sitemap</a>`);
+        } else {
+            res.status(500).send(`Error generating sitemap: ${result.error.message}`);
+        }
+    } catch (error) {
+        res.status(500).send(`An unexpected error occurred: ${error.message}`);
     }
 });
 
