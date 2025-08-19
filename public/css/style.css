@@ -738,9 +738,8 @@ footer {
 .post-detail .post-meta { color: #6c757d; margin-bottom: 40px; }
 .post-detail .post-meta span:not(:last-child) { margin-right: 15px; }
 
-.text-column .post-content {
-    word-wrap: break-word;
-    overflow-wrap: break-word;
+.post-text-content .post-card-snippet {
+    word-break: break-all;
 }
 
 
