@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>상세 상담 정보 입력</title>
+    <link rel="stylesheet" href="/css/style.css"> 
+</head>
+<body>
+    <%- include('partials/header.html') %>
+
+    <main class="container page-content">
+        <h1>상세 상담 정보 입력</h1>
+        <p>정확한 상담을 위해 아래 정보를 입력해주세요.</p>
+        <hr>
+
+        <form action="/consultation/form/submit" method="POST">
+            <input type="hidden" name="requestId" value="<%= requestId %>">
+
+            <div class="form-group">
+                <label for="property_type"><strong>상담받고 싶은 매물 종류를 선택하세요</strong></label>
+                <select id="property_type" name="property_type" required>
+                    <option value="">선택하세요</option>
+                    <option value="주택">주택 (아파트, 빌라 등)</option>
+                    <option value="상가">상가</option>
+                    <option value="공장/지산">공장/지식산업센터</option>
+                    <option value="토지">토지</option>
+                </select>
+            </div>
+
+            <!-- 공통 질문 -->
+            <div class="form-group">
+                <label for="desired_area">희망 지역</label>
+                <input type="text" id="desired_area" name="desired_area" placeholder="예: 군포시 부곡동">
+            </div>
+            <div class="form-group">
+                <label for="budget">예산 범위</label>
+                <input type="text" id="budget" name="budget" placeholder="예: 5억 ~ 6억">
+            </div>
+
+            <!-- 주택 관련 질문 -->
+            <div id="house_questions" class="specific-questions" style="display: none;">
+                <div class="form-group">
+                    <label for="rooms">필요한 방 개수</label>
+                    <input type="text" id="rooms" name="rooms" placeholder="예: 3개 이상">
+                </div>
+            </div>
+
+            <!-- 상가 관련 질문 -->
+            <div id="commercial_questions" class="specific-questions" style="display: none;">
+                <div class="form-group">
+                    <label for="business_type">원하는 업종</label>
+                    <input type="text" id="business_type" name="business_type" placeholder="예: 카페, 식당">
+                </div>
+                <div class="form-group">
+                    <label for="required_area">필요 면적 (평)</label>
+                    <input type="text" id="required_area" name="required_area" placeholder="예: 20평 내외">
+                </div>
+            </div>
+
+            <!-- 공장/지산 관련 질문 -->
+            <div id="factory_questions" class="specific-questions" style="display: none;">
+                <!-- 필요시 공장/지산 관련 필드 추가 -->
+            </div>
+
+            <!-- 토지 관련 질문 -->
+            <div id="land_questions" class="specific-questions" style="display: none;">
+                <!-- 필요시 토지 관련 필드 추가 -->
+            </div>
+
+            <div class="form-group">
+                <label for="other_requests">기타 요청사항</label>
+                <textarea id="other_requests" name="other_requests" rows="5"></textarea>
+            </div>
+
+            <button type="submit" class="cta-button">제출하기</button>
+        </form>
+    </main>
+
+    <%- include('partials/footer.html') %>
+
+    <script>
+        document.getElementById('property_type').addEventListener('change', function () {
+            // 모든 특정 질문 영역을 숨깁니다.
+            document.querySelectorAll('.specific-questions').forEach(function(div) {
+                div.style.display = 'none';
+            });
+
+            // 선택된 값에 따라 해당 질문 영역만 보여줍니다.
+            const selectedType = this.value;
+            if (selectedType === '주택') {
+                document.getElementById('house_questions').style.display = 'block';
+            } else if (selectedType === '상가') {
+                document.getElementById('commercial_questions').style.display = 'block';
+            } else if (selectedType === '공장/지산') {
+                document.getElementById('factory_questions').style.display = 'block';
+            } else if (selectedType === '토지') {
+                document.getElementById('land_questions').style.display = 'block';
+            }
+        });
+    </script>
+</body>
+</html>

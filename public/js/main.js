@@ -29,4 +29,23 @@ document.addEventListener('DOMContentLoaded', function() {
             thumbnails[0].classList.add('active');
         }
     }
+
+    // 퀵메뉴 즉시 표시
+    const quickMenu = document.querySelector('.quick-menu');
+    if (quickMenu) {
+        quickMenu.classList.add('visible');
+    }
+
+    // 모바일 보기 버튼 이벤트
+    const mobileViewBtn = document.getElementById('mobile-view-btn');
+    if (mobileViewBtn) {
+        mobileViewBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            const width = 414; // iPhone XR width
+            const height = 896; // iPhone XR height
+            const left = (screen.width / 2) - (width / 2);
+            const top = (screen.height / 2) - (height / 2);
+            window.open(window.location.href, 'mobileWindow', `width=${width},height=${height},top=${top},left=${left}`);
+        });
+    }
 });

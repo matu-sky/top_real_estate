@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>전체 매물 보기 - <%= content.header_logo_text %></title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <%- include('partials/header.html') %>
+
+    <main class="container all-properties-container">
+        <div class="page-header">
+            <h1>전체 매물</h1>
+            <p>찾으시는 모든 매물을 여기에서 확인하세요.</p>
+        </div>
+
+        <!-- 필터 및 검색 -->
+        <div class="filter-search-bar">
+            <div class="category-filters">
+                <a href="/properties" class="filter-btn <%= !currentCategory ? 'active' : '' %>">전체</a>
+                <a href="/properties?category=주거용" class="filter-btn <%= currentCategory === '주거용' ? 'active' : '' %>">주거용</a>
+                <a href="/properties?category=상업용" class="filter-btn <%= currentCategory === '상업용' ? 'active' : '' %>">상업용</a>
+                <a href="/properties?category=공장/지산" class="filter-btn <%= currentCategory === '공장/지산' ? 'active' : '' %>">공장/지산</a>
+            </div>
+            <form action="/properties" method="GET" class="search-form">
+                <input type="hidden" name="category" value="<%= currentCategory %>">
+                <input type="text" name="search" placeholder="매물 이름 또는 주소 검색..." value="<%= searchQuery %>">
+                <button type="submit">검색</button>
+            </form>
+        </div>
+
+        <!-- 매물 그리드 -->
+        <div class="listing-grid properties-page-grid">
+            <% if (properties && properties.length > 0) { %>
+                <% properties.forEach(function(property) { %>
+                    <a href="/property/<%= property.id %>" class="listing-card">
+                        <div class="image-wrapper">
+                            <span class="tag"><%= property.category %></span>
+                            <img src="<%= property.image_path ? property.image_path.split(',')[0] : '/images/default_property.jpg' %>" alt="<%= property.title %>">
+                        </div>
+                        <div class="listing-info">
+                            <h3><%= property.title %></h3>
+                            <p class="details"><%= property.address %></p>
+                            <p class="price"><%= property.price %></p>
+                        </div>
+                    </a>
+                <% }); %>
+            <% } else { %>
+                <p class="no-results">검색 조건에 맞는 매물이 없습니다.</p>
+            <% } %>
+        </div>
+
+        <!-- 페이지네이션 -->
+        <% if (totalPages > 1) { %>
+            <div class="pagination">
+                <% 
+                const urlParams = new URLSearchParams({ category: currentCategory, search: searchQuery });
+                const baseUrl = `/properties?${urlParams.toString()}`;
+                %> 
+                <% if (currentPage > 1) { %>
+                    <a href="<%= baseUrl %>&page=<%= currentPage - 1 %>" class="page-link">이전</a>
+                <% } %>
+
+                <% for (let i = 1; i <= totalPages; i++) { %>
+                    <a href="<%= baseUrl %>&page=<%= i %>" class="page-link <%= i === currentPage ? 'active' : '' %>"><%= i %></a>
+                <% } %>
+
+                <% if (currentPage < totalPages) { %>
+                    <a href="<%= baseUrl %>&page=<%= currentPage + 1 %>" class="page-link">다음</a>
+                <% } %>
+            </div>
+        <% } %>
+
+    </main>
+
+    <%- include('partials/footer.html') %>
+    <script src="/js/main.js"></script>
+</body>
+</html>

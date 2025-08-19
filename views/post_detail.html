@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= post.title %> | <%= board.name %></title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <%- include('partials/header.html') %>
+
+    <style>
+        .post-detail-layout {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2rem;
+        }
+        .video-column {
+            flex: 2; /* 비디오 컬럼이 더 넓게 */
+            min-width: 320px;
+        }
+        .text-column {
+            flex: 1; /* 텍스트 컬럼 */
+            min-width: 300px;
+        }
+    </style>
+
+    <main class="container">
+        <section class="post-detail">
+            <h2><%= post.title %></h2>
+            <div class="post-meta">
+                <span>작성자: <%= post.author %></span>
+                <span>작성일: <%= new Date(post.created_at).toLocaleDateString('ko-KR') %></span>
+            </div>
+
+            <div class="post-detail-layout">
+                <%# 유튜브 영상 처리 %>
+                <% if (board.board_type === 'youtube' && post.youtube_url) { %>
+                    <div class="video-column">
+                        <div class="youtube-video-container" style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; max-width: 100%;">
+                            <% 
+                                let videoId = '';
+                                try {
+                                    const url = new URL(post.youtube_url);
+                                    if (url.hostname === 'youtu.be') {
+                                        videoId = url.pathname.slice(1);
+                                    } else {
+                                        videoId = url.searchParams.get('v');
+                                    }
+                                } catch (e) {
+                                    const regex = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|watch\?v=|v\/|e(?:mbed)?\/)|youtu\.be\/)([^"&?\/\s]{11})/;
+                                    const match = post.youtube_url.match(regex);
+                                    if (match) videoId = match[1];
+                                }
+                            %>
+                            <iframe 
+                                src="https://www.youtube.com/embed/<%= videoId %>" 
+                                style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;" 
+                                frameborder="0" 
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                                allowfullscreen>
+                            </iframe>
+                        </div>
+                    </div>
+                    <div class="text-column">
+                        <div class="post-content">
+                            <%- post.content.replace(/\n/g, '<br>') %>
+                        </div>
+                    </div>
+                <% } else { %>
+                    <%# 유튜브가 아닌 다른 게시판 레이아웃 %>
+                    <div class="content-column" style="flex-basis: 100%;">
+                        <div class="post-content">
+                            <%# 갤러리 이미지 처리 %>
+                            <% if (board.board_type === 'gallery' && post.attachment_path) { %>
+                                <div class="gallery-container" style="margin-top: 1rem;">
+                                    <% 
+                                        try {
+                                            const images = JSON.parse(post.attachment_path);
+                                            if (Array.isArray(images)) {
+                                                images.forEach(image_url => { %>
+                                                    <img src="<%= image_url %>" alt="갤러리 이미지" style="max-width: 100%; height: auto; margin-bottom: 10px; display: block;">
+                                                <% });
+                                            }
+                                        } catch (e) { %>
+                                            <img src="<%= post.attachment_path %>" alt="첨부 이미지" style="max-width: 100%; height: auto;">
+                                        <% } %>
+                                </div>
+                            <% } %>
+
+                            <%- post.content.replace(/\n/g, '<br>') %>
+
+                            <%# 일반/뉴스 첨부파일 처리 %>
+                            <% if ((['general', 'news'].includes(board.board_type)) && post.attachment_path) { 
+                                const fileNameWithTimestamp = post.attachment_path.split('/').pop();
+                                const base64Part = fileNameWithTimestamp.substring(fileNameWithTimestamp.indexOf('_') + 1);
+                                let decodedFileName = '';
+                                try {
+                                    decodedFileName = Buffer.from(base64Part, 'base64').toString('utf8');
+                                } catch (e) {
+                                    decodedFileName = "첨부파일";
+                                }
+                            %>
+                                <div class="post-attachment" style="margin-top: 1rem;">
+                                    <strong>첨부파일:</strong>
+                                    <a href="<%= post.attachment_path %>" target="_blank" download="<%= decodedFileName %>">
+                                        <%= decodedFileName %>
+                                    </a>
+                                </div>
+                            <% } %>
+                        </div>
+                    </div>
+                <% } %>
+            </div>
+
+            <div class="post-actions">
+                <a href="/board/<%= board.slug %>" class="btn-secondary">목록으로</a>
+                <% if (user && user.loggedin) { %>
+                    <a href="/board/<%= board.slug %>/<%= post.id %>/edit" class="btn-primary">수정</a>
+                    <form action="/board/<%= board.slug %>/<%= post.id %>/delete" method="POST" style="display: inline;">
+                        <button type="submit" class="btn-danger" onclick="return confirm('정말로 이 글을 삭제하시겠습니까?');">삭제</button>
+                    </form>
+                <% } %>
+            </div>
+        </section>
+    </main>
+
+    <%- include('partials/footer.html') %>
+</body>
+</html>

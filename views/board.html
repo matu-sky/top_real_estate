@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= board.name %> | 탑 부동산</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <%- include('partials/header.html') %>
+
+    <main class="board-container">
+        <%
+            let headerStyle, titleStyle, descriptionStyle, subNavStyle = '';
+            subNavStyle = 'margin-bottom: 0;';
+
+            if (board.board_type === 'youtube') {
+                // 유튜브 게시판: 상단 여백 제거 및 특정 스타일 적용
+                headerStyle = `
+                    background-image: linear-gradient(rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.7)), url('https://images.unsplash.com/photo-1504711434969-e33886168f5c?q=80&w=2071&auto=format&fit=crop');
+                    background-size: cover;
+                    background-position: center;
+                    padding: 4rem 2rem;
+                    text-align: center;
+                    margin-bottom: 2rem;
+                `;
+                titleStyle = `color: #111111; text-shadow: none;`;
+                descriptionStyle = `color: #333333; text-shadow: none;`;
+            } else {
+                // 다른 모든 게시판: 기존 스타일
+                headerStyle = `
+                    background-image: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url('https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?q=80&w=2070&auto=format&fit=crop');
+                    background-size: cover;
+                    background-position: center;
+                    padding: 4rem 2rem;
+                    text-align: center;
+                    margin-bottom: 2rem;
+                `;
+                titleStyle = `color: #ffffff; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);`;
+                descriptionStyle = `color: #eeeeee; text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);`;
+            }
+        %>
+        <div class="sub-nav" style="<%- subNavStyle %>">
+            <a href="/board/notice" class="sub-nav-item notice-link <%= board.slug === 'notice' ? 'active' : '' %>">공지사항</a>
+            <a href="/board/rearinfo" class="sub-nav-item rearinfo-link <%= board.slug === 'rearinfo' ? 'active' : '' %>">부동산정보</a>
+            <a href="/board/realcun" class="sub-nav-item realcun-link <%= board.slug === 'realcun' ? 'active' : '' %>">부동산관련상담</a>
+            <a href="/board/utube" class="sub-nav-item utube-link <%= board.slug === 'utube' ? 'active' : '' %>">동영상 갤러리</a>
+        </div>
+
+        <div class="board-header" style="<%- headerStyle %>">
+            <h1 style="<%- titleStyle %>">
+                <%= board.name %>
+            </h1>
+            <p style="<%- descriptionStyle %>">
+                <%= board.description %>
+            </p>
+        </div>
+
+        <div class="container">
+            <div class="board-toolbar">
+            <% if (user && user.loggedin) { %>
+                <a href="/board/<%= board.slug %>/write" class="btn btn-primary">글쓰기</a>
+            <% } %>
+            </div>
+
+            <div class="post-list">
+            <% posts.forEach(post => { %>
+                <%
+                    let thumbnailUrl = null;
+                    if (board.board_type === 'youtube' && post.youtube_url) {
+                        let videoId = '';
+                        try {
+                            const url = new URL(post.youtube_url);
+                            if (url.hostname === 'youtu.be') {
+                                videoId = url.pathname.slice(1);
+                            } else {
+                                videoId = url.searchParams.get('v');
+                            }
+                        } catch (e) {
+                            const regex = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|watch\?v=|v\/|e(?:mbed)?\/)|youtu\.be\/)([^"&?\/\s]{11})/;
+                            const match = post.youtube_url.match(regex);
+                            if (match) videoId = match[1];
+                        }
+                        if (videoId) {
+                            thumbnailUrl = `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`;
+                        }
+                    } else if (board.board_type === 'gallery' && post.attachment_path) {
+                        try {
+                            const images = JSON.parse(post.attachment_path);
+                            if (Array.isArray(images) && images.length > 0) {
+                                thumbnailUrl = images[0];
+                            }
+                        } catch (e) {
+                            thumbnailUrl = post.attachment_path;
+                        }
+                    } else if (board.board_type === 'news' && post.attachment_path) {
+                        thumbnailUrl = post.attachment_path;
+                    }
+                %>
+                <div class="post-card">
+                    <div class="post-card-content" <% if (thumbnailUrl) { %>style="display: flex; align-items: flex-start; gap: 1rem;"<% } %>>
+                        <%# 썸네일 (공통 로직) %>
+                        <% if (thumbnailUrl) { %>
+                            <div class="post-card-thumbnail" style="flex-shrink: 0;">
+                                <a href="/board/<%= board.slug %>/<%= post.id %>">
+                                    <img src="<%= thumbnailUrl %>" alt="<%= post.title %> 썸네일" style="width: 120px; height: 90px; object-fit: cover; display: block;">
+                                </a>
+                            </div>
+                        <% } %>
+
+                        <%# 텍스트 컨텐츠 %>
+                        <div class="post-text-content" style="flex-grow: 1;">
+                            <h3><a href="/board/<%= board.slug %>/<%= post.id %>"><%= post.title %></a></h3>
+                            <p class="post-card-snippet">
+                                    <% if (post.content) { 
+                                        const strippedContent = post.content.replace(/<[^>]*>?/gm, '');
+                                    %>
+                                        <%- strippedContent.substring(0, 100) %><% if (strippedContent.length > 100) { %>...<% } %>
+                                    <% } %>
+                                </p>
+                            <div class="post-card-meta">
+                                <span><strong>작성자:</strong> <%= post.author %></span>
+                                <span><strong>작성일:</strong> <%= new Date(post.created_at).toLocaleDateString('ko-KR') %></span>
+                            </div>
+                        </div>
+                    </div>
+                    <% if (user && user.loggedin) { %>
+                        <div class="post-card-actions">
+                            <a href="/board/<%= board.slug %>/<%= post.id %>/edit" class="btn btn-sm-secondary">수정</a>
+                            <form action="/board/<%= board.slug %>/<%= post.id %>/delete" method="POST" style="display: inline-block;">
+                                <button type="submit" class="btn btn-sm-danger" onclick="return confirm('정말로 이 글을 삭제하시겠습니까?');">삭제</button>
+                            </form>
+                        </div>
+                    <% } %>
+                </div>
+            <% }); %>
+
+            <% if (posts.length === 0) { %>
+                <div class="post-card">
+                    <p>아직 등록된 글이 없습니다. 첫 번째 글을 작성해보세요!</p>
+                </div>
+            <% } %>
+        </div>
+    </main>
+
+    <%- include('partials/footer.html') %>
+    <script src="/js/main.js"></script>
+</body>
+</html>

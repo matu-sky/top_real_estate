@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>상담 신청 관리 | 관리자</title>
+    <link rel="stylesheet" href="/css/admin_style.css">
+</head>
+<body>
+    <div class="admin-container">
+        <%- include('partials/admin_sidebar.html') %>
+
+        <main class="main-content">
+            <header class="content-header">
+                <h2>상담 신청 관리</h2>
+            </header>
+
+            <div class="card">
+                <div class="card-body">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>신청일시</th>
+                                <th>상담 종류</th>
+                                <th>고객 이름</th>
+                                <th>연락 방식</th>
+                                <th>연락처</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% requests.forEach(function(request) { %>
+                                <tr>
+                                    <td><%= new Date(request.created_at).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' }) %></td>
+                                    <td><%= request.consultation_type %></td>
+                                    <td><%= request.customer_name %></td>
+                                    <td><%= request.contact_method %></td>
+                                    <td><%= request.contact_info %></td>
+                                </tr>
+                            <% }); %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+</body>
+</html>

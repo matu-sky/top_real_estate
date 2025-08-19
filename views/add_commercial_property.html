@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -18,6 +17,7 @@
                 </header>
 
                 <form id="add-property-form" action="/listings/add" method="POST" enctype="multipart/form-data">
+                    <input type="hidden" name="category" value="상업용">
                     <div class="card">
                         <div class="card-header"><h4>기본 정보</h4></div>
                         <div class="card-body form-grid">
@@ -28,14 +28,6 @@
                             <div class="form-group">
                                 <label for="price">가격</label>
                                 <input type="text" id="price" name="price" placeholder="예) 10억">
-                            </div>
-                            <div class="form-group">
-                                <label for="category">매물 구분</label>
-                                <select id="category" name="category" required>
-                                    <option value="주거용">주거용</option>
-                                    <option value="상업용" selected>상업용</option>
-                                    <option value="공장/지산">공장/지산</option>
-                                </select>
                             </div>
                             <div class="form-group">
                                 <label for="area">평수</label>

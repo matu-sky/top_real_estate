@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>새 글 작성 | <%= board.name %></title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/admin_style.css">
+    <!-- Summernote CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-bs4.min.css" rel="stylesheet">
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="admin-container">
+        <main class="main-content" style="margin-left: 0; padding: 2rem;">
+            <header class="content-header">
+                <h2>새 글 작성: <%= board.name %></h2>
+            </header>
+
+            <div class="card">
+                <div class="card-body">
+                    <form action="/board/<%= board.slug %>/write" method="POST" enctype="multipart/form-data" accept-charset="UTF-8">
+                        <div class="form-group">
+                            <label for="title">제목</label>
+                            <input type="text" id="title" name="title" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="author">작성자</label>
+                            <input type="text" id="author" name="author" value="<%= user.loggedin ? '관리자' : '' %>" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="content">내용</label>
+                            <textarea id="content" name="content" rows="10"></textarea>
+                        </div>
+
+                        <% if (board.board_type === 'youtube') { %>
+                            <div class="form-group">
+                                <label for="youtube_url">유튜브 동영상 URL</label>
+                                <input type="url" id="youtube_url" name="youtube_url" placeholder="https://www.youtube.com/watch?v=..." class="form-control">
+                            </div>
+                        <% } else if (board.board_type === 'gallery') { %>
+                            <div class="form-group">
+                                <label for="attachments">이미지 첨부 (여러 장 가능)</label>
+                                <input type="file" id="attachments" name="attachments" accept="image/*" multiple>
+                            </div>
+                        <% } else { %>
+                            <div class="form-group">
+                                <label for="attachment">파일 첨부</label>
+                                <input type="file" id="attachment" name="attachments">
+                            </div>
+                        <% } %>
+                        <div class="form-actions">
+                            <button type="submit" class="btn-primary">작성 완료</button>
+                            <a href="/board/<%= board.slug %>" class="btn-secondary">취소</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </main>
+    </div>
+    <!-- Summernote JS -->
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/summernote@0.8.18/dist/summernote-bs4.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            $('#content').summernote({
+                height: 300,
+                toolbar: [
+                    ['style', ['style']],
+                    ['font', ['bold', 'italic', 'underline', 'clear']],
+                    ['fontname', ['fontname']],
+                    ['color', ['color']],
+                    ['para', ['ul', 'ol', 'paragraph']],
+                    ['height', ['height']],
+                    ['table', ['table']],
+                    ['insert', ['link', 'picture', 'video']],
+                    ['view', ['fullscreen', 'codeview', 'help']]
+                ]
+            });
+        });
+    </script>
+</body>
+</html>

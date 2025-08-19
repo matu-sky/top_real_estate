@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= page.title %> | 탑 부동산</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <%- include('partials/header.html') %>
+
+    <main class="policy-page-section">
+        <div class="container">
+            <div class="document-card">
+                <h1><%= page.title %></h1>
+                <div class="page-content">
+                    <%- page.content %>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <%- include('partials/footer.html') %>
+</body>
+</html>

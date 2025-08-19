@@ -5,18 +5,23 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node server.js",
+    "start:local": "node functions/server.js",
     "prestart": "fuser -k 8080/tcp || true"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@supabase/supabase-js": "^2.44.4",
+    "bcrypt": "^5.1.1",
+    "dotenv": "^17.2.1",
     "ejs": "^3.1.10",
     "express": "^5.1.0",
     "express-session": "^1.18.2",
     "multer": "^2.0.2",
+    "nodemailer": "^7.0.5",
+    "pg": "^8.12.0",
     "serverless-http": "^3.2.0",
-    "sqlite3": "^5.1.7"
+    "sitemap": "^8.0.0"
   }
 }

@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>게시판 수정 | 관리자</title>
+    <link rel="stylesheet" href="/css/admin_style.css">
+</head>
+<body>
+    <div class="admin-container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h1><a href="/dashboard">탑 부동산<span>.</span></a></h1>
+            </div>
+            <ul class="sidebar-menu">
+                <% menus.forEach(menu => { %>
+                    <li class="<%= menu.url === '/admin/board_settings' ? 'active' : '' %>"><a href="<%= menu.url %>"><%= menu.name %></a></li>
+                <% }); %>
+                <li><a href="/admin/menu">메뉴 관리</a></li>
+            </ul>
+            <div class="sidebar-footer">
+                <a href="/logout">로그아웃</a>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <header class="content-header">
+                <h2>게시판 수정</h2>
+            </header>
+
+            <div class="card">
+                <div class="card-header"><h4>게시판 정보 수정</h4></div>
+                <div class="card-body">
+                    <form action="/admin/board/update/<%= board.id %>" method="POST">
+                        <div class="form-group">
+                            <label for="board_name">게시판 이름</label>
+                            <input type="text" id="board_name" name="board_name" value="<%= board.name %>" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="board_slug">게시판 경로 (Slug)</label>
+                            <input type="text" id="board_slug" name="board_slug" value="<%= board.slug %>" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="board_description">게시판 설명</label>
+                            <textarea id="board_description" name="board_description" rows="4"><%= board.description %></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="board_type">게시판 유형</label>
+                            <select id="board_type" name="board_type">
+                                <option value="general" <%= board.board_type === 'general' ? 'selected' : '' %>>일반</option>
+                                <option value="gallery" <%= board.board_type === 'gallery' ? 'selected' : '' %>>갤러리</option>
+                                <option value="news" <%= board.board_type === 'news' ? 'selected' : '' %>>뉴스</option>
+                                <option value="youtube" <%= board.board_type === 'youtube' ? 'selected' : '' %>>유튜브</option>
+                            </select>
+                        </div>
+                        <div class="form-actions">
+                            <button type="submit" class="btn-primary">수정 완료</button>
+                            <a href="/admin/board_settings" class="btn-secondary">취소</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </main>
+    </div>
+</body>
+</html>

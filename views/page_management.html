@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>페이지 관리 | 관리자</title>
+    <link rel="stylesheet" href="/css/admin_style.css">
+</head>
+<body>
+    <div class="admin-container">
+        <%- include('partials/admin_sidebar.html') %>
+
+        <main class="main-content">
+            <header class="content-header">
+                <h2>페이지 관리</h2>
+            </header>
+
+            <div class="card">
+                <div class="card-body">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>제목</th>
+                                <th>URL</th>
+                                <th>최종 수정일</th>
+                                <th>관리</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% pages.forEach(page => { %>
+                                <tr>
+                                    <td><%= page.title %></td>
+                                    <td><a href="/page/<%= page.slug %>" target="_blank">/page/<%= page.slug %></a></td>
+                                    <td><%= new Date(page.updated_at).toLocaleString('ko-KR') %></td>
+                                    <td>
+                                        <a href="/admin/pages/edit/<%= page.id %>" class="btn btn-sm-secondary">수정</a>
+                                        <form action="/admin/pages/delete/<%= page.id %>" method="POST" style="display: inline-block;" onsubmit="return confirm('정말로 이 페이지를 삭제하시겠습니까?');">
+                                            <button type="submit" class="btn btn-sm-danger">삭제</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            <% }); %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+</body>
+</html>

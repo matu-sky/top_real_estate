@@ -1,23 +1,6 @@
 {
   "header_logo_text": "군포첨단탑.공인중개사",
-  "header_nav_links": [
-    {
-      "text": "라이프스타일 제안",
-      "url": "#lifestyle"
-    },
-    {
-      "text": "최신 매물",
-      "url": "#recent-listings"
-    },
-    {
-      "text": "오시는길",
-      "url": "#location"
-    },
-    {
-      "text": "컨설팅상담신청",
-      "url": "#about"
-    }
-  ],
+  
   "hero_title": "최고의 공간,\r\n데이터로 증명하는 가치",
   "hero_subtitle": "군포첨단탑공인중개사는 감각적인 안목과 정확한 데이터로 당신의 선택을 돕습니다.",
   "hero_bg_image": "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?q=80&w=2070&auto=format&fit=crop",

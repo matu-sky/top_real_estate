@@ -1,0 +1,28 @@
+<header id="header">
+    <div class="container header-container">
+        <div class="logo">
+            <a href="/"><%= content.header_logo_text %></a>
+        </div>
+        <nav>
+            <ul>
+                <% if (content && content.header_nav_links) { %>
+                    <% content.header_nav_links.forEach(link => { 
+                        const finalUrl = link.url.startsWith('/') ? link.url : '/' + link.url;
+                    %>
+                        <li><a href="<%= finalUrl %>"><%= link.text %></a></li>
+                    <% }); %>
+                <% } %>
+            </ul>
+        </nav>
+        <div class="header-auth">
+            <% if (user && user.loggedin) { %>
+                <span>관리자님</span>
+                <a href="/dashboard" class="header-admin-link">관리자 페이지</a>
+                <a href="/logout">로그아웃</a>
+            <% } else { %>
+                <a href="/login">로그인</a>
+            <% } %>
+        </div>
+        <div class="mobile-menu-btn">☰</div>
+    </div>
+</header>

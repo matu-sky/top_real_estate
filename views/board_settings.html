@@ -8,34 +8,95 @@
 </head>
 <body>
     <div class="admin-container">
-        <aside class="sidebar">
-            <div class="sidebar-header">
-                <h1><a href="/dashboard">탑 부동산<span>.</span></a></h1>
-            </div>
-            <ul class="sidebar-menu">
-                <% menus.forEach(menu => { %>
-                    <li class="<%= menu.url === '/admin/board_settings' ? 'active' : '' %>"><a href="<%= menu.url %>"><%= menu.name %></a></li>
-                <% }); %>
-                <li><a href="/admin/menu">메뉴 관리</a></li>
-            </ul>
-            <div class="sidebar-footer">
-                <a href="/logout">로그아웃</a>
-            </div>
-        </aside>
+        <%- include('partials/admin_sidebar.html') %>
 
         <main class="main-content">
             <header class="content-header">
                 <h2>게시판 설정</h2>
+                <button type="button" class="btn save" id="add-board-btn">게시판 만들기</button>
             </header>
 
             <div class="card">
-                <div class="card-header"><h4>게시판 기본 설정</h4></div>
+                <div class="card-header"><h4>생성된 게시판 목록</h4></div>
                 <div class="card-body">
-                    <p>이곳에서 게시판 관련 설정을 관리할 수 있습니다.</p>
-                    <!-- 게시판 설정 폼이 들어갈 자리 -->
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>게시판 이름</th>
+                                <th>슬러그 (URL 경로)</th>
+                                <th>게시판 유형</th>
+                                <th>설명</th>
+                                <th>관리</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% boards.forEach(board => { %>
+                                <tr>
+                                    <td><a href="/board/<%= board.slug %>" target="_blank"><%= board.name %></a></td>
+                                    <td><%= board.slug %></td>
+                                    <td><%= board.board_type %></td>
+                                    <td><%= board.description %></td>
+                                    <td class="actions">
+                                        <a href="/admin/board/edit/<%= board.id %>" class="btn btn-sm-secondary">수정</a>
+                                        <form action="/admin/board/delete/<%= board.id %>" method="POST" style="display: inline-block;">
+                                            <button type="submit" class="btn btn-sm-danger" onclick="return confirm('정말로 이 게시판과 모든 게시글을 삭제하시겠습니까?');">삭제</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            <% }); %>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </main>
     </div>
+
+    <!-- 게시판 유형 선택 모달 -->
+    <div id="board-type-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <h3>어떤 종류의 게시판을 만드시겠어요?</h3>
+            <p>게시판 유형에 따라 입력 필드와 목록 페이지의 디자인이 달라집니다.</p>
+            <div class="board-type-selection">
+                <a href="/admin/board/new?type=general" class="board-type-card">
+                    <h4>일반 게시판</h4>
+                    <p>가장 기본적인 형태의 게시판입니다.</p>
+                </a>
+                <a href="/admin/board/new?type=gallery" class="board-type-card">
+                    <h4>갤러리 게시판</h4>
+                    <p>이미지 중심으로 콘텐츠를 보여줍니다.</p>
+                </a>
+                <a href="/admin/board/new?type=news" class="board-type-card">
+                    <h4>뉴스 게시판</h4>
+                    <p>뉴스 기사처럼 제목과 요약, 썸네일을 강조합니다.</p>
+                </a>
+                <a href="/admin/board/new?type=youtube" class="board-type-card">
+                    <h4>유튜브 게시판</h4>
+                    <p>유튜브 영상 링크를 첨부하여 동영상을 보여줍니다.</p>
+                </a>
+            </div>
+            <button type="button" class="btn close-modal-btn">닫기</button>
+        </div>
+    </div>
+
+    <script>
+        const addBoardBtn = document.getElementById('add-board-btn');
+        const modal = document.getElementById('board-type-modal');
+        const closeModalBtn = modal.querySelector('.close-modal-btn');
+
+        addBoardBtn.addEventListener('click', () => {
+            modal.style.display = 'flex';
+        });
+
+        closeModalBtn.addEventListener('click', () => {
+            modal.style.display = 'none';
+        });
+
+        // 모달 바깥 영역 클릭 시 닫기
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.style.display = 'none';
+            }
+        });
+    </script>
 </body>
 </html>

@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>상담 유형 선택 | 탑 부동산</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .portal-container {
+            padding: 60px 0;
+            text-align: center;
+        }
+        .portal-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px;
+            margin-top: 40px;
+            text-align: left;
+        }
+        .service-card {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            background-color: #fff;
+            border-radius: 12px;
+            padding: 35px;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            border: 1px solid transparent; /* 테두리는 투명하게 시작 */
+        }
+        .service-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
+        }
+        .service-card .icon {
+            margin-bottom: 20px;
+            transition: transform 0.3s ease;
+        }
+        .service-card:hover .icon {
+            transform: scale(1.05);
+        }
+        .service-card h3 {
+            font-size: 1.5rem;
+            margin-top: 0;
+            margin-bottom: 15px;
+        }
+        .service-card p {
+            line-height: 1.7;
+            flex-grow: 1; /* 텍스트 영역이 남은 공간을 채우도록 */
+        }
+        .service-card .arrow {
+            align-self: flex-end;
+            font-size: 1.5rem;
+            transition: transform 0.3s ease;
+        }
+        .service-card:hover .arrow {
+            transform: translateX(5px);
+        }
+
+        /* 개별 카드 색상 및 스타일 */
+        .card-sell { background-color: #2c3e50; color: #ffffff; }
+        .card-sell h3, .card-sell .icon, .card-sell .arrow { color: #ffffff; }
+        .card-sell p { color: #ecf0f1; }
+
+        .card-find { background-color: #16a085; color: #ffffff; }
+        .card-find h3, .card-find .icon, .card-find .arrow { color: #ffffff; }
+        .card-find p { color: #ecf0f1; }
+
+        .card-startup { background-color: #c09f53; color: #ffffff; }
+        .card-startup h3, .card-startup .icon, .card-startup .arrow { color: #ffffff; }
+        .card-startup p { color: #ecf0f1; }
+
+        .card-closing { background-color: #5d6d7e; color: #ffffff; }
+        .card-closing h3, .card-closing .icon, .card-closing .arrow { color: #ffffff; }
+        .card-closing p { color: #ecf0f1; }
+
+        .card-general { background-color: #f8f9fa; color: #343a40; border-color: #dee2e6; }
+        .card-general h3, .card-general .icon, .card-general .arrow { color: #343a40; }
+        .card-general p { color: #495057; }
+
+    </style>
+</head>
+<body>
+    <%- include('partials/header.html') %>
+
+    <main class="container portal-container">
+        <div class="section-title">
+            <h2>어떤 도움이 필요하신가요?</h2>
+            <p>원하시는 서비스를 선택하시면, 담당자 배정 및 상담이 더욱 신속하게 이루어집니다.</p>
+        </div>
+
+        <div class="portal-grid">
+            <!-- 매물 내놓기 -->
+            <a href="/consultation-request?type=매도/임대" class="service-card card-sell">
+                <div>
+                    <div class="icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="currentColor" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M1.88.877a.5.5 0 0 1 .434.148l4 3.5a.5.5 0 0 1 0 .75l-4 3.5a.5.5 0 0 1-.868-.434V1.377a.5.5 0 0 1 .434-.5ZM14 1.5a.5.5 0 0 0-.5-.5h-5a.5.5 0 0 0 0 1h5a.5.5 0 0 0 0-1h-5a.5.5 0 0 0 0 1h5a.5.5 0 0 0 0-1h-5a.5.5 0 0 0-.5.5v13a.5.5 0 0 0 .5.5h5a.5.5 0 0 0 0-1h-5a.5.5 0 0 0 0 1h5a.5.5 0 0 0 0-1h-5a.5.5 0 0 0 0 1h5a.5.5 0 0 0 .5-.5v-13Z"/><path d="M2 5.5a.5.5 0 0 0 .5.5h2a.5.5 0 0 0 0-1h-2a.5.5 0 0 0-.5.5Zm0 3a.5.5 0 0 0 .5.5h2a.5.5 0 0 0 0-1h-2a.5.5 0 0 0-.5.5Zm0 3a.5.5 0 0 0 .5.5h2a.5.5 0 0 0 0-1h-2a.5.5 0 0 0-.5.5Z"/></svg>
+                    </div>
+                    <h3>매물 내놓기 (매도/임대)</h3>
+                    <p>소중한 자산을 최고의 조건으로 거래할 수 있도록 돕겠습니다.</p>
+                </div>
+                <div class="arrow">→</div>
+            </a>
+
+            <!-- 매물 찾기 -->
+            <a href="/consultation-request?type=매수/임차" class="service-card card-find">
+                <div>
+                    <div class="icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="currentColor" viewBox="0 0 16 16"><path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/></svg>
+                    </div>
+                    <h3>매물 찾기 (매수/임차)</h3>
+                    <p>원하시는 조건에 꼭 맞는 집, 사무실, 투자처를 찾아드리겠습니다.</p>
+                </div>
+                <div class="arrow">→</div>
+            </a>
+
+            <!-- 창업/사업이전 컨설팅 -->
+            <a href="/consultation-request?type=양도양수" class="service-card card-startup">
+                <div>
+                    <div class="icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="currentColor" viewBox="0 0 16 16"><path d="M2 6a6 6 0 1 1 10.174 4.31c-.203.196-.359.4-.453.619l-.762 1.769A.5.5 0 0 1 10.5 13a.5.5 0 0 1 0 1 .5.5 0 0 1 0 1l-.224.447a1 1 0 0 1-.894.553H6.618a1 1 0 0 1-.894-.553L5.5 15a.5.5 0 0 1 0-1 .5.5 0 0 1 0-1 .5.5 0 0 1-.46-.302l-.761-1.77a1.964 1.964 0 0 0-.453-.618A6 6 0 0 1 2 6zM5 8.5a.5.5 0 0 0 .5.5h5a.5.5 0 0 0 0-1l-.224-.447a.5.5 0 0 0-.447-.275H5.671a.5.5 0 0 0-.447.275L5 8.5z"/></svg>
+                    </div>
+                    <h3>창업/사업이전 컨설팅</h3>
+                    <p>업종과 예산에 맞는 최적의 입지 분석 및 상권 정보를 제공합니다.</p>
+                </div>
+                <div class="arrow">→</div>
+            </a>
+
+            <!-- 폐업/철거/원상복구 문의 -->
+            <a href="/consultation-request?type=양도양수" class="service-card card-closing">
+                <div>
+                    <div class="icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="currentColor" viewBox="0 0 16 16"><path d="M0 8a4 4 0 0 1 7.465-2H14a.5.5 0 0 1 .354.146l1.5 1.5a.5.5 0 0 1 0 .708l-1.5 1.5a.5.5 0 0 1-.708 0L13 9.207l-.646.647a.5.5 0 0 1-.708 0L11 9.207l-.646.647a.5.5 0 0 1-.708 0L9 9.207l-.646.647A.5.5 0 0 1 8 9.5h-.535A4 4 0 0 1 0 8zm4-3a3 3 0 1 0 2.712 4.285A.5.5 0 0 1 7.163 9h.63l.853-.854a.5.5 0 0 1 .708 0l.646.647.646-.647a.5.5 0 0 1 .708 0l.646.647.646-.647a.5.5 0 0 1 .708 0l.646.647.793-.793-1-1h-6.63a.5.5 0 0 1-.451-.285A3 3 0 0 0 4 5z"/><path d="M4 8a1 1 0 1 1-2 0 1 1 0 0 1 2 0z"/></svg>
+                    </div>
+                    <h3>폐업/철거/원상복구 문의</h3>
+                    <p>복잡한 폐업 절차와 원상복구 문제를 최소한의 비용으로 해결해 드립니다.</p>
+                </div>
+                <div class="arrow">→</div>
+            </a>
+
+            <!-- 일반 컨설팅 -->
+            <a href="/consultation-request?type=기타일반" class="service-card card-general">
+                <div>
+                    <div class="icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="currentColor" viewBox="0 0 16 16"><path d="M0 2a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-2.5a1 1 0 0 0-.8.4l-1.9 2.533a1 1 0 0 1-1.6 0L5.3 12.4a1 1 0 0 0-.8-.4H2a2 2 0 0 1-2-2V2zm3.5 1a.5.5 0 0 0 0 1h9a.5.5 0 0 0 0-1h-9zm0 2.5a.5.5 0 0 0 0 1h9a.5.5 0 0 0 0-1h-9zm0 2.5a.5.5 0 0 0 0 1h5a.5.5 0 0 0 0-1h-5z"/></svg>
+                    </div>
+                    <h3>일반 컨설팅</h3>
+                    <p>부동산 관련 일반적인 문의사항이나 컨설팅 내용을 확인하실 수 있습니다.</p>
+                </div>
+                <div class="arrow">→</div>
+            </a>
+        </div>
+    </main>
+
+    <%- include('partials/footer.html') %>
+    <script src="/js/main.js"></script>
+</body>
+</html>
