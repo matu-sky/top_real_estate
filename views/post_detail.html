@@ -64,7 +64,7 @@
                     </div>
                     <div class="text-column">
                         <div class="post-content">
-                            <p><%- post.content.replace(/\n/g, '<br>') %></p>
+                            <%- post.content.replace(/\n/g, '<br>') %>
                         </div>
                     </div>
                 <% } else { %>
@@ -88,7 +88,7 @@
                                 </div>
                             <% } %>
 
-                            <p><%- post.content.replace(/\n/g, '<br>') %></p>
+                            <%- post.content.replace(/\n/g, '<br>') %>
 
                             <%# 일반/뉴스 첨부파일 처리 %>
                             <% if ((['general', 'news'].includes(board.board_type)) && post.attachment_path) { 

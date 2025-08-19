@@ -738,6 +738,12 @@ footer {
 .post-detail .post-meta { color: #6c757d; margin-bottom: 40px; }
 .post-detail .post-meta span:not(:last-child) { margin-right: 15px; }
 
+.post-content {
+    word-wrap: break-word; /* 긴 단어 줄바꿈 */
+    overflow-wrap: break-word; /* word-wrap의 최신 표준 속성 */
+}
+
+
 .post-detail-layout {
     display: grid;
     grid-template-columns: 1fr 1fr;
