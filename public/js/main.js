@@ -30,16 +30,10 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // 퀵메뉴 스크롤 이벤트
+    // 퀵메뉴 즉시 표시
     const quickMenu = document.querySelector('.quick-menu');
     if (quickMenu) {
-        window.addEventListener('scroll', function() {
-            if (window.scrollY > 200) { // 200px 이상 스크롤하면 보이도록 설정
-                quickMenu.classList.add('visible');
-            } else {
-                quickMenu.classList.remove('visible');
-            }
-        });
+        quickMenu.classList.add('visible');
     }
 
     // 모바일 보기 버튼 이벤트
