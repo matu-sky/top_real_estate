@@ -20,7 +20,7 @@ const { getYouTubeVideoId, getYouTubeThumbnailUrl } = require('./utils.js');
 const { generateSitemap } = require('./sitemapGenerator.js');
 const nodemailer = require('nodemailer');
 const sharp = require('sharp');
-const { addWatermark } = require('./watermark.js');
+
 
 // 디버깅: 재귀적으로 디렉토리 목록을 가져오는 함수
 async function getFiles(dir) {
@@ -850,11 +850,39 @@ router.post('/listings/add', upload.array('images', 10), async (req, res) => {
         for (const file of req.files) {
             const originalname_utf8 = Buffer.from(file.originalname, 'latin1').toString('utf8');
             const newFileName = `${Date.now()}_${encodeURIComponent(originalname_utf8)}`;
-            console.log('[server.js] Calling addWatermark...');
-            const watermarkedBuffer = await addWatermark(file.buffer);
+            // --- 워터마크 로직 시작 ---
+            const watermarkTextKR = '군포첨단 탑공인중개사';
+            const watermarkTextEN = 'Gunpo Cheomdan Top Real Estate';
+
+            const svgKR = `
+            <svg width="800" height="150">
+              <style>
+                .title { fill: rgba(255, 255, 255, 0.7); font-size: 60px; font-weight: bold; font-family: "Noto Sans KR"; }
+              </style>
+              <text x="50%" y="50%" text-anchor="middle" class="title">${watermarkTextKR}</text>
+            </svg>`;
+            const bufferKR = Buffer.from(svgKR);
+
+            const svgEN = `
+            <svg width="400" height="50">
+              <style>
+                .title { fill: rgba(255, 255, 255, 0.6); font-size: 20px; font-family: "Noto Sans KR"; }
+              </style>
+              <text x="95%" y="50%" text-anchor="end" class="title">${watermarkTextEN}</text>
+            </svg>`;
+            const bufferEN = Buffer.from(svgEN);
+
+            const watermarkedBuffer = await sharp(file.buffer)
+                .composite([
+                    { input: bufferKR, gravity: 'center' },
+                    { input: bufferEN, gravity: 'southeast' }
+                ])
+                .toBuffer();
+            // --- 워터마크 로직 종료 ---
+
             const { data, error } = await supabase.storage
                 .from('property-images')
-                .upload(newFileName, watermarkedBuffer, {
+                .upload(newFileName, watermarkedBuffer, { // watermarkedBuffer 사용
                     contentType: file.mimetype,
                 });
 
@@ -957,11 +985,39 @@ router.post('/listings/edit/:id', upload.array('images', 10), async (req, res) =
     if (req.files) {
         for (const file of req.files) {
             const newFileName = `${Date.now()}_${file.originalname}`;
-            console.log('[server.js] Calling addWatermark...');
-            const watermarkedBuffer = await addWatermark(file.buffer);
+            // --- 워터마크 로직 시작 ---
+            const watermarkTextKR = '군포첨단 탑공인중개사';
+            const watermarkTextEN = 'Gunpo Cheomdan Top Real Estate';
+
+            const svgKR = `
+            <svg width="800" height="150">
+              <style>
+                .title { fill: rgba(255, 255, 255, 0.7); font-size: 60px; font-weight: bold; font-family: "Noto Sans KR"; }
+              </style>
+              <text x="50%" y="50%" text-anchor="middle" class="title">${watermarkTextKR}</text>
+            </svg>`;
+            const bufferKR = Buffer.from(svgKR);
+
+            const svgEN = `
+            <svg width="400" height="50">
+              <style>
+                .title { fill: rgba(255, 255, 255, 0.6); font-size: 20px; font-family: "Noto Sans KR"; }
+              </style>
+              <text x="95%" y="50%" text-anchor="end" class="title">${watermarkTextEN}</text>
+            </svg>`;
+            const bufferEN = Buffer.from(svgEN);
+
+            const watermarkedBuffer = await sharp(file.buffer)
+                .composite([
+                    { input: bufferKR, gravity: 'center' },
+                    { input: bufferEN, gravity: 'southeast' }
+                ])
+                .toBuffer();
+            // --- 워터마크 로직 종료 ---
+
             const { data, error } = await supabase.storage
                 .from('property-images')
-                .upload(newFileName, watermarkedBuffer, {
+                .upload(newFileName, watermarkedBuffer, { // watermarkedBuffer 사용
                     contentType: file.mimetype,
                 });
 
@@ -1290,9 +1346,23 @@ router.post('/board/:slug/write', requireLogin, upload.array('attachments', 10),
                 const newFileName = `${Date.now()}_${originalname_base64}`;
 
                 let bufferToUpload = file.buffer;
-                // Watermark images, but not for 'utube' board and only for image files
-                if (slug !== 'utube' && file.mimetype.startsWith('image/')) {
-                    bufferToUpload = await addWatermark(file.buffer);
+                // 이미지가 첨부된 경우에만 워터마크 적용
+                if (file.mimetype.startsWith('image/')) {
+                    const watermarkTextKR = '군포첨단 탑공인중개사';
+                    const watermarkTextEN = 'Gunpo Cheomdan Top Real Estate';
+
+                    const svgKR = `<svg width="800" height="150"><style>.title { fill: rgba(255, 255, 255, 0.7); font-size: 60px; font-weight: bold; font-family: "Noto Sans KR"; }</style><text x="50%" y="50%" text-anchor="middle" class="title">${watermarkTextKR}</text></svg>`;
+                    const bufferKR = Buffer.from(svgKR);
+
+                    const svgEN = `<svg width="400" height="50"><style>.title { fill: rgba(255, 255, 255, 0.6); font-size: 20px; font-family: "Noto Sans KR"; }</style><text x="95%" y="50%" text-anchor="end" class="title">${watermarkTextEN}</text></svg>`;
+                    const bufferEN = Buffer.from(svgEN);
+
+                    bufferToUpload = await sharp(file.buffer)
+                        .composite([
+                            { input: bufferKR, gravity: 'center' },
+                            { input: bufferEN, gravity: 'southeast' }
+                        ])
+                        .toBuffer();
                 }
 
                 const { error: uploadError } = await supabase.storage
@@ -1440,9 +1510,23 @@ router.post('/board/:slug/:postId/edit', requireLogin, upload.array('attachments
                 const newFileName = `${Date.now()}_${originalname_base64}`;
                 
                 let bufferToUpload = file.buffer;
-                // Watermark images, but not for 'utube' board and only for image files
-                if (slug !== 'utube' && file.mimetype.startsWith('image/')) {
-                    bufferToUpload = await addWatermark(file.buffer);
+                // 이미지가 첨부된 경우에만 워터마크 적용
+                if (file.mimetype.startsWith('image/')) {
+                    const watermarkTextKR = '군포첨단 탑공인중개사';
+                    const watermarkTextEN = 'Gunpo Cheomdan Top Real Estate';
+
+                    const svgKR = `<svg width="800" height="150"><style>.title { fill: rgba(255, 255, 255, 0.7); font-size: 60px; font-weight: bold; font-family: "Noto Sans KR"; }</style><text x="50%" y="50%" text-anchor="middle" class="title">${watermarkTextKR}</text></svg>`;
+                    const bufferKR = Buffer.from(svgKR);
+
+                    const svgEN = `<svg width="400" height="50"><style>.title { fill: rgba(255, 255, 255, 0.6); font-size: 20px; font-family: "Noto Sans KR"; }</style><text x="95%" y="50%" text-anchor="end" class="title">${watermarkTextEN}</text></svg>`;
+                    const bufferEN = Buffer.from(svgEN);
+
+                    bufferToUpload = await sharp(file.buffer)
+                        .composite([
+                            { input: bufferKR, gravity: 'center' },
+                            { input: bufferEN, gravity: 'southeast' }
+                        ])
+                        .toBuffer();
                 }
 
                 const { error: uploadError } = await supabase.storage.from('attachments').upload(newFileName, bufferToUpload, { contentType: file.mimetype });
