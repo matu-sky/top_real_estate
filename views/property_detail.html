@@ -47,12 +47,12 @@
                     <th>거래유형</th>
                     <td data-label="거래유형"><%= property.transaction_type %></td>
                     <th>면적(공급)</th>
-                    <td data-label="면적(공급)"><%= property.area %> m²</td>
+                    <td data-label="면적(공급)"><%= property.area %></td>
                 </tr>
                 <tr>
                     <% if (property.exclusive_area) { %>
                         <th>면적(전용)</th>
-                        <td data-label="면적(전용)"><%= property.exclusive_area %> m²</td>
+                        <td data-label="면적(전용)"><%= property.exclusive_area %></td>
                     <% } else { %>
                         <th></th><td></td>
                     <% } %>
