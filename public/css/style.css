@@ -50,14 +50,14 @@ header {
     text-decoration: none;
 }
 .logo a span { color: var(--secondary-color); }
-nav {
+.desktop-nav {
     position: relative; /* z-index 적용을 위해 추가 */
     z-index: 1; /* 헤더 내에서 다른 요소와 겹치지 않도록 보장 */
 }
-nav ul {
+.desktop-nav ul {
     margin: 0; padding: 0; list-style: none; display: flex;
 }
-nav a {
+.desktop-nav a {
     font-family: 'Noto Sans KR', sans-serif;
     font-weight: 500;
     font-size: 1rem;
@@ -66,7 +66,7 @@ nav a {
     padding: 28px 25px;
     transition: color 0.2s, background-color 0.2s;
 }
-nav a:hover {
+.desktop-nav a:hover {
     color: var(--primary-color);
     background-color: var(--light-gray-bg);
 }
@@ -595,37 +595,73 @@ footer {
     margin-bottom: 20px;
 }
 
+/* --- 모바일 오버레이 메뉴 --- */
+.mobile-nav-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(13, 44, 84, 0.97);
+    z-index: 1000;
+    display: none; /* 기본적으로 숨김 */
+    justify-content: center;
+    align-items: center;
+    transition: opacity 0.3s ease;
+}
+
+.mobile-nav-overlay.active {
+    display: flex; /* 활성화 시 보임 */
+}
+
+.mobile-nav-close {
+    position: absolute;
+    top: 20px;
+    right: 30px;
+    font-size: 3rem;
+    color: #fff;
+    text-decoration: none;
+    line-height: 1;
+}
+
+.mobile-nav ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    text-align: center;
+}
+
+.mobile-nav li {
+    margin-bottom: 20px;
+}
+
+.mobile-nav a {
+    font-size: 1.8rem;
+    font-weight: 500;
+    color: #fff;
+    text-decoration: none;
+    padding: 10px;
+    display: block;
+    transition: color 0.2s;
+}
+
+.mobile-nav a:hover {
+    color: var(--secondary-color);
+}
+
 /* --- 반응형 --- */
 @media (max-width: 1200px) {
     .listing-grid { grid-template-columns: repeat(2, 1fr); }
     .property-layout { grid-template-columns: 1fr; }
 }
+
 @media (max-width: 992px) {
-    nav ul { display: none; }
+    .desktop-nav { display: none; }
     .mobile-menu-btn { display: block; }
     .hero h1 { font-size: 2.5rem; }
     .hero p { font-size: 1.1rem; }
     .lifestyle-grid { grid-template-columns: repeat(2, 1fr); }
     .quick-menu { display: none; }
-    
-    nav.active ul {
-        display: flex;
-        flex-direction: column;
-        position: absolute;
-        top: 75px;
-        left: 0;
-        width: 100%;
-        background-color: #fff;
-        border-top: 1px solid var(--border-color);
-        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-    }
-    nav.active a {
-        padding: 15px 25px;
-        width: 100%;
-        box-sizing: border-box;
-        text-align: left;
-        border-bottom: 1px solid var(--border-color);
-    }
     
     .consulting-parallax-bg {
         background-attachment: scroll; /* 모바일에서 패럴랙스 효과 비활성화 */
@@ -635,6 +671,7 @@ footer {
         font-size: 1.8rem;
     }
 }
+
 @media (max-width: 768px) {
     .footer-info p {
         font-size: 0.8rem; /* 폰트 크기 미세 조정 */
@@ -651,11 +688,65 @@ footer {
     .post-card { flex-direction: column; align-items: flex-start; gap: 15px; }
 
     /* 모바일에서 1열로 변경 */
-    .lifestyle-grid {
+    .lifestyle-grid,
+    .listing-grid,
+    .post-detail-layout,
+    .properties-page-grid {
         grid-template-columns: 1fr;
     }
-    .listing-grid {
-        grid-template-columns: 1fr;
+
+    .filter-search-bar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .sub-nav {
+        justify-content: flex-start;
+        overflow-x: auto;
+        white-space: nowrap;
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+    .sub-nav::-webkit-scrollbar {
+        display: none;
+    }
+    .post-item-title {
+        max-width: 150px;
+    }
+
+    /* 매물 상세 정보 반응형 테이블 (세로 쌓기) */
+    .property-info-table-unified {
+        border: none;
+        box-shadow: none;
+    }
+    .property-info-table-unified thead,
+    .property-info-table-unified th {
+        display: none;
+    }
+    .property-info-table-unified tr {
+        display: block;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        margin-bottom: 15px;
+        padding: 15px;
+    }
+    .property-info-table-unified td {
+        display: block;
+        padding: 8px 0;
+        border: none;
+        border-bottom: 1px dashed var(--border-color);
+        width: 100%;
+        text-align: left;
+    }
+    .property-info-table-unified td:last-of-type {
+        border-bottom: none;
+    }
+    .property-info-table-unified td::before {
+        content: attr(data-label);
+        font-weight: 700;
+        color: var(--primary-color);
+        display: block;
+        margin-bottom: 5px;
     }
 }
 
@@ -723,7 +814,14 @@ footer {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 250px; /* Adjust this value as needed */
+    max-width: 250px; /* Default max-width for desktop */
+    min-width: 0; /* Flexbox overflow fix */
+}
+
+@media (max-width: 768px) {
+    .post-item-title {
+        max-width: 150px; /* Smaller max-width for mobile */
+    }
 }
 
 .post-item-date {

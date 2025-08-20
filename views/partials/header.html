@@ -3,7 +3,8 @@
         <div class="logo">
             <a href="/"><%= content.header_logo_text %></a>
         </div>
-        <nav>
+        <!-- 데스크톱용 네비게이션 -->
+        <nav class="desktop-nav">
             <ul>
                 <% if (content && content.header_nav_links) { %>
                     <% content.header_nav_links.forEach(link => { 
@@ -23,6 +24,25 @@
                 <a href="/login">로그인</a>
             <% } %>
         </div>
+        <!-- 모바일 메뉴 버튼 -->
         <div class="mobile-menu-btn">☰</div>
     </div>
 </header>
+
+<!-- 모바일용 오버레이 메뉴 -->
+<div class="mobile-nav-overlay">
+    <a href="javascript:void(0)" class="mobile-nav-close">&times;</a>
+    <div class="mobile-nav-content">
+        <nav class="mobile-nav">
+            <ul>
+                <% if (content && content.header_nav_links) { %>
+                    <% content.header_nav_links.forEach(link => { 
+                        const finalUrl = link.url.startsWith('/') ? link.url : '/' + link.url;
+                    %>
+                        <li><a href="<%= finalUrl %>"><%= link.text %></a></li>
+                    <% }); %>
+                <% } %>
+            </ul>
+        </nav>
+    </div>
+</div>

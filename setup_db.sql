@@ -93,6 +93,14 @@ CREATE TABLE IF NOT EXISTS public.users (
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE "session" (
+  "sid" varchar NOT NULL COLLATE "default",
+  "sess" json NOT NULL,
+  "expire" timestamp(6) NOT NULL
+)
+WITH (OIDS=FALSE);
+ALTER TABLE "session" ADD CONSTRAINT "session_pkey" PRIMARY KEY ("sid") NOT DEFERRABLE INITIALLY IMMEDIATE;
+
 -- Enable Row Level Security for all tables
 ALTER TABLE public.properties ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.boards ENABLE ROW LEVEL SECURITY;
@@ -102,41 +110,45 @@ ALTER TABLE public.consultation_requests ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.consultation_details ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
 
--- Policies for properties
+-- Secure RLS Policies
+
+-- Drop all existing policies to ensure a clean slate
 DROP POLICY IF EXISTS "Allow public read access" ON public.properties;
-CREATE POLICY "Allow public read access" ON public.properties FOR SELECT USING (true);
 DROP POLICY IF EXISTS "Allow all access for now" ON public.properties;
-CREATE POLICY "Allow all access for now" ON public.properties FOR ALL USING (true) WITH CHECK (true);
-
--- Policies for boards
-DROP POLICY IF EXISTS "Allow public read access for boards" ON public.boards;
-CREATE POLICY "Allow public read access for boards" ON public.boards FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Allow public read access" ON public.boards;
 DROP POLICY IF EXISTS "Allow all access for boards" ON public.boards;
-CREATE POLICY "Allow all access for boards" ON public.boards FOR ALL USING (true) WITH CHECK (true);
-
--- Policies for posts
-DROP POLICY IF EXISTS "Allow public read access for posts" ON public.posts;
-CREATE POLICY "Allow public read access for posts" ON public.posts FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Allow public read access" ON public.posts;
 DROP POLICY IF EXISTS "Allow all access for posts" ON public.posts;
-CREATE POLICY "Allow all access for posts" ON public.posts FOR ALL USING (true) WITH CHECK (true);
-
--- Policies for pages
-DROP POLICY IF EXISTS "Allow public read access for pages" ON public.pages;
-CREATE POLICY "Allow public read access for pages" ON public.pages FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Allow public read access" ON public.pages;
 DROP POLICY IF EXISTS "Allow all access for pages" ON public.pages;
-CREATE POLICY "Allow all access for pages" ON public.pages FOR ALL USING (true) WITH CHECK (true);
-
--- Policies for consultation_requests
 DROP POLICY IF EXISTS "Allow all access for consultation_requests" ON public.consultation_requests;
-CREATE POLICY "Allow all access for consultation_requests" ON public.consultation_requests FOR ALL USING (true) WITH CHECK (true);
-
--- Policies for consultation_details
 DROP POLICY IF EXISTS "Allow all access for consultation_details" ON public.consultation_details;
-CREATE POLICY "Allow all access for consultation_details" ON public.consultation_details FOR ALL USING (true) WITH CHECK (true);
-
--- Policies for users
 DROP POLICY IF EXISTS "Allow all access for users" ON public.users;
-CREATE POLICY "Allow all access for users" ON public.users FOR ALL USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "Allow all access for inquiries" ON public.inquiries;
+
+
+-- Policies for properties, boards, posts, pages (Public Read, Admin All)
+CREATE POLICY "Allow public read access" ON public.properties FOR SELECT USING (true);
+CREATE POLICY "Allow admin full access" ON public.properties FOR ALL USING (auth.role() = 'authenticated');
+
+CREATE POLICY "Allow public read access" ON public.boards FOR SELECT USING (true);
+CREATE POLICY "Allow admin full access" ON public.boards FOR ALL USING (auth.role() = 'authenticated');
+
+CREATE POLICY "Allow public read access" ON public.posts FOR SELECT USING (true);
+CREATE POLICY "Allow admin full access" ON public.posts FOR ALL USING (auth.role() = 'authenticated');
+
+CREATE POLICY "Allow public read access" ON public.pages FOR SELECT USING (true);
+CREATE POLICY "Allow admin full access" ON public.pages FOR ALL USING (auth.role() = 'authenticated');
+
+-- Policies for inquiries (Public Insert, Admin All)
+CREATE POLICY "Allow public insert access" ON public.inquiries FOR INSERT WITH CHECK (true);
+CREATE POLICY "Allow admin full access" ON public.inquiries FOR ALL USING (auth.role() = 'authenticated');
+
+-- Policies for users, settings, and consultation tables (Admin Only)
+CREATE POLICY "Allow admin full access" ON public.users FOR ALL USING (auth.role() = 'authenticated');
+CREATE POLICY "Allow admin full access" ON public.site_settings FOR ALL USING (auth.role() = 'authenticated');
+CREATE POLICY "Allow admin full access" ON public.consultation_requests FOR ALL USING (auth.role() = 'authenticated');
+CREATE POLICY "Allow admin full access" ON public.consultation_details FOR ALL USING (auth.role() = 'authenticated');
 
 
 -- Insert initial data

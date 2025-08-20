@@ -39,79 +39,79 @@
             <table class="property-info-table-unified">
                 <tr>
                     <th>카테고리</th>
-                    <td><%= property.category %></td>
+                    <td data-label="카테고리"><%= property.category %></td>
                     <th>가격</th>
-                    <td class="price"><%= property.price %></td>
+                    <td data-label="가격" class="price"><%= property.price %></td>
                 </tr>
                 <tr>
                     <th>거래유형</th>
-                    <td><%= property.transaction_type %></td>
+                    <td data-label="거래유형"><%= property.transaction_type %></td>
                     <th>면적(공급)</th>
-                    <td><%= property.area %> m²</td>
+                    <td data-label="면적(공급)"><%= property.area %> m²</td>
                 </tr>
                 <tr>
                     <% if (property.exclusive_area) { %>
                         <th>면적(전용)</th>
-                        <td><%= property.exclusive_area %> m²</td>
+                        <td data-label="면적(전용)"><%= property.exclusive_area %> m²</td>
                     <% } else { %>
                         <th></th><td></td>
                     <% } %>
                     <th>층/총층</th>
-                    <td><%= property.floor %> / <%= property.total_floors %></td>
+                    <td data-label="층/총층"><%= property.floor %> / <%= property.total_floors %></td>
                 </tr>
                 <tr>
                     <th>방향</th>
-                    <td><%= property.direction %> (<%= property.direction_standard %> 기준)</td>
+                    <td data-label="방향"><%= property.direction %> (<%= property.direction_standard %> 기준)</td>
                     <th>주차</th>
-                    <td><%= property.parking ? property.parking + ' 대' : '정보 없음' %></td>
+                    <td data-label="주차"><%= property.parking ? property.parking + ' 대' : '정보 없음' %></td>
                 </tr>
                 <tr>
                     <th>관리비</th>
-                    <td colspan="3"><%= property.maintenance_fee ? property.maintenance_fee + ' 원' : '정보 없음' %></td>
+                    <td data-label="관리비" colspan="3"><%= property.maintenance_fee ? property.maintenance_fee + ' 원' : '정보 없음' %></td>
                 </tr>
                  <% if (property.maintenance_fee_details) { %>
                 <tr>
                     <th>관리비 상세</th>
-                    <td colspan="3"><%= property.maintenance_fee_details %></td>
+                    <td data-label="관리비 상세" colspan="3"><%= property.maintenance_fee_details %></td>
                 </tr>
                 <% } %>
                 <% if (property.purpose) { %>
                 <tr>
                     <th>용도</th>
-                    <td><%= property.purpose %></td>
+                    <td data-label="용도"><%= property.purpose %></td>
                     <th>사용승인일</th>
-                    <td><%= property.approval_date %></td>
+                    <td data-label="사용승인일"><%= property.approval_date %></td>
                 </tr>
                 <% } %>
                 <% if (property.power_supply || property.hoist) { %>
                 <tr>
                     <th>사용전력</th>
-                    <td><%= property.power_supply %></td>
+                    <td data-label="사용전력"><%= property.power_supply %></td>
                     <th>호이스트</th>
-                    <td><%= property.hoist %></td>
+                    <td data-label="호이스트"><%= property.hoist %></td>
                 </tr>
                 <% } %>
                 <% if (property.ceiling_height || property.access_road_condition) { %>
                 <tr>
                     <th>층고</th>
-                    <td><%= property.ceiling_height %> m</td>
+                    <td data-label="층고"><%= property.ceiling_height %> m</td>
                     <th>진입로 사정</th>
-                    <td><%= property.access_road_condition %></td>
+                    <td data-label="진입로 사정"><%= property.access_road_condition %></td>
                 </tr>
                 <% } %>
                 <% if (property.permitted_business_types) { %>
                 <tr>
                     <th>가능 업종</th>
-                    <td colspan="3"><%= property.permitted_business_types %></td>
+                    <td data-label="가능 업종" colspan="3"><%= property.permitted_business_types %></td>
                 </tr>
                 <% } %>
                 <tr>
                     <th>입주가능일</th>
-                    <td colspan="3"><%= property.move_in_date %></td>
+                    <td data-label="입주가능일" colspan="3"><%= property.move_in_date %></td>
                 </tr>
                 <tr>
                     <th>상세 설명</th>
-                    <td colspan="3" class="description-cell">
+                    <td data-label="상세 설명" colspan="3" class="description-cell">
                         <%- property.description ? property.description.replace(/\n/g, '<br>') : '' %>
                     </td>
                 </tr>
