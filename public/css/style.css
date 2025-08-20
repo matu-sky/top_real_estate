@@ -694,6 +694,16 @@ footer {
     .listing-grid {
         grid-template-columns: 1fr;
     }
+    .sub-nav {
+        justify-content: flex-start;
+        overflow-x: auto;
+        white-space: nowrap;
+        -ms-overflow-style: none;  /* IE and Edge */
+        scrollbar-width: none;  /* Firefox */
+    }
+    .sub-nav::-webkit-scrollbar {
+        display: none;
+    }
 }
 
 /* --- 오시는길 & 최신 소식 섹션 --- */
