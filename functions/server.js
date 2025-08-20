@@ -15,6 +15,7 @@ const { generateSitemap } = require('./sitemapGenerator.js');
 const nodemailer = require('nodemailer');
 const sharp = require('sharp');
 
+// 디버깅: 재귀적으로 디렉토리 목록을 가져오는 함수
 async function getFiles(dir) {
     const dirents = await readdir(dir, { withFileTypes: true });
     const files = await Promise.all(dirents.map((dirent) => {
@@ -36,6 +37,7 @@ const pool = new Pool({
     ssl: { rejectUnauthorized: false }
 });
 
+// --- 데이터베이스 기반 설정 로더 ---
 async function getSettings(client) {
     const result = await client.query('SELECT key, value FROM site_settings');
     const settings = {};
@@ -135,7 +137,15 @@ router.use(loadSettings);
 
 // ... (other routes are unchanged) ...
 
-router.post('/listings/add', upload.array('images', 10), async (req, res) => {
+// 인증 확인 미들웨어
+function requireLogin(req, res, next) {
+    if (!req.session.loggedin) {
+        return res.redirect('/login');
+    }
+    next();
+}
+
+router.post('/listings/add', requireLogin, upload.array('images', 10), async (req, res) => {
     let body = req.body instanceof Buffer ? querystring.parse(req.body.toString()) : req.body;
     const imageUrls = [];
     if (req.files) {
@@ -178,7 +188,7 @@ router.post('/listings/add', upload.array('images', 10), async (req, res) => {
     }
 });
 
-router.post('/listings/edit/:id', upload.array('images', 10), async (req, res) => {
+router.post('/listings/edit/:id', requireLogin, upload.array('images', 10), async (req, res) => {
     const { id } = req.params;
     let body = req.body instanceof Buffer ? querystring.parse(req.body.toString()) : req.body;
     if (body.deleted_images) {
