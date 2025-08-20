@@ -704,6 +704,49 @@ footer {
     .sub-nav::-webkit-scrollbar {
         display: none;
     }
+
+    .property-info-table-unified {
+        border: none;
+        box-shadow: none;
+    }
+    .property-info-table-unified thead {
+        display: none;
+    }
+    .property-info-table-unified tr {
+        display: block;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        margin-bottom: 15px;
+        padding: 15px;
+    }
+    .property-info-table-unified td {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px 0;
+        border: none;
+        border-bottom: 1px dashed var(--border-color);
+        width: 100%;
+        text-align: right;
+    }
+    .property-info-table-unified tr td:last-child {
+        border-bottom: none;
+    }
+    .property-info-table-unified td::before {
+        content: attr(data-label);
+        font-weight: 700;
+        color: var(--primary-color);
+        text-align: left;
+        margin-right: 10px;
+    }
+    .property-info-table-unified td[colspan="3"] {
+        flex-direction: column;
+        align-items: flex-start;
+        text-align: left;
+    }
+    .property-info-table-unified td[colspan="3"]::before {
+        margin-bottom: 8px;
+    }
 }
 
 /* --- 오시는길 & 최신 소식 섹션 --- */
