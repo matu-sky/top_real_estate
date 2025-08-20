@@ -93,6 +93,14 @@ CREATE TABLE IF NOT EXISTS public.users (
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE "session" (
+  "sid" varchar NOT NULL COLLATE "default",
+  "sess" json NOT NULL,
+  "expire" timestamp(6) NOT NULL
+)
+WITH (OIDS=FALSE);
+ALTER TABLE "session" ADD CONSTRAINT "session_pkey" PRIMARY KEY ("sid") NOT DEFERRABLE INITIALLY IMMEDIATE;
+
 -- Enable Row Level Security for all tables
 ALTER TABLE public.properties ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.boards ENABLE ROW LEVEL SECURITY;
@@ -107,11 +115,11 @@ ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
 -- Drop all existing policies to ensure a clean slate
 DROP POLICY IF EXISTS "Allow public read access" ON public.properties;
 DROP POLICY IF EXISTS "Allow all access for now" ON public.properties;
-DROP POLICY IF EXISTS "Allow public read access for boards" ON public.boards;
+DROP POLICY IF EXISTS "Allow public read access" ON public.boards;
 DROP POLICY IF EXISTS "Allow all access for boards" ON public.boards;
-DROP POLICY IF EXISTS "Allow public read access for posts" ON public.posts;
+DROP POLICY IF EXISTS "Allow public read access" ON public.posts;
 DROP POLICY IF EXISTS "Allow all access for posts" ON public.posts;
-DROP POLICY IF EXISTS "Allow public read access for pages" ON public.pages;
+DROP POLICY IF EXISTS "Allow public read access" ON public.pages;
 DROP POLICY IF EXISTS "Allow all access for pages" ON public.pages;
 DROP POLICY IF EXISTS "Allow all access for consultation_requests" ON public.consultation_requests;
 DROP POLICY IF EXISTS "Allow all access for consultation_details" ON public.consultation_details;

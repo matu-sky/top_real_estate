@@ -75,16 +75,29 @@ const supabase = createClient(supabaseUrl, supabaseAnonKey);
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
+const pgSession = require('connect-pg-simple')(session);
+
 // --- 미들웨어 설정 ---
 app.use(express.urlencoded({ extended: true }));
 
+// 세션 미들웨어 설정 (데이터베이스 기반)
+const store = new pgSession({
+    pool: pool,                // 데이터베이스 연결 풀
+    tableName: 'session',      // 세션 테이블 이름
+    createTableIfMissing: true // 테이블이 없으면 자동 생성
+});
 
-// 세션 미들웨어 설정
 app.use(session({
-    secret: 'your-secret-key', // 실제 프로덕션 환경에서는 강력한 키 사용
+    store: store,
+    secret: process.env.SESSION_SECRET || 'a-more-secure-secret-key-for-production',
     resave: false,
-    saveUninitialized: true,
-    cookie: { secure: false } // HTTPS를 사용한다면 true로 변경
+    saveUninitialized: false, // 불필요한 세션 저장을 방지
+    cookie: {
+        maxAge: 24 * 60 * 60 * 1000, // 24시간
+        secure: true, // Netlify는 HTTPS를 사용하므로 true로 설정
+        httpOnly: true, // 클라이언트 측 스크립트가 쿠키에 접근하는 것을 방지
+        sameSite: 'lax' // CSRF 공격 방지
+    }
 }));
 
 // --- 뷰 엔진 설정 ---
