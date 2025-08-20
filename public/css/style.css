@@ -688,28 +688,39 @@ footer {
     .post-card { flex-direction: column; align-items: flex-start; gap: 15px; }
 
     /* 모바일에서 1열로 변경 */
-    .lifestyle-grid {
+    .lifestyle-grid,
+    .listing-grid,
+    .post-detail-layout,
+    .properties-page-grid {
         grid-template-columns: 1fr;
     }
-    .listing-grid {
-        grid-template-columns: 1fr;
+
+    .filter-search-bar {
+        flex-direction: column;
+        align-items: stretch;
     }
+
     .sub-nav {
         justify-content: flex-start;
         overflow-x: auto;
         white-space: nowrap;
-        -ms-overflow-style: none;  /* IE and Edge */
-        scrollbar-width: none;  /* Firefox */
+        -ms-overflow-style: none;
+        scrollbar-width: none;
     }
     .sub-nav::-webkit-scrollbar {
         display: none;
     }
+    .post-item-title {
+        max-width: 150px;
+    }
 
+    /* 매물 상세 정보 반응형 테이블 (세로 쌓기) */
     .property-info-table-unified {
         border: none;
         box-shadow: none;
     }
-    .property-info-table-unified thead {
+    .property-info-table-unified thead,
+    .property-info-table-unified th {
         display: none;
     }
     .property-info-table-unified tr {
@@ -720,32 +731,22 @@ footer {
         padding: 15px;
     }
     .property-info-table-unified td {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 10px 0;
+        display: block;
+        padding: 8px 0;
         border: none;
         border-bottom: 1px dashed var(--border-color);
         width: 100%;
-        text-align: right;
+        text-align: left;
     }
-    .property-info-table-unified tr td:last-child {
+    .property-info-table-unified td:last-of-type {
         border-bottom: none;
     }
     .property-info-table-unified td::before {
         content: attr(data-label);
         font-weight: 700;
         color: var(--primary-color);
-        text-align: left;
-        margin-right: 10px;
-    }
-    .property-info-table-unified td[colspan="3"] {
-        flex-direction: column;
-        align-items: flex-start;
-        text-align: left;
-    }
-    .property-info-table-unified td[colspan="3"]::before {
-        margin-bottom: 8px;
+        display: block;
+        margin-bottom: 5px;
     }
 }
 
