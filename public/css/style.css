@@ -723,7 +723,14 @@ footer {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    max-width: 250px; /* Default max-width for desktop */
     min-width: 0; /* Flexbox overflow fix */
+}
+
+@media (max-width: 768px) {
+    .post-item-title {
+        max-width: 150px; /* Smaller max-width for mobile */
+    }
 }
 
 .post-item-date {
