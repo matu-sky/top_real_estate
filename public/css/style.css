@@ -723,7 +723,7 @@ footer {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 250px; /* Adjust this value as needed */
+    min-width: 0; /* Flexbox overflow fix */
 }
 
 .post-item-date {
