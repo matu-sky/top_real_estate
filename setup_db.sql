@@ -4,8 +4,8 @@ CREATE TABLE IF NOT EXISTS public.properties (
     title TEXT NOT NULL,
     price TEXT,
     address TEXT,
-    area REAL,
-    exclusive_area REAL,
+    area TEXT,
+    exclusive_area TEXT,
     approval_date TEXT,
     purpose TEXT,
     total_floors INTEGER,
@@ -109,46 +109,79 @@ ALTER TABLE public.pages ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.consultation_requests ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.consultation_details ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.session ENABLE ROW LEVEL SECURITY;
 
--- Secure RLS Policies
+-- Secure RLS Policies (v6 - Final & Verified)
 
--- Drop all existing policies to ensure a clean slate
-DROP POLICY IF EXISTS "Allow public read access" ON public.properties;
-DROP POLICY IF EXISTS "Allow all access for now" ON public.properties;
-DROP POLICY IF EXISTS "Allow public read access" ON public.boards;
-DROP POLICY IF EXISTS "Allow all access for boards" ON public.boards;
-DROP POLICY IF EXISTS "Allow public read access" ON public.posts;
-DROP POLICY IF EXISTS "Allow all access for posts" ON public.posts;
-DROP POLICY IF EXISTS "Allow public read access" ON public.pages;
-DROP POLICY IF EXISTS "Allow all access for pages" ON public.pages;
-DROP POLICY IF EXISTS "Allow all access for consultation_requests" ON public.consultation_requests;
-DROP POLICY IF EXISTS "Allow all access for consultation_details" ON public.consultation_details;
-DROP POLICY IF EXISTS "Allow all access for users" ON public.users;
-DROP POLICY IF EXISTS "Allow all access for inquiries" ON public.inquiries;
+-- Drop all conceivable old policies
+DROP POLICY IF EXISTS "properties_select_public" ON public.properties;
+DROP POLICY IF EXISTS "properties_insert_admin" ON public.properties;
+DROP POLICY IF EXISTS "properties_update_admin" ON public.properties;
+DROP POLICY IF EXISTS "properties_delete_admin" ON public.properties;
+DROP POLICY IF EXISTS "boards_select_public" ON public.boards;
+DROP POLICY IF EXISTS "boards_insert_admin" ON public.boards;
+DROP POLICY IF EXISTS "boards_update_admin" ON public.boards;
+DROP POLICY IF EXISTS "boards_delete_admin" ON public.boards;
+DROP POLICY IF EXISTS "posts_select_public" ON public.posts;
+DROP POLICY IF EXISTS "posts_insert_admin" ON public.posts;
+DROP POLICY IF EXISTS "posts_update_admin" ON public.posts;
+DROP POLICY IF EXISTS "posts_delete_admin" ON public.posts;
+DROP POLICY IF EXISTS "pages_select_public" ON public.pages;
+DROP POLICY IF EXISTS "pages_insert_admin" ON public.pages;
+DROP POLICY IF EXISTS "pages_update_admin" ON public.pages;
+DROP POLICY IF EXISTS "pages_delete_admin" ON public.pages;
+DROP POLICY IF EXISTS "inquiries_insert_public" ON public.inquiries;
+DROP POLICY IF EXISTS "inquiries_select_admin" ON public.inquiries;
+DROP POLICY IF EXISTS "inquiries_update_admin" ON public.inquiries;
+DROP POLICY IF EXISTS "inquiries_delete_admin" ON public.inquiries;
+DROP POLICY IF EXISTS "users_all_admin" ON public.users;
+DROP POLICY IF EXISTS "site_settings_all_admin" ON public.site_settings;
+DROP POLICY IF EXISTS "consultation_requests_all_admin" ON public.consultation_requests;
+DROP POLICY IF EXISTS "consultation_details_all_admin" ON public.consultation_details;
+DROP POLICY IF EXISTS "session_block_all" ON public.session;
+-- Drop old, conflicting policies for site_settings identified by verification script
+DROP POLICY IF EXISTS "Allow all access for site_settings" ON public.site_settings;
+DROP POLICY IF EXISTS "Allow public read access for site_settings" ON public.site_settings;
 
 
--- Policies for properties, boards, posts, pages (Public Read, Admin All)
-CREATE POLICY "Allow public read access" ON public.properties FOR SELECT USING (true);
-CREATE POLICY "Allow admin full access" ON public.properties FOR ALL USING (auth.role() = 'authenticated');
+-- Create New, Separated Policies
 
-CREATE POLICY "Allow public read access" ON public.boards FOR SELECT USING (true);
-CREATE POLICY "Allow admin full access" ON public.boards FOR ALL USING (auth.role() = 'authenticated');
+-- properties
+CREATE POLICY "properties_select_public" ON public.properties FOR SELECT USING (true);
+CREATE POLICY "properties_insert_admin" ON public.properties FOR INSERT WITH CHECK ((select auth.role()) = $authenticated$);
+CREATE POLICY "properties_update_admin" ON public.properties FOR UPDATE USING ((select auth.role()) = $authenticated$);
+CREATE POLICY "properties_delete_admin" ON public.properties FOR DELETE USING ((select auth.role()) = $authenticated$);
 
-CREATE POLICY "Allow public read access" ON public.posts FOR SELECT USING (true);
-CREATE POLICY "Allow admin full access" ON public.posts FOR ALL USING (auth.role() = 'authenticated');
+-- boards
+CREATE POLICY "boards_select_public" ON public.boards FOR SELECT USING (true);
+CREATE POLICY "boards_insert_admin" ON public.boards FOR INSERT WITH CHECK ((select auth.role()) = $authenticated$);
+CREATE POLICY "boards_update_admin" ON public.boards FOR UPDATE USING ((select auth.role()) = $authenticated$);
+CREATE POLICY "boards_delete_admin" ON public.boards FOR DELETE USING ((select auth.role()) = $authenticated$);
 
-CREATE POLICY "Allow public read access" ON public.pages FOR SELECT USING (true);
-CREATE POLICY "Allow admin full access" ON public.pages FOR ALL USING (auth.role() = 'authenticated');
+-- posts
+CREATE POLICY "posts_select_public" ON public.posts FOR SELECT USING (true);
+CREATE POLICY "posts_insert_admin" ON public.posts FOR INSERT WITH CHECK ((select auth.role()) = $authenticated$);
+CREATE POLICY "posts_update_admin" ON public.posts FOR UPDATE USING ((select auth.role()) = $authenticated$);
+CREATE POLICY "posts_delete_admin" ON public.posts FOR DELETE USING ((select auth.role()) = $authenticated$);
 
--- Policies for inquiries (Public Insert, Admin All)
-CREATE POLICY "Allow public insert access" ON public.inquiries FOR INSERT WITH CHECK (true);
-CREATE POLICY "Allow admin full access" ON public.inquiries FOR ALL USING (auth.role() = 'authenticated');
+-- pages
+CREATE POLICY "pages_select_public" ON public.pages FOR SELECT USING (true);
+CREATE POLICY "pages_insert_admin" ON public.pages FOR INSERT WITH CHECK ((select auth.role()) = $authenticated$);
+CREATE POLICY "pages_update_admin" ON public.pages FOR UPDATE USING ((select auth.role()) = $authenticated$);
+CREATE POLICY "pages_delete_admin" ON public.pages FOR DELETE USING ((select auth.role()) = $authenticated$);
 
--- Policies for users, settings, and consultation tables (Admin Only)
-CREATE POLICY "Allow admin full access" ON public.users FOR ALL USING (auth.role() = 'authenticated');
-CREATE POLICY "Allow admin full access" ON public.site_settings FOR ALL USING (auth.role() = 'authenticated');
-CREATE POLICY "Allow admin full access" ON public.consultation_requests FOR ALL USING (auth.role() = 'authenticated');
-CREATE POLICY "Allow admin full access" ON public.consultation_details FOR ALL USING (auth.role() = 'authenticated');
+-- inquiries
+CREATE POLICY "inquiries_insert_public" ON public.inquiries FOR INSERT WITH CHECK (true);
+CREATE POLICY "inquiries_select_admin" ON public.inquiries FOR SELECT USING ((select auth.role()) = $authenticated$);
+CREATE POLICY "inquiries_update_admin" ON public.inquiries FOR UPDATE USING ((select auth.role()) = $authenticated$);
+CREATE POLICY "inquiries_delete_admin" ON public.inquiries FOR DELETE USING ((select auth.role()) = $authenticated$);
+
+-- users, site_settings, etc (FOR ALL is ok for these)
+CREATE POLICY "users_all_admin" ON public.users FOR ALL USING ((select auth.role()) = $authenticated$);
+CREATE POLICY "site_settings_all_admin" ON public.site_settings FOR ALL USING ((select auth.role()) = $authenticated$);
+CREATE POLICY "consultation_requests_all_admin" ON public.consultation_requests FOR ALL USING ((select auth.role()) = $authenticated$);
+CREATE POLICY "consultation_details_all_admin" ON public.consultation_details FOR ALL USING ((select auth.role()) = $authenticated$);
+CREATE POLICY "session_block_all" ON public.session FOR ALL USING (false) WITH CHECK (false);
 
 
 -- Insert initial data

@@ -805,8 +805,8 @@ router.post('/listings/add', upload.array('images', 10), async (req, res) => {
     const parseToInt = (value) => (value === '' || value === undefined || value === null) ? null : Number.parseInt(value, 10);
     const parseFloat = (value) => (value === '' || value === undefined || value === null) ? null : Number.parseFloat(value);
 
-    const area = parseToInt(body.area);
-    const exclusive_area = parseFloat(body.exclusive_area);
+    const area = body.area;
+    const exclusive_area = body.exclusive_area;
     const total_floors = parseToInt(body.total_floors);
     const floor = parseToInt(body.floor);
     const parking = parseToInt(body.parking);
@@ -909,8 +909,8 @@ router.post('/listings/edit/:id', upload.array('images', 10), async (req, res) =
     const parseToInt = (value) => (value === '' || value === undefined || value === null) ? null : Number.parseInt(value, 10);
     const parseFloat = (value) => (value === '' || value === undefined || value === null) ? null : Number.parseFloat(value);
 
-    const area = parseToInt(body.area);
-    const exclusive_area = parseFloat(body.exclusive_area);
+    const area = body.area;
+    const exclusive_area = body.exclusive_area;
     const total_floors = parseToInt(body.total_floors);
     const floor = parseToInt(body.floor);
     const parking = parseToInt(body.parking);
