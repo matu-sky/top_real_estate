@@ -1,10 +1,26 @@
 document.addEventListener('DOMContentLoaded', function() {
-    // 모바일 메뉴 토글
+    // 신규 모바일 메뉴 오버레이 토글
     const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
-    const nav = document.querySelector('nav');
-    if (mobileMenuBtn) {
+    const mobileNavOverlay = document.querySelector('.mobile-nav-overlay');
+    const mobileNavClose = document.querySelector('.mobile-nav-close');
+    const mobileNavLinks = document.querySelectorAll('.mobile-nav a');
+
+    if (mobileMenuBtn && mobileNavOverlay && mobileNavClose) {
+        // 메뉴 열기
         mobileMenuBtn.addEventListener('click', () => {
-            nav.classList.toggle('active');
+            mobileNavOverlay.classList.add('active');
+        });
+
+        // 닫기 버튼으로 메뉴 닫기
+        mobileNavClose.addEventListener('click', () => {
+            mobileNavOverlay.classList.remove('active');
+        });
+
+        // 메뉴 링크 클릭 시 메뉴 닫기
+        mobileNavLinks.forEach(link => {
+            link.addEventListener('click', () => {
+                mobileNavOverlay.classList.remove('active');
+            });
         });
     }
 
