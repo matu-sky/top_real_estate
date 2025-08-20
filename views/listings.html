@@ -323,6 +323,22 @@
             }
         }
     </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const propertyIdToEdit = urlParams.get('edit');
+
+            if (propertyIdToEdit) {
+                const row = document.querySelector(`tr[data-id='${propertyIdToEdit}']`);
+                if (row) {
+                    const editButton = row.querySelector('.btn-edit');
+                    if (editButton) {
+                        editButton.click();
+                    }
+                }
+            }
+        });
+    </script>
 
 </body>
 </html>

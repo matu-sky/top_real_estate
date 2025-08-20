@@ -11,7 +11,11 @@
 
     <main class="container property-detail-container-v2">
         <div class="property-detail-header">
-            <h1><%= property.title %></h1>
+            <h1><%= property.title %>
+                <% if (user && user.loggedin) { %>
+                    <a href="/listings?edit=<%= property.id %>" class="btn-primary" style="margin-left: 1rem; font-size: 1rem; vertical-align: middle;">수정</a>
+                <% } %>
+            </h1>
             <p class="property-address"><%= property.short_address %></p>
         </div>
 
