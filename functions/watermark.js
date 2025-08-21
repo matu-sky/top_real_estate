@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 
 // Path to the font file
-const fontPath = path.resolve(__dirname, '../node_modules/@fontsource/noto-sans-kr/files/noto-sans-kr-korean-400-normal.woff2');
+const fontPath = path.resolve(__dirname, '../public/fonts/noto-sans-kr-korean-400-normal.woff2');
 
 // Read the font file into a buffer
 const fontBuffer = fs.readFileSync(fontPath);
