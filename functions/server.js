@@ -210,13 +210,7 @@ router.post('/listings/add', requireLogin, upload.array('images', 10), async (re
         for (const file of req.files) {
             const originalname_utf8 = Buffer.from(file.originalname, 'latin1').toString('utf8');
             const newFileName = `${Date.now()}_${encodeURIComponent(originalname_utf8)}`;
-            const watermarkTextKR = '군포첨단 탑공인중개사';
-            const watermarkTextEN = 'Gunpo Cheomdan Top Real Estate';
-            const svgKR = `<svg width="1600" height="300"><style>.title { fill: rgba(255, 255, 255, 0.7); font-size: 120px; font-weight: bold; font-family: "sans-serif"; }</style><text x="50%" y="50%" text-anchor="middle" class="title">${watermarkTextKR}</text></svg>`;
-            const bufferKR = Buffer.from(svgKR);
-            const svgEN = `<svg width="400" height="50"><style>.title { fill: rgba(255, 255, 255, 0.6); font-size: 20px; font-family: "sans-serif"; }</style><text x="95%" y="50%" text-anchor="end" class="title">${watermarkTextEN}</text></svg>`;
-            const bufferEN = Buffer.from(svgEN);
-            const watermarkedBuffer = await sharp(file.buffer).composite([{ input: bufferKR, gravity: 'center' },{ input: bufferEN, gravity: 'southeast' }]).toBuffer();
+            const watermarkedBuffer = await addWatermark(file.buffer);
             const { error } = await supabase.storage.from('property-images').upload(newFileName, watermarkedBuffer, { contentType: file.mimetype });
             if (error) { console.error('Supabase..._error:', error); return res.status(500).send('...'); }
             const { data: { publicUrl } } = supabase.storage.from('property-images').getPublicUrl(newFileName);
