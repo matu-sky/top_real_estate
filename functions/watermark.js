@@ -2,52 +2,57 @@ const sharp = require('sharp');
 const fs = require('fs');
 const path = require('path');
 
-console.log('[watermark.js] Module loaded (Image-based)');
+// Load both watermark images
+let watermarkCenterBuffer;
+let watermarkBottomRightBuffer;
 
-let watermarkBuffer;
 try {
-    const watermarkPath = path.resolve(__dirname, '../public/images/watermark.png');
-    console.log(`[watermark.js] Reading watermark image from: ${watermarkPath}`);
-    watermarkBuffer = fs.readFileSync(watermarkPath);
-    console.log(`[watermark.js] Watermark image read successfully. Buffer size: ${watermarkBuffer.length}`);
+    const watermarkCenterPath = path.resolve(__dirname, '../public/images/watermark.png');
+    watermarkCenterBuffer = fs.readFileSync(watermarkCenterPath);
+
+    const watermarkBottomRightPath = path.resolve(__dirname, '../public/images/watermark_bottom_right.png');
+    watermarkBottomRightBuffer = fs.readFileSync(watermarkBottomRightPath);
 } catch (error) {
-    console.error('[watermark.js] CRITICAL: Failed to read watermark image.', error);
+    console.error('[watermark.js] CRITICAL: Failed to read one or more watermark images.', error);
     throw error;
 }
 
 async function addWatermark(imageBuffer) {
-    console.log('[watermark.js] addWatermark function called (Image-based).');
     try {
         const mainImage = sharp(imageBuffer);
         const mainMetadata = await mainImage.metadata();
-        console.log(`[watermark.js] Main image dimensions: ${mainMetadata.width}x${mainMetadata.height}`);
 
-        const watermark = sharp(watermarkBuffer);
-        const watermarkMetadata = await watermark.metadata();
-        console.log(`[watermark.js] Watermark source image dimensions: ${watermarkMetadata.width}x${watermarkMetadata.height}`);
-
-        const newWatermarkWidth = Math.floor(mainMetadata.width * 0.5);
-        console.log(`[watermark.js] Calculated new watermark width: ${newWatermarkWidth}`);
-
-        const finalWatermarkWidth = Math.min(newWatermarkWidth, watermarkMetadata.width);
-        console.log(`[watermark.js] Final watermark width (after comparing with original): ${finalWatermarkWidth}`);
-
-        const resizedWatermarkBuffer = await watermark
-            .resize({ width: finalWatermarkWidth })
+        // --- Center Watermark Logic ---
+        const centerWatermark = sharp(watermarkCenterBuffer);
+        const centerWatermarkMetadata = await centerWatermark.metadata();
+        // Resize center watermark to 50% of main image width, but not larger than its original size
+        const centerWatermarkWidth = Math.min(Math.floor(mainMetadata.width * 0.5), centerWatermarkMetadata.width);
+        const resizedCenterWatermarkBuffer = await centerWatermark
+            .resize({ width: centerWatermarkWidth })
             .toBuffer();
-        console.log(`[watermark.js] Watermark resized successfully. New buffer size: ${resizedWatermarkBuffer.length}`);
 
+        // --- Bottom-Right Watermark Logic ---
+        const bottomRightWatermark = sharp(watermarkBottomRightBuffer);
+        const bottomRightWatermarkMetadata = await bottomRightWatermark.metadata();
+        // Resize bottom-right watermark to 30% of main image width, but not larger than its original size
+        const bottomRightWatermarkWidth = Math.min(Math.floor(mainMetadata.width * 0.3), bottomRightWatermarkMetadata.width);
+        const resizedBottomRightWatermarkBuffer = await bottomRightWatermark
+            .resize({ width: bottomRightWatermarkWidth })
+            .toBuffer();
+
+        // Composite both watermarks in a single call
         const watermarkedBuffer = await mainImage
             .composite([
-                { input: resizedWatermarkBuffer, gravity: 'center' }
+                { input: resizedCenterWatermarkBuffer, gravity: 'center' },
+                { input: resizedBottomRightWatermarkBuffer, gravity: 'southeast' }
             ])
             .toBuffer();
-        console.log('[watermark.js] Watermark image composited successfully.');
 
         return watermarkedBuffer;
     } catch (error) {
         console.error('[watermark.js] Error during watermark composition:', error);
-        return imageBuffer; // Return original buffer on error
+        // On error, return the original image to avoid breaking the upload
+        return imageBuffer;
     }
 }
 
