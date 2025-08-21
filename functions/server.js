@@ -1201,9 +1201,16 @@ router.post('/board/:slug/write', requireLogin, upload.array('attachments', 10),
                 const originalname_utf8 = Buffer.from(file.originalname, 'latin1').toString('utf8');
                 const originalname_base64 = Buffer.from(originalname_utf8).toString('base64');
                 const newFileName = `${Date.now()}_${originalname_base64}`;
+
+                let bufferToUpload = file.buffer;
+                // Watermark images, but not for 'utube' board and only for image files
+                if (slug !== 'utube' && file.mimetype.startsWith('image/')) {
+                    bufferToUpload = await addWatermark(file.buffer);
+                }
+
                 const { error: uploadError } = await supabase.storage
                     .from('attachments')
-                    .upload(newFileName, file.buffer, { contentType: file.mimetype });
+                    .upload(newFileName, bufferToUpload, { contentType: file.mimetype });
 
                 if (uploadError) {
                     throw new Error(`Supabase upload error: ${uploadError.message}`);
@@ -1345,7 +1352,13 @@ router.post('/board/:slug/:postId/edit', requireLogin, upload.array('attachments
                 const originalname_base64 = Buffer.from(originalname_utf8).toString('base64');
                 const newFileName = `${Date.now()}_${originalname_base64}`;
                 
-                const { error: uploadError } = await supabase.storage.from('attachments').upload(newFileName, file.buffer, { contentType: file.mimetype });
+                let bufferToUpload = file.buffer;
+                // Watermark images, but not for 'utube' board and only for image files
+                if (slug !== 'utube' && file.mimetype.startsWith('image/')) {
+                    bufferToUpload = await addWatermark(file.buffer);
+                }
+
+                const { error: uploadError } = await supabase.storage.from('attachments').upload(newFileName, bufferToUpload, { contentType: file.mimetype });
                 if (uploadError) throw new Error(`Supabase upload error: ${uploadError.message}`);
 
                 const { data: urlData } = supabase.storage.from('attachments').getPublicUrl(newFileName);
