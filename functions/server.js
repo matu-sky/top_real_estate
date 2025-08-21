@@ -14,6 +14,7 @@ const { getYouTubeVideoId, getYouTubeThumbnailUrl } = require('./utils.js');
 const { generateSitemap } = require('./sitemapGenerator.js');
 const nodemailer = require('nodemailer');
 const sharp = require('sharp');
+const { addWatermark } = require('./watermark.js');
 
 const app = express();
 const { Pool } = require('pg');
