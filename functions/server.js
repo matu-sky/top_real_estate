@@ -19,6 +19,8 @@ const readdir = util.promisify(fs.readdir);
 const { getYouTubeVideoId, getYouTubeThumbnailUrl } = require('./utils.js');
 const { generateSitemap } = require('./sitemapGenerator.js');
 const nodemailer = require('nodemailer');
+const sharp = require('sharp');
+const { addWatermark } = require('./watermark.js');
 
 // 디버깅: 재귀적으로 디렉토리 목록을 가져오는 함수
 async function getFiles(dir) {
@@ -779,9 +781,11 @@ router.post('/listings/add', upload.array('images', 10), async (req, res) => {
         for (const file of req.files) {
             const originalname_utf8 = Buffer.from(file.originalname, 'latin1').toString('utf8');
             const newFileName = `${Date.now()}_${encodeURIComponent(originalname_utf8)}`;
+            console.log('[server.js] Calling addWatermark...');
+            const watermarkedBuffer = await addWatermark(file.buffer);
             const { data, error } = await supabase.storage
                 .from('property-images')
-                .upload(newFileName, file.buffer, {
+                .upload(newFileName, watermarkedBuffer, {
                     contentType: file.mimetype,
                 });
 
@@ -884,9 +888,11 @@ router.post('/listings/edit/:id', upload.array('images', 10), async (req, res) =
     if (req.files) {
         for (const file of req.files) {
             const newFileName = `${Date.now()}_${file.originalname}`;
+            console.log('[server.js] Calling addWatermark...');
+            const watermarkedBuffer = await addWatermark(file.buffer);
             const { data, error } = await supabase.storage
                 .from('property-images')
-                .upload(newFileName, file.buffer, {
+                .upload(newFileName, watermarkedBuffer, {
                     contentType: file.mimetype,
                 });
 
