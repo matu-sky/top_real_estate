@@ -1150,6 +1150,21 @@ router.get('/admin/inquiry/:id', requireLogin, async (req, res) => {
     }
 });
 
+router.post('/admin/inquiry/delete/:id', requireLogin, async (req, res) => {
+    const { id } = req.params;
+    let client;
+    try {
+        client = await pool.connect();
+        await client.query('DELETE FROM inquiries WHERE id = $1', [id]);
+        res.redirect('/admin/inquiries');
+    } catch (err) {
+        console.error('문의 삭제 오류:', err.stack);
+        res.status(500).send('문의 내역 삭제에 실패했습니다.');
+    } finally {
+        if (client) client.release();
+    }
+});
+
 
 // --- 컨설팅 접수 포털 ---
 router.get('/consulting_portal', (req, res) => {
