@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>워터마크 관리 | 관리자</title>
+    <link rel="stylesheet" href="/css/admin_style.css">
+    <style>
+        .watermark-preview {
+            max-width: 300px;
+            max-height: 150px;
+            border: 1px solid #ddd;
+            margin-top: 10px;
+            background-color: #f8f9fa;
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-container">
+        <%- include('partials/admin_sidebar.html') %>
+
+        <main class="main-content">
+            <header class="content-header">
+                <h2>워터마크 관리</h2>
+                <button type="submit" form="watermark-upload-form" class="btn save">변경사항 저장</button>
+            </header>
+
+            <form id="watermark-upload-form" action="/admin/watermarks/update" method="POST" enctype="multipart/form-data">
+
+                <div class="card">
+                    <div class="card-header"><h4>중앙 워터마크</h4></div>
+                    <div class="card-body">
+                        <p>사진 중앙에 크게 표시되는 워터마크입니다.</p>
+                        <div class="form-group">
+                            <label for="center_watermark">새 워터마크 업로드 (PNG 파일)</label>
+                            <input type="file" id="center_watermark" name="center_watermark" accept="image/png">
+                        </div>
+                        <h5>현재 워터마크 미리보기</h5>
+                        <% if (watermarks.center) { %>
+                            <img src="data:image/png;base64,<%= watermarks.center %>" alt="중앙 워터마크 미리보기" class="watermark-preview">
+                        <% } else { %>
+                            <p>현재 설정된 워터마크가 없습니다.</p>
+                        <% } %>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header"><h4>우측 하단 워터마크</h4></div>
+                    <div class="card-body">
+                        <p>사진 우측 하단에 작게 표시되는 워터마크입니다.</p>
+                        <div class="form-group">
+                            <label for="bottom_right_watermark">새 워터마크 업로드 (PNG 파일)</label>
+                            <input type="file" id="bottom_right_watermark" name="bottom_right_watermark" accept="image/png">
+                        </div>
+                        <h5>현재 워터마크 미리보기</h5>
+                        <% if (watermarks.bottom_right) { %>
+                            <img src="data:image/png;base64,<%= watermarks.bottom_right %>" alt="우측 하단 워터마크 미리보기" class="watermark-preview">
+                        <% } else { %>
+                            <p>현재 설정된 워터마크가 없습니다.</p>
+                        <% } %>
+                    </div>
+                </div>
+
+            </form>
+        </main>
+    </div>
+</body>
+</html>
