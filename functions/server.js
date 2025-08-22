@@ -713,6 +713,10 @@ router.post('/admin/watermarks/update', requireLogin, upload.fields([
     { name: 'center_watermark', maxCount: 1 },
     { name: 'bottom_right_watermark', maxCount: 1 }
 ]), async (req, res) => {
+    console.log('--- Watermark Update Request ---');
+    console.log('Request Body:', req.body);
+    console.log('Request Files:', req.files);
+
     let client;
     try {
         client = await pool.connect();
