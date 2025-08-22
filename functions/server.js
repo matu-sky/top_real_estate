@@ -690,6 +690,70 @@ router.post('/admin/pages/delete/:id', requireLogin, async (req, res) => {
 
 // --- End of 페이지 관리 ---
 
+// --- 워터마크 관리 ---
+router.get('/admin/watermarks', requireLogin, async (req, res) => {
+    let client;
+    try {
+        client = await pool.connect();
+        const result = await client.query('SELECT name, image_base64 FROM watermarks');
+        const watermarks = {};
+        result.rows.forEach(row => {
+            watermarks[row.name] = row.image_base64;
+        });
+        res.render('watermark_management', { menus: res.locals.menus, watermarks });
+    } catch (err) {
+        console.error('DB 조회 오류:', err.stack);
+        res.status(500).send('워터마크 정보를 가져오는 데 실패했습니다.');
+    } finally {
+        if (client) client.release();
+    }
+});
+
+router.post('/admin/watermarks/update', requireLogin, upload.fields([
+    { name: 'center_watermark', maxCount: 1 },
+    { name: 'bottom_right_watermark', maxCount: 1 }
+]), async (req, res) => {
+    let client;
+    try {
+        client = await pool.connect();
+        let updated = false;
+
+        const updateTasks = [];
+
+        if (req.files.center_watermark) {
+            const file = req.files.center_watermark[0];
+            const base64Data = file.buffer.toString('base64');
+            updateTasks.push(
+                client.query('UPDATE watermarks SET image_base64 = $1 WHERE name = $2', [base64Data, 'center'])
+            );
+            updated = true;
+        }
+
+        if (req.files.bottom_right_watermark) {
+            const file = req.files.bottom_right_watermark[0];
+            const base64Data = file.buffer.toString('base64');
+            updateTasks.push(
+                client.query('UPDATE watermarks SET image_base64 = $1 WHERE name = $2', [base64Data, 'bottom_right'])
+            );
+            updated = true;
+        }
+
+        await Promise.all(updateTasks);
+
+        if (updated) {
+            clearWatermarkCache();
+        }
+
+        res.redirect('/admin/watermarks');
+
+    } catch (err) {
+        console.error('워터마크 업데이트 오류:', err.stack);
+        res.status(500).send('워터마크 업데이트에 실패했습니다.');
+    } finally {
+        if (client) client.release();
+    }
+});
+
 // --- 동적 페이지 라우트 ---
 router.get('/page/:slug', async (req, res) => {
     const { slug } = req.params;

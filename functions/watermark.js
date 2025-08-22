@@ -95,4 +95,10 @@ async function addWatermark(imageBuffer) {
     }
 }
 
-module.exports = { addWatermark };
+module.exports = { addWatermark, clearWatermarkCache };
+
+function clearWatermarkCache() {
+    watermarkCache = null;
+    cacheTimestamp = 0;
+    console.log('Watermark cache cleared.');
+}
