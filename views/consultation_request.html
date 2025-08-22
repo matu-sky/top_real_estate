@@ -64,7 +64,7 @@
                 <p style="font-size: 0.9rem; color: #6c757d;">아래 폼을 작성해주시면, 전문 담당자가 신속하게 검토 후 연락드리겠습니다.</p>
             </div>
 
-            <form id="consultationForm" action="/consultation-request/submit" method="POST" onsubmit="prepareFormSubmit()">
+            <form id="consultationForm" action="/consultation-request/submit" method="POST" onsubmit="return prepareFormSubmit()">
                 <div class="form-group">
                     <label>매물 구분 *</label>
                     <div class="checkbox-group">
@@ -114,9 +114,9 @@
                     </div>
     
                     <div class="form-group">
-                        <label for="email_local">이메일</label>
+                        <label for="email_local">이메일 *</label>
                         <div class="email-field-group">
-                            <input type="text" id="email_local" placeholder="아이디">
+                            <input type="text" id="email_local" placeholder="아이디" required>
                             <span>@</span>
                             <select id="email_domain_select" onchange="updateEmailDomain()">
                                 <option value="naver.com">naver.com</option>
@@ -201,6 +201,22 @@
         function prepareFormSubmit() {
             assembleEmail();
             assemblePhone();
+
+            const finalPhone = document.getElementById('phone').value;
+            const finalEmail = document.getElementById('email').value;
+
+            if (!finalPhone) {
+                alert('전화번호를 올바르게 입력해주세요.');
+                document.getElementById('phone1').focus();
+                return false;
+            }
+
+            if (!finalEmail) {
+                alert('이메일을 올바르게 입력해주세요.');
+                document.getElementById('email_local').focus();
+                return false;
+            }
+
             // 여기에 reCAPTCHA 로직 등을 추가할 수 있습니다.
             return true; // 실제 폼 제출 계속
         }

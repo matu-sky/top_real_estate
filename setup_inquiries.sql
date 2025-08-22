@@ -10,3 +10,6 @@ CREATE TABLE IF NOT EXISTS inquiries (
     title VARCHAR(255) NOT NULL,
     message TEXT
 );
+
+-- RLS 활성화
+ALTER TABLE public.inquiries ENABLE ROW LEVEL SECURITY;

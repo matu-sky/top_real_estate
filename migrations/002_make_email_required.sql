@@ -1,0 +1,1 @@
+ALTER TABLE inquiries ALTER COLUMN email SET NOT NULL;

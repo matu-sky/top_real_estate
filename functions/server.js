@@ -19,6 +19,8 @@ const readdir = util.promisify(fs.readdir);
 const { getYouTubeVideoId, getYouTubeThumbnailUrl } = require('./utils.js');
 const { generateSitemap } = require('./sitemapGenerator.js');
 const nodemailer = require('nodemailer');
+const sharp = require('sharp');
+const { addWatermark } = require('./watermark.js');
 
 // 디버깅: 재귀적으로 디렉토리 목록을 가져오는 함수
 async function getFiles(dir) {
@@ -142,6 +144,7 @@ async function loadSettings(req, res, next) {
             { name: '게시판 설정', url: '/admin/board_settings' },
             { name: '메뉴 관리', url: '/admin/menu' },
             { name: '페이지 관리', url: '/admin/pages' },
+            { name: '워터마크 관리', url: '/admin/watermarks' },
             { name: '문의보기', url: '/admin/inquiries' },
             { name: '계정 설정', url: '/admin/settings' }
         ];
@@ -687,6 +690,74 @@ router.post('/admin/pages/delete/:id', requireLogin, async (req, res) => {
 
 // --- End of 페이지 관리 ---
 
+// --- 워터마크 관리 ---
+router.get('/admin/watermarks', requireLogin, async (req, res) => {
+    let client;
+    try {
+        client = await pool.connect();
+        const result = await client.query('SELECT name, image_base64 FROM watermarks');
+        const watermarks = {};
+        result.rows.forEach(row => {
+            watermarks[row.name] = row.image_base64;
+        });
+        res.render('watermark_management', { menus: res.locals.menus, watermarks });
+    } catch (err) {
+        console.error('DB 조회 오류:', err.stack);
+        res.status(500).send('워터마크 정보를 가져오는 데 실패했습니다.');
+    } finally {
+        if (client) client.release();
+    }
+});
+
+router.post('/admin/watermarks/update', requireLogin, upload.fields([
+    { name: 'center_watermark', maxCount: 1 },
+    { name: 'bottom_right_watermark', maxCount: 1 }
+]), async (req, res) => {
+    console.log('--- Watermark Update Request ---');
+    console.log('Request Body:', req.body);
+    console.log('Request Files:', req.files);
+
+    let client;
+    try {
+        client = await pool.connect();
+        let updated = false;
+
+        const updateTasks = [];
+
+        if (req.files.center_watermark) {
+            const file = req.files.center_watermark[0];
+            const base64Data = file.buffer.toString('base64');
+            updateTasks.push(
+                client.query('UPDATE watermarks SET image_base64 = $1 WHERE name = $2', [base64Data, 'center'])
+            );
+            updated = true;
+        }
+
+        if (req.files.bottom_right_watermark) {
+            const file = req.files.bottom_right_watermark[0];
+            const base64Data = file.buffer.toString('base64');
+            updateTasks.push(
+                client.query('UPDATE watermarks SET image_base64 = $1 WHERE name = $2', [base64Data, 'bottom_right'])
+            );
+            updated = true;
+        }
+
+        await Promise.all(updateTasks);
+
+        // if (updated) {
+        //     clearWatermarkCache();
+        // }
+
+        res.redirect('/admin/watermarks');
+
+    } catch (err) {
+        console.error('워터마크 업데이트 오류:', err.stack);
+        res.status(500).send('워터마크 업데이트에 실패했습니다.');
+    } finally {
+        if (client) client.release();
+    }
+});
+
 // --- 동적 페이지 라우트 ---
 router.get('/page/:slug', async (req, res) => {
     const { slug } = req.params;
@@ -779,9 +850,11 @@ router.post('/listings/add', upload.array('images', 10), async (req, res) => {
         for (const file of req.files) {
             const originalname_utf8 = Buffer.from(file.originalname, 'latin1').toString('utf8');
             const newFileName = `${Date.now()}_${encodeURIComponent(originalname_utf8)}`;
+            console.log('[server.js] Calling addWatermark...');
+            const watermarkedBuffer = await addWatermark(file.buffer);
             const { data, error } = await supabase.storage
                 .from('property-images')
-                .upload(newFileName, file.buffer, {
+                .upload(newFileName, watermarkedBuffer, {
                     contentType: file.mimetype,
                 });
 
@@ -805,8 +878,8 @@ router.post('/listings/add', upload.array('images', 10), async (req, res) => {
     const parseToInt = (value) => (value === '' || value === undefined || value === null) ? null : Number.parseInt(value, 10);
     const parseFloat = (value) => (value === '' || value === undefined || value === null) ? null : Number.parseFloat(value);
 
-    const area = parseToInt(body.area);
-    const exclusive_area = parseFloat(body.exclusive_area);
+    const area = body.area;
+    const exclusive_area = body.exclusive_area;
     const total_floors = parseToInt(body.total_floors);
     const floor = parseToInt(body.floor);
     const parking = parseToInt(body.parking);
@@ -884,9 +957,11 @@ router.post('/listings/edit/:id', upload.array('images', 10), async (req, res) =
     if (req.files) {
         for (const file of req.files) {
             const newFileName = `${Date.now()}_${file.originalname}`;
+            console.log('[server.js] Calling addWatermark...');
+            const watermarkedBuffer = await addWatermark(file.buffer);
             const { data, error } = await supabase.storage
                 .from('property-images')
-                .upload(newFileName, file.buffer, {
+                .upload(newFileName, watermarkedBuffer, {
                     contentType: file.mimetype,
                 });
 
@@ -909,8 +984,8 @@ router.post('/listings/edit/:id', upload.array('images', 10), async (req, res) =
     const parseToInt = (value) => (value === '' || value === undefined || value === null) ? null : Number.parseInt(value, 10);
     const parseFloat = (value) => (value === '' || value === undefined || value === null) ? null : Number.parseFloat(value);
 
-    const area = parseToInt(body.area);
-    const exclusive_area = parseFloat(body.exclusive_area);
+    const area = body.area;
+    const exclusive_area = body.exclusive_area;
     const total_floors = parseToInt(body.total_floors);
     const floor = parseToInt(body.floor);
     const parking = parseToInt(body.parking);
@@ -976,6 +1051,10 @@ router.post('/consultation-request/submit', async (req, res) => {
         const {
             name, phone, email, inquiry_type, title, message
         } = body;
+
+        if (!name || !phone || !email) {
+            return res.status(400).send('이름, 전화번호, 이메일은 필수 입력 항목입니다. 양식을 다시 확인해주세요.');
+        }
         
         let property_types = body.property_type;
         if (Array.isArray(property_types)) {
@@ -1070,6 +1149,21 @@ router.get('/admin/inquiry/:id', requireLogin, async (req, res) => {
     } catch (err) {
         console.error('DB 조회 오류:', err.stack);
         res.status(500).send('문의 내역을 불러오는 데 실패했습니다.');
+    } finally {
+        if (client) client.release();
+    }
+});
+
+router.post('/admin/inquiry/delete/:id', requireLogin, async (req, res) => {
+    const { id } = req.params;
+    let client;
+    try {
+        client = await pool.connect();
+        await client.query('DELETE FROM inquiries WHERE id = $1', [id]);
+        res.redirect('/admin/inquiries');
+    } catch (err) {
+        console.error('문의 삭제 오류:', err.stack);
+        res.status(500).send('문의 내역 삭제에 실패했습니다.');
     } finally {
         if (client) client.release();
     }
@@ -1194,9 +1288,16 @@ router.post('/board/:slug/write', requireLogin, upload.array('attachments', 10),
                 const originalname_utf8 = Buffer.from(file.originalname, 'latin1').toString('utf8');
                 const originalname_base64 = Buffer.from(originalname_utf8).toString('base64');
                 const newFileName = `${Date.now()}_${originalname_base64}`;
+
+                let bufferToUpload = file.buffer;
+                // Watermark images, but not for 'utube' board and only for image files
+                if (slug !== 'utube' && file.mimetype.startsWith('image/')) {
+                    bufferToUpload = await addWatermark(file.buffer);
+                }
+
                 const { error: uploadError } = await supabase.storage
                     .from('attachments')
-                    .upload(newFileName, file.buffer, { contentType: file.mimetype });
+                    .upload(newFileName, bufferToUpload, { contentType: file.mimetype });
 
                 if (uploadError) {
                     throw new Error(`Supabase upload error: ${uploadError.message}`);
@@ -1338,7 +1439,13 @@ router.post('/board/:slug/:postId/edit', requireLogin, upload.array('attachments
                 const originalname_base64 = Buffer.from(originalname_utf8).toString('base64');
                 const newFileName = `${Date.now()}_${originalname_base64}`;
                 
-                const { error: uploadError } = await supabase.storage.from('attachments').upload(newFileName, file.buffer, { contentType: file.mimetype });
+                let bufferToUpload = file.buffer;
+                // Watermark images, but not for 'utube' board and only for image files
+                if (slug !== 'utube' && file.mimetype.startsWith('image/')) {
+                    bufferToUpload = await addWatermark(file.buffer);
+                }
+
+                const { error: uploadError } = await supabase.storage.from('attachments').upload(newFileName, bufferToUpload, { contentType: file.mimetype });
                 if (uploadError) throw new Error(`Supabase upload error: ${uploadError.message}`);
 
                 const { data: urlData } = supabase.storage.from('attachments').getPublicUrl(newFileName);

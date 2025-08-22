@@ -24,7 +24,7 @@
                                 <th>연락처</th>
                                 <th>문의 유형</th>
                                 <th>제목</th>
-                                <th>상세보기</th>
+                                <th>작업</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -36,7 +36,12 @@
                                         <td><%= inquiry.phone %></td>
                                         <td><%= inquiry.inquiry_type %></td>
                                         <td><%= inquiry.title %></td>
-                                        <td><a href="/admin/inquiry/<%= inquiry.id %>" class="btn btn-sm">보기</a></td>
+                                        <td>
+                                            <a href="/admin/inquiry/<%= inquiry.id %>" class="btn btn-sm">보기</a>
+                                            <form action="/admin/inquiry/delete/<%= inquiry.id %>" method="POST" style="display: inline-block;" onsubmit="return confirm('정말로 이 문의를 삭제하시겠습니까?');">
+                                                <button type="submit" class="btn btn-sm btn-danger">삭제</button>
+                                            </form>
+                                        </td>
                                     </tr>
                                 <% }); %>
                             <% } else { %>
