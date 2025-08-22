@@ -744,9 +744,9 @@ router.post('/admin/watermarks/update', requireLogin, upload.fields([
 
         await Promise.all(updateTasks);
 
-        if (updated) {
-            clearWatermarkCache();
-        }
+        // if (updated) {
+        //     clearWatermarkCache();
+        // }
 
         res.redirect('/admin/watermarks');
 
