@@ -4,7 +4,7 @@
   functions = "functions"
 
 [functions]
-  included_files = ["views/**", "data/**", "public/images/watermark.png", "public/images/watermark_bottom_right.png"]
+  included_files = ["views/**", "data/**"]
 
 [dev]
   command = "node functions/server.js"
