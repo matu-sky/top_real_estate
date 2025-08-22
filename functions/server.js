@@ -1051,6 +1051,10 @@ router.post('/consultation-request/submit', async (req, res) => {
         const {
             name, phone, email, inquiry_type, title, message
         } = body;
+
+        if (!name || !phone || !email) {
+            return res.status(400).send('이름, 전화번호, 이메일은 필수 입력 항목입니다. 양식을 다시 확인해주세요.');
+        }
         
         let property_types = body.property_type;
         if (Array.isArray(property_types)) {
