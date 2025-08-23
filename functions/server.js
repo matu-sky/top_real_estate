@@ -1569,7 +1569,9 @@ router.get('/properties', async (req, res) => {
             params.push(category);
         }
         if (searchQuery) {
-            whereClauses.push(`(title ILIKE ${paramIndex++} OR address ILIKE ${paramIndex++})`);
+            const titleParam = paramIndex++;
+            const addressParam = paramIndex++;
+            whereClauses.push(`(title ILIKE ${titleParam} OR address ILIKE ${addressParam})`);
             params.push(`%${searchQuery}%`);
             params.push(`%${searchQuery}%`);
         }
@@ -1578,7 +1580,6 @@ router.get('/properties', async (req, res) => {
 
         // 매물 수 계산
         const countQuery = `SELECT COUNT(*) FROM properties ${whereCondition}`;
-        console.log('Count Query:', countQuery, params);
         const countResult = await client.query(countQuery, params);
         const totalCount = parseInt(countResult.rows[0].count, 10);
         const totalPages = Math.ceil(totalCount / limit);
@@ -1586,7 +1587,6 @@ router.get('/properties', async (req, res) => {
         // 매물 목록 조회
         const propertiesQuery = `SELECT * FROM properties ${whereCondition} ORDER BY created_at DESC LIMIT ${paramIndex++} OFFSET ${paramIndex++}`;
         const finalParams = [...params, limit, offset];
-        console.log('Properties Query:', propertiesQuery, finalParams);
         const propertiesResult = await client.query(propertiesQuery, finalParams);
         const properties = propertiesResult.rows;
 
@@ -1601,7 +1601,7 @@ router.get('/properties', async (req, res) => {
 
     } catch (err) {
         console.error('전체 매물 조회 오류:', err.stack);
-        res.status(500).send('매물 정보를 가져오는 데 실패했습니다: ' + err.message);
+        res.status(500).send('매물 정보를 가져오는 데 실패했습니다.');
     } finally {
         if (client) client.release();
     }
