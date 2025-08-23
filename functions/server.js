@@ -1562,27 +1562,32 @@ router.get('/properties', async (req, res) => {
 
         let whereClauses = [];
         const params = [];
+        let paramIndex = 1;
 
         if (category) {
+            whereClauses.push(`category = ${paramIndex++}`);
             params.push(category);
-            whereClauses.push(`category = ${params.length}`);
         }
         if (searchQuery) {
+            whereClauses.push(`(title ILIKE ${paramIndex++} OR address ILIKE ${paramIndex++})`);
             params.push(`%${searchQuery}%`);
-            whereClauses.push(`(title ILIKE ${params.length} OR address ILIKE ${params.length})`);
+            params.push(`%${searchQuery}%`);
         }
 
         const whereCondition = whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')}` : '';
 
         // 매물 수 계산
         const countQuery = `SELECT COUNT(*) FROM properties ${whereCondition}`;
+        console.log('Count Query:', countQuery, params);
         const countResult = await client.query(countQuery, params);
         const totalCount = parseInt(countResult.rows[0].count, 10);
         const totalPages = Math.ceil(totalCount / limit);
 
         // 매물 목록 조회
-        const propertiesQuery = `SELECT * FROM properties ${whereCondition} ORDER BY created_at DESC LIMIT ${params.length + 1} OFFSET ${params.length + 2}`;
-        const propertiesResult = await client.query(propertiesQuery, [...params, limit, offset]);
+        const propertiesQuery = `SELECT * FROM properties ${whereCondition} ORDER BY created_at DESC LIMIT ${paramIndex++} OFFSET ${paramIndex++}`;
+        const finalParams = [...params, limit, offset];
+        console.log('Properties Query:', propertiesQuery, finalParams);
+        const propertiesResult = await client.query(propertiesQuery, finalParams);
         const properties = propertiesResult.rows;
 
         res.render('properties', {
