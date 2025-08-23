@@ -1601,7 +1601,7 @@ router.get('/properties', async (req, res) => {
 
     } catch (err) {
         console.error('전체 매물 조회 오류:', err.stack);
-        res.status(500).send('매물 정보를 가져오는 데 실패했습니다.');
+        res.status(500).send('매물 정보를 가져오는 데 실패했습니다: ' + err.message);
     } finally {
         if (client) client.release();
     }
