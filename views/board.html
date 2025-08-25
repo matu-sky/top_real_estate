@@ -66,35 +66,27 @@
             <div class="post-list">
             <% posts.forEach(post => { %>
                 <%
-                    let thumbnailUrl = null;
-                    if (board.board_type === 'youtube' && post.youtube_url) {
-                        let videoId = '';
-                        try {
-                            const url = new URL(post.youtube_url);
-                            if (url.hostname === 'youtu.be') {
-                                videoId = url.pathname.slice(1);
-                            } else {
-                                videoId = url.searchParams.get('v');
-                            }
-                        } catch (e) {
-                            const regex = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|watch\?v=|v\/|e(?:mbed)?\/)|youtu\.be\/)([^"&?\/\s]{11})/;
-                            const match = post.youtube_url.match(regex);
-                            if (match) videoId = match[1];
-                        }
-                        if (videoId) {
-                            thumbnailUrl = `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`;
-                        }
-                    } else if (board.board_type === 'gallery' && post.attachment_path) {
-                        try {
-                            const images = JSON.parse(post.attachment_path);
-                            if (Array.isArray(images) && images.length > 0) {
-                                thumbnailUrl = images[0];
-                            }
-                        } catch (e) {
+                    let thumbnailUrl = post.thumbnail_url; // 1. DB에 저장된 썸네일 우선 사용
+                    let isDirectVideo = false;
+
+                    // 2. DB 썸네일이 없을 경우, 첨부파일 경로를 확인
+                    if (!thumbnailUrl && post.attachment_path) {
+                        const isVideoFile = (path) => ['.mp4', '.webm', '.ogg'].some(ext => path.toLowerCase().endsWith(ext));
+
+                        if (board.board_type === 'gallery') {
+                            try {
+                                const images = JSON.parse(post.attachment_path);
+                                if (Array.isArray(images) && images.length > 0) thumbnailUrl = images[0];
+                            } catch (e) { thumbnailUrl = post.attachment_path; }
+                        } else if (board.board_type === 'news') {
+                            thumbnailUrl = post.attachment_path;
+                        } else if (isVideoFile(post.attachment_path)) {
+                            isDirectVideo = true;
+                            thumbnailUrl = 'https://img.icons8.com/fluency/96/video.png'; // 직접 업로드 동영상용 기본 아이콘
+                        } else {
+                            // 첨부파일이 이미지일 경우
                             thumbnailUrl = post.attachment_path;
                         }
-                    } else if (board.board_type === 'news' && post.attachment_path) {
-                        thumbnailUrl = post.attachment_path;
                     }
                 %>
                 <div class="post-card">
@@ -103,7 +95,7 @@
                         <% if (thumbnailUrl) { %>
                             <div class="post-card-thumbnail" style="flex-shrink: 0;">
                                 <a href="/board/<%= board.slug %>/<%= post.id %>">
-                                    <img src="<%= thumbnailUrl %>" alt="<%= post.title %> 썸네일" style="width: 120px; height: 90px; object-fit: cover; display: block;">
+                                    <img src="<%= thumbnailUrl %>" alt="<%= post.title %> 썸네일" style="width: 120px; height: 90px; object-fit: cover; display: block; <% if(isDirectVideo) { %> background-color: #f0f0f0; padding: 10px; <% } %>">
                                 </a>
                             </div>
                         <% } %>

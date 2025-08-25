@@ -2,6 +2,7 @@ function getYouTubeVideoId(url) {
   if (!url) return null;
   let videoId = '';
   const patterns = [
+    /(?:https?:\/\/)?(?:www\.)?youtube\.com\/shorts\/([^?]+)/,
     /(?:https?:\/\/)?(?:www\.)?youtube\.com\/watch\?v=([^&]+)/,
     /(?:https?:\/\/)?youtu\.be\/([^?]+)/,
     /(?:https?:\/\/)?(?:www\.)?youtube\.com\/embed\/([^?]+)/
