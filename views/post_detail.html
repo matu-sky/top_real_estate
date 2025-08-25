@@ -60,6 +60,8 @@
                                         const url = new URL(post.youtube_url);
                                         if (url.hostname === 'youtu.be') {
                                             videoId = url.pathname.slice(1);
+                                        } else if (url.pathname.startsWith('/shorts/')) {
+                                            videoId = url.pathname.split('/')[2];
                                         } else {
                                             videoId = url.searchParams.get('v');
                                         }
