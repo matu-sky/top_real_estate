@@ -1402,55 +1402,32 @@ router.get('/board/:slug/:postId/edit', requireLogin, async (req, res) => {
 // 글 수정 (저장)
 router.post('/board/:slug/:postId/edit', requireLogin, upload.array('attachments', 10), async (req, res) => {
     const { slug, postId } = req.params;
-    let { title, content, author, youtube_url, delete_attachment } = req.body; // youtube_url, delete_attachment 추가
+    let { title, content, author, youtube_url, delete_attachment } = req.body;
 
     let client;
     try {
         client = await pool.connect();
-
         const boardResult = await client.query('SELECT id, board_type FROM boards WHERE slug = $1', [slug]);
-        if (boardResult.rows.length === 0) return res.status(404).send('게시판을 찾을 수 없습니다.');
         const board = boardResult.rows[0];
 
-        const postResult = await client.query('SELECT attachment_path FROM posts WHERE id = $1', [postId]);
-        if (postResult.rows.length === 0) return res.status(404).send('수정할 게시글을 찾을 수 없습니다.');
-        
-        let current_attachment_path = postResult.rows[0].attachment_path;
-        let attachment_path_to_db = current_attachment_path;
+        const postResult = await client.query('SELECT attachment_path, thumbnail_url FROM posts WHERE id = $1', [postId]);
+        let attachment_path_to_db = postResult.rows[0].attachment_path;
+        let thumbnail_url = postResult.rows[0].thumbnail_url;
 
-        // 1. 첨부파일 삭제 로직
-        if (delete_attachment) {
-            const attachments_to_delete = Array.isArray(delete_attachment) ? delete_attachment : [delete_attachment];
-            if (attachments_to_delete.length > 0) {
-                const fileNamesToDelete = attachments_to_delete.map(url => url.split('/').pop());
-                await supabase.storage.from('attachments').remove(fileNamesToDelete);
-
-                if (board.board_type === 'gallery') {
-                    const remaining_attachments = JSON.parse(current_attachment_path || '[]').filter(url => !attachments_to_delete.includes(url));
-                    attachment_path_to_db = JSON.stringify(remaining_attachments);
-                } else {
-                    attachment_path_to_db = null;
-                }
-            }
-        }
-
-        // 2. 새 첨부파일 업로드 로직
-        let new_attachment_paths = [];
+        // Case 1: A new file is uploaded. This takes precedence over everything.
         if (req.files && req.files.length > 0) {
+            let new_attachment_paths = [];
             for (const file of req.files) {
                 const originalname_utf8 = Buffer.from(file.originalname, 'latin1').toString('utf8');
                 const originalname_base64 = Buffer.from(originalname_utf8).toString('base64');
                 const newFileName = `${Date.now()}_${originalname_base64}`;
-                
                 let bufferToUpload = file.buffer;
-                // Watermark images, but not for 'utube' board and only for image files
+
                 if (slug !== 'utube' && file.mimetype.startsWith('image/')) {
                     bufferToUpload = await addWatermark(file.buffer);
                 }
-
                 const { error: uploadError } = await supabase.storage.from('attachments').upload(newFileName, bufferToUpload, { contentType: file.mimetype });
                 if (uploadError) throw new Error(`Supabase upload error: ${uploadError.message}`);
-
                 const { data: urlData } = supabase.storage.from('attachments').getPublicUrl(newFileName);
                 if (!urlData || !urlData.publicUrl) throw new Error('Failed to get public URL.');
                 new_attachment_paths.push(urlData.publicUrl);
@@ -1462,17 +1439,31 @@ router.post('/board/:slug/:postId/edit', requireLogin, upload.array('attachments
             } else {
                 attachment_path_to_db = new_attachment_paths[0];
             }
-            // 새 파일이 업로드되면 youtube_url은 null로 처리
+            
             youtube_url = null;
+            thumbnail_url = null;
+        } 
+        // Case 2: No new file, but user wants to delete existing attachment.
+        else if (delete_attachment) {
+            const attachments_to_delete = Array.isArray(delete_attachment) ? delete_attachment : [delete_attachment];
+            if (attachments_to_delete.length > 0) {
+                const fileNamesToDelete = attachments_to_delete.map(url => url.split('/').pop());
+                await supabase.storage.from('attachments').remove(fileNamesToDelete);
+
+                if (board.board_type === 'gallery') {
+                    const remaining_attachments = JSON.parse(attachment_path_to_db || '[]').filter(url => !attachments_to_delete.includes(url));
+                    attachment_path_to_db = JSON.stringify(remaining_attachments);
+                } else {
+                    attachment_path_to_db = null;
+                }
+            }
         }
         
-        // 3. 유튜브 썸네일 추출 로직
-        let thumbnail_url = null;
-        if (board.board_type === 'youtube' && youtube_url) {
+        // Case 3: No file actions, but a YouTube URL is present.
+        if (youtube_url) {
             const videoId = getYouTubeVideoId(youtube_url);
             thumbnail_url = getYouTubeThumbnailUrl(videoId);
-            // 유튜브 URL이 있으면 기존 첨부파일은 null로 처리
-            attachment_path_to_db = null;
+            attachment_path_to_db = null; // Clear any old file path
         }
 
         const query = 'UPDATE posts SET title = $1, content = $2, author = $3, attachment_path = $4, youtube_url = $5, thumbnail_url = $6 WHERE id = $7';
