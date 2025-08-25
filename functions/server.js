@@ -1402,7 +1402,7 @@ router.get('/board/:slug/:postId/edit', requireLogin, async (req, res) => {
 // 글 수정 (저장)
 router.post('/board/:slug/:postId/edit', requireLogin, upload.array('attachments', 10), async (req, res) => {
     const { slug, postId } = req.params;
-    const { title, content, author, youtube_url, delete_attachment } = req.body; // youtube_url, delete_attachment 추가
+    let { title, content, author, youtube_url, delete_attachment } = req.body; // youtube_url, delete_attachment 추가
 
     let client;
     try {
