@@ -613,7 +613,10 @@ router.get('/add_factory_property', requireLogin, (req, res) => {
     res.render('add_factory_property', { menus: res.locals.menus });
 });
 
+
+
 // --- 홈페이지 메뉴 관리 ---
+
 
 // --- 페이지 관리 ---
 router.get('/admin/pages', requireLogin, async (req, res) => {
@@ -1261,7 +1264,7 @@ router.get('/board/:slug/write', requireLogin, async (req, res) => {
 // 새 글 작성 (저장)
 router.post('/board/:slug/write', requireLogin, upload.array('attachments', 10), async (req, res) => {
     const { slug } = req.params;
-    const { title, content, author, youtube_url } = req.body; // youtube_url 추가
+    let { title, content, author, youtube_url } = req.body; // youtube_url을 let으로 변경
 
     let attachment_path_to_db = null;
     let thumbnail_url = null; // 썸네일 URL 변수 추가
@@ -1275,12 +1278,6 @@ router.post('/board/:slug/write', requireLogin, upload.array('attachments', 10),
         }
         const board = boardResult.rows[0];
         const boardId = board.id;
-
-        // 유튜브 URL이 있으면 썸네일 추출
-        if (board.board_type === 'youtube' && youtube_url) {
-            const videoId = getYouTubeVideoId(youtube_url);
-            thumbnail_url = getYouTubeThumbnailUrl(videoId);
-        }
 
         let attachment_paths = [];
         if (req.files && req.files.length > 0) {
@@ -1315,6 +1312,15 @@ router.post('/board/:slug/write', requireLogin, upload.array('attachments', 10),
             } else {
                 attachment_path_to_db = attachment_paths[0];
             }
+            
+            // 파일이 업로드되면, youtube_url은 null로 처리하여 충돌 방지
+            youtube_url = null;
+        }
+
+        // 유튜브 URL이 있고, 파일 업로드가 없는 경우에만 썸네일 추출
+        if (board.board_type === 'youtube' && youtube_url) {
+            const videoId = getYouTubeVideoId(youtube_url);
+            thumbnail_url = getYouTubeThumbnailUrl(videoId);
         }
 
         const query = 'INSERT INTO posts (board_id, title, content, author, attachment_path, youtube_url, thumbnail_url) VALUES ($1, $2, $3, $4, $5, $6, $7)';
@@ -1399,55 +1405,32 @@ router.get('/board/:slug/:postId/edit', requireLogin, async (req, res) => {
 // 글 수정 (저장)
 router.post('/board/:slug/:postId/edit', requireLogin, upload.array('attachments', 10), async (req, res) => {
     const { slug, postId } = req.params;
-    const { title, content, author, youtube_url, delete_attachment } = req.body; // youtube_url, delete_attachment 추가
+    let { title, content, author, youtube_url, delete_attachment } = req.body;
 
     let client;
     try {
         client = await pool.connect();
-
         const boardResult = await client.query('SELECT id, board_type FROM boards WHERE slug = $1', [slug]);
-        if (boardResult.rows.length === 0) return res.status(404).send('게시판을 찾을 수 없습니다.');
         const board = boardResult.rows[0];
 
-        const postResult = await client.query('SELECT attachment_path FROM posts WHERE id = $1', [postId]);
-        if (postResult.rows.length === 0) return res.status(404).send('수정할 게시글을 찾을 수 없습니다.');
-        
-        let current_attachment_path = postResult.rows[0].attachment_path;
-        let attachment_path_to_db = current_attachment_path;
+        const postResult = await client.query('SELECT attachment_path, thumbnail_url FROM posts WHERE id = $1', [postId]);
+        let attachment_path_to_db = postResult.rows[0].attachment_path;
+        let thumbnail_url = postResult.rows[0].thumbnail_url;
 
-        // 1. 첨부파일 삭제 로직
-        if (delete_attachment) {
-            const attachments_to_delete = Array.isArray(delete_attachment) ? delete_attachment : [delete_attachment];
-            if (attachments_to_delete.length > 0) {
-                const fileNamesToDelete = attachments_to_delete.map(url => url.split('/').pop());
-                await supabase.storage.from('attachments').remove(fileNamesToDelete);
-
-                if (board.board_type === 'gallery') {
-                    const remaining_attachments = JSON.parse(current_attachment_path || '[]').filter(url => !attachments_to_delete.includes(url));
-                    attachment_path_to_db = JSON.stringify(remaining_attachments);
-                } else {
-                    attachment_path_to_db = null;
-                }
-            }
-        }
-
-        // 2. 새 첨부파일 업로드 로직
-        let new_attachment_paths = [];
+        // Case 1: A new file is uploaded. This takes precedence over everything.
         if (req.files && req.files.length > 0) {
+            let new_attachment_paths = [];
             for (const file of req.files) {
                 const originalname_utf8 = Buffer.from(file.originalname, 'latin1').toString('utf8');
                 const originalname_base64 = Buffer.from(originalname_utf8).toString('base64');
                 const newFileName = `${Date.now()}_${originalname_base64}`;
-                
                 let bufferToUpload = file.buffer;
-                // Watermark images, but not for 'utube' board and only for image files
+
                 if (slug !== 'utube' && file.mimetype.startsWith('image/')) {
                     bufferToUpload = await addWatermark(file.buffer);
                 }
-
                 const { error: uploadError } = await supabase.storage.from('attachments').upload(newFileName, bufferToUpload, { contentType: file.mimetype });
                 if (uploadError) throw new Error(`Supabase upload error: ${uploadError.message}`);
-
                 const { data: urlData } = supabase.storage.from('attachments').getPublicUrl(newFileName);
                 if (!urlData || !urlData.publicUrl) throw new Error('Failed to get public URL.');
                 new_attachment_paths.push(urlData.publicUrl);
@@ -1459,13 +1442,31 @@ router.post('/board/:slug/:postId/edit', requireLogin, upload.array('attachments
             } else {
                 attachment_path_to_db = new_attachment_paths[0];
             }
+            
+            youtube_url = null;
+            thumbnail_url = null;
+        } 
+        // Case 2: No new file, but user wants to delete existing attachment.
+        else if (delete_attachment) {
+            const attachments_to_delete = Array.isArray(delete_attachment) ? delete_attachment : [delete_attachment];
+            if (attachments_to_delete.length > 0) {
+                const fileNamesToDelete = attachments_to_delete.map(url => url.split('/').pop());
+                await supabase.storage.from('attachments').remove(fileNamesToDelete);
+
+                if (board.board_type === 'gallery') {
+                    const remaining_attachments = JSON.parse(attachment_path_to_db || '[]').filter(url => !attachments_to_delete.includes(url));
+                    attachment_path_to_db = JSON.stringify(remaining_attachments);
+                } else {
+                    attachment_path_to_db = null;
+                }
+            }
         }
         
-        // 3. 유튜브 썸네일 추출 로직
-        let thumbnail_url = null;
-        if (board.board_type === 'youtube' && youtube_url) {
+        // Case 3: No file actions, but a YouTube URL is present.
+        if (youtube_url) {
             const videoId = getYouTubeVideoId(youtube_url);
             thumbnail_url = getYouTubeThumbnailUrl(videoId);
+            attachment_path_to_db = null; // Clear any old file path
         }
 
         const query = 'UPDATE posts SET title = $1, content = $2, author = $3, attachment_path = $4, youtube_url = $5, thumbnail_url = $6 WHERE id = $7';
@@ -1531,6 +1532,13 @@ router.get('/property/:id', async (req, res) => {
             );
             const relatedProperties = relatedPropertiesResult.rows;
 
+            // 관련 매물 주소 축약
+            relatedProperties.forEach(p => {
+                if (p.address) {
+                    p.short_address = p.address.split(' ').slice(0, 3).join(' ');
+                }
+            });
+
             res.render('property_detail', { 
                 property, 
                 relatedProperties, 
@@ -1584,6 +1592,13 @@ router.get('/properties', async (req, res) => {
         const propertiesQuery = `SELECT * FROM properties ${whereCondition} ORDER BY created_at DESC LIMIT ${params.length + 1} OFFSET ${params.length + 2}`;
         const propertiesResult = await client.query(propertiesQuery, [...params, limit, offset]);
         const properties = propertiesResult.rows;
+
+        // 주소 축약 로직 추가
+        properties.forEach(p => {
+            if (p.address) {
+                p.short_address = p.address.split(' ').slice(0, 3).join(' ');
+            }
+        });
 
         res.render('properties', {
             content: res.locals.settings,
