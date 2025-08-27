@@ -143,7 +143,7 @@
                     <div class="card-header"><h4>상세 정보</h4></div>
                     <div class="card-body form-grid">
                         <div class="form-group"><label for="address">소재지</label><input type="text" id="address" name="address"></div>
-                        <div class="form-group"><label for="exclusive_area">면적(m²)</label><input type="text" id="exclusive_area" name="exclusive_area"></div>
+                        <div class="form-group"><label for="exclusive_area">전용면적(평)</label><input type="text" id="exclusive_area" name="exclusive_area"></div>
                         <div class="form-group"><label for="approval_date">사용승인일</label><input type="date" id="approval_date" name="approval_date"></div>
                         <div class="form-group"><label for="purpose">물건의 용도</label><input type="text" id="purpose" name="purpose"></div>
                         <div class="form-group"><label for="total_floors">총층</label><input type="number" id="total_floors" name="total_floors"></div>
@@ -153,7 +153,16 @@
                         <div class="form-group"><label for="transaction_type">거래 형태</label><input type="text" id="transaction_type" name="transaction_type"></div>
                         <div class="form-group"><label for="parking">주차대수</label><input type="number" id="parking" name="parking"></div>
                         <div class="form-group"><label for="maintenance_fee">관리비</label><input type="number" id="maintenance_fee" name="maintenance_fee"></div>
+                        <div class="form-group"><label for="maintenance_fee_details">관리비 상세</label><input type="text" id="maintenance_fee_details" name="maintenance_fee_details"></div>
                         <div class="form-group"><label for="move_in_date">입주가능일</label><input type="date" id="move_in_date" name="move_in_date"></div>
+                        
+                        <!-- 공장/지산 전용 필드 -->
+                        <div class="form-group factory-field"><label for="ceiling_height">층고(m)</label><input type="number" id="ceiling_height" name="ceiling_height" step="0.1"></div>
+                        <div class="form-group factory-field"><label for="permitted_business_types">가능업종</label><input type="text" id="permitted_business_types" name="permitted_business_types"></div>
+                        <div class="form-group factory-field"><label for="hoist">호이스트</label><input type="text" id="hoist" name="hoist"></div>
+                        <div class="form-group factory-field"><label for="power_supply">사용전력(kW)</label><input type="text" id="power_supply" name="power_supply"></div>
+                        <div class="form-group factory-field"><label for="access_road_condition">진입로 사정</label><input type="text" id="access_road_condition" name="access_road_condition"></div>
+
                         <div class="form-group full-width"><label for="description">물건 설명</label><textarea id="description" name="description" rows="6"></textarea></div>
                         <div class="form-group full-width"><label for="youtube_url">YouTube URL</label><input type="text" id="youtube_url" name="youtube_url"></div>
                     </div>
@@ -223,10 +232,9 @@
             });
         }
 
-        // 모달이 열릴 때마다 파일 목록 초기화
         function resetImageUploadState() {
             newSelectedFiles = [];
-            newImageInput.value = ''; // 파일 선택 창 비우기
+            newImageInput.value = '';
             updateNewImagePreview();
         }
 
@@ -241,15 +249,28 @@
                     
                     const property = await response.json();
 
-                    resetImageUploadState(); // 이미지 업로드 상태 초기화
+                    resetImageUploadState();
 
                     modalTitle.innerText = '매물 수정';
                     modalForm.action = `/listings/edit/${property.id}`;
                     modalForm.reset();
 
+                    // 카테고리에 따라 전용 필드 표시/숨기기
+                    const factoryFields = modalForm.querySelectorAll('.factory-field');
+                    if (property.category === '공장/지산') {
+                        factoryFields.forEach(field => field.style.display = 'block');
+                    } else {
+                        factoryFields.forEach(field => field.style.display = 'none');
+                    }
+
                     for (const key in property) {
                         if (modalForm.elements[key]) {
-                            modalForm.elements[key].value = property[key] || '';
+                            const element = modalForm.elements[key];
+                            if (element.type === 'date' && property[key]) {
+                                element.value = new Date(property[key]).toISOString().split('T')[0];
+                            } else {
+                                element.value = property[key] || '';
+                            }
                         }
                     }
 
@@ -274,7 +295,7 @@
 
                             const deleteBtn = document.createElement('button');
                             deleteBtn.innerText = 'X';
-                            deleteBtn.type = 'button'; // 중요: 폼 제출 방지
+                            deleteBtn.type = 'button';
                             deleteBtn.style.position = 'absolute';
                             deleteBtn.style.top = '0';
                             deleteBtn.style.right = '0';
@@ -284,17 +305,12 @@
                             deleteBtn.style.cursor = 'pointer';
 
                             deleteBtn.onclick = () => {
-                                // 숨겨진 필드에 삭제할 이미지 경로 추가
                                 const deletedInput = document.createElement('input');
                                 deletedInput.type = 'hidden';
                                 deletedInput.name = 'deleted_images';
                                 deletedInput.value = path;
                                 document.getElementById('deleted_image_paths_container').appendChild(deletedInput);
-
-                                // 화면에서 이미지 컨테이너 제거
                                 imgContainer.remove();
-
-                                // 기존 이미지 목록에서 해당 경로 제거
                                 const existingImagesField = document.getElementById('existing_image_paths');
                                 const updatedPaths = existingImagesField.value.split(',').filter(p => p !== path);
                                 existingImagesField.value = updatedPaths.join(',');

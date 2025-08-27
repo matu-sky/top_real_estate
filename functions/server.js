@@ -613,7 +613,10 @@ router.get('/add_factory_property', requireLogin, (req, res) => {
     res.render('add_factory_property', { menus: res.locals.menus });
 });
 
+
+
 // --- 홈페이지 메뉴 관리 ---
+
 
 // --- 페이지 관리 ---
 router.get('/admin/pages', requireLogin, async (req, res) => {
