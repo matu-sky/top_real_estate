@@ -1512,9 +1512,7 @@ router.get('/property/:id', async (req, res) => {
 
         if (property) {
             if (property.address) {
-                const originalAddress = property.address;
-                property.short_address = originalAddress.split(' ').slice(0, 3).join(' ');
-                console.log(`[Address Debug] Category: ${property.category}, Original: "${originalAddress}", Shortened: "${property.short_address}"`);
+                property.short_address = property.address.split(' ').slice(0, 3).join(' ');
             }
 
             const page = parseInt(req.query.page, 10) || 1;
@@ -1534,12 +1532,10 @@ router.get('/property/:id', async (req, res) => {
             );
             const relatedProperties = relatedPropertiesResult.rows;
 
-            // 관련 매물 주소 축약 (디버깅 로그 포함)
+            // 관련 매물 주소 축약
             relatedProperties.forEach(p => {
                 if (p.address) {
-                    const originalAddress = p.address;
-                    p.short_address = originalAddress.split(' ').slice(0, 3).join(' ');
-                    console.log(`[Address Debug] Category: ${p.category}, Original: "${originalAddress}", Shortened: "${p.short_address}"`);
+                    p.short_address = p.address.split(' ').slice(0, 3).join(' ');
                 }
             });
 
@@ -1597,12 +1593,10 @@ router.get('/properties', async (req, res) => {
         const propertiesResult = await client.query(propertiesQuery, [...params, limit, offset]);
         const properties = propertiesResult.rows;
 
-        // 주소 축약 로직 추가 (디버깅 로그 포함)
+        // 주소 축약 로직 추가
         properties.forEach(p => {
             if (p.address) {
-                const originalAddress = p.address;
-                p.short_address = originalAddress.split(' ').slice(0, 3).join(' ');
-                console.log(`[Address Debug] Category: ${p.category}, Original: "${originalAddress}", Shortened: "${p.short_address}"`);
+                p.short_address = p.address.split(' ').slice(0, 3).join(' ');
             }
         });
 
