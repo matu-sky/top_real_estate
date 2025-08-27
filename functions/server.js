@@ -1532,6 +1532,13 @@ router.get('/property/:id', async (req, res) => {
             );
             const relatedProperties = relatedPropertiesResult.rows;
 
+            // 관련 매물 주소 축약
+            relatedProperties.forEach(p => {
+                if (p.address) {
+                    p.short_address = p.address.split(' ').slice(0, 3).join(' ');
+                }
+            });
+
             res.render('property_detail', { 
                 property, 
                 relatedProperties, 
@@ -1585,6 +1592,13 @@ router.get('/properties', async (req, res) => {
         const propertiesQuery = `SELECT * FROM properties ${whereCondition} ORDER BY created_at DESC LIMIT ${params.length + 1} OFFSET ${params.length + 2}`;
         const propertiesResult = await client.query(propertiesQuery, [...params, limit, offset]);
         const properties = propertiesResult.rows;
+
+        // 주소 축약 로직 추가
+        properties.forEach(p => {
+            if (p.address) {
+                p.short_address = p.address.split(' ').slice(0, 3).join(' ');
+            }
+        });
 
         res.render('properties', {
             content: res.locals.settings,

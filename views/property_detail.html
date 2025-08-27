@@ -145,7 +145,7 @@
                             <div class="related-property-info">
                                 <h3><%= p.title %></h3>
                                 <p class="price"><%= p.price %></p>
-                                <p class="address"><%= p.address ? p.address.split(' ').slice(0, 3).join(' ') : '' %></p>
+                                <p class="address"><%= p.short_address %></p>
                             </div>
                         </a>
                     <% }); %>
