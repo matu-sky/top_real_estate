@@ -1123,10 +1123,23 @@ router.get('/admin/inquiries', requireLogin, async (req, res) => {
     let client;
     try {
         client = await pool.connect();
-        const result = await client.query('SELECT * FROM inquiries ORDER BY created_at DESC');
+        const page = parseInt(req.query.page, 10) || 1;
+        const limit = 15; // 페이지당 15개 항목
+        const offset = (page - 1) * limit;
+
+        // 전체 문의 수 계산
+        const totalResult = await client.query('SELECT COUNT(*) FROM inquiries');
+        const totalInquiries = parseInt(totalResult.rows[0].count, 10);
+        const totalPages = Math.ceil(totalInquiries / limit);
+
+        // 현재 페이지에 해당하는 문의 목록 가져오기
+        const result = await client.query('SELECT * FROM inquiries ORDER BY created_at DESC LIMIT $1 OFFSET $2', [limit, offset]);
+        
         res.render('admin_inquiries', { 
             inquiries: result.rows,
-            menus: res.locals.menus
+            menus: res.locals.menus,
+            currentPage: page,
+            totalPages: totalPages
         });
     } catch (err) {
         console.error('DB 조회 오류:', err.stack);

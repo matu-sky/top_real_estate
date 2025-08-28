@@ -51,6 +51,23 @@
                             <% } %>
                         </tbody>
                     </table>
+
+                    <!-- Pagination -->
+                    <% if (totalPages > 1) { %>
+                        <div class="pagination">
+                            <% if (currentPage > 1) { %>
+                                <a href="/admin/inquiries?page=<%= currentPage - 1 %>" class="page-link">이전</a>
+                            <% } %>
+                    
+                            <% for (let i = 1; i <= totalPages; i++) { %>
+                                <a href="/admin/inquiries?page=<%= i %>" class="page-link <%= i === currentPage ? 'active' : '' %>"><%= i %></a>
+                            <% } %>
+                    
+                            <% if (currentPage < totalPages) { %>
+                                <a href="/admin/inquiries?page=<%= parseInt(currentPage) + 1 %>" class="page-link">다음</a>
+                            <% } %>
+                        </div>
+                    <% } %>
                 </div>
             </div>
         </div>
