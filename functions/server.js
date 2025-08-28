@@ -876,50 +876,47 @@ router.post('/listings/add', upload.array('images', 10), async (req, res) => {
     const image_paths = imageUrls.join(',');
     console.log('생성된 이미지 경로 문자열:', image_paths);
 
-    const { category, title, price, address, approval_date, purpose, direction, direction_standard, transaction_type, maintenance_fee_details, power_supply, hoist, ceiling_height, permitted_business_types, access_road_condition, move_in_date, description, youtube_url } = body;
-
-    // 데이터 클렌징 및 유효성 검사
+    // 데이터 클렌징 및 유효성 검사 헬퍼 함수
     const parseToInt = (value) => (value === '' || value === undefined || value === null) ? null : Number.parseInt(value, 10);
     const parseFloat = (value) => (value === '' || value === undefined || value === null) ? null : Number.parseFloat(value);
 
-    const area = body.area;
-    const exclusive_area = body.exclusive_area;
+    // 폼 데이터 추출
+    const { category, title, price, address, approval_date, purpose, direction, direction_standard, transaction_type, maintenance_fee_details, permitted_business_types, access_road_condition, move_in_date, description, youtube_url } = body;
+
+    // 숫자 필드 안전하게 파싱
+    const area = parseFloat(body.area);
+    const exclusive_area = parseFloat(body.exclusive_area);
     const total_floors = parseToInt(body.total_floors);
     const floor = parseToInt(body.floor);
     const parking = parseToInt(body.parking);
     const maintenance_fee = parseToInt(body.maintenance_fee);
+    const ceiling_height = parseFloat(body.ceiling_height);
+    const power_supply = parseFloat(body.power_supply);
+    const hoist = parseFloat(body.hoist);
 
     const query = `INSERT INTO properties (
         category, title, price, address, area, exclusive_area, approval_date, purpose, total_floors, floor, direction, direction_standard, transaction_type, parking, maintenance_fee, maintenance_fee_details, power_supply, hoist, ceiling_height, permitted_business_types, access_road_condition, move_in_date, description, image_path, youtube_url
     ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25)
-    RETURNING id;`; // RETURNING id 추가하여 삽입된 행의 id를 반환받음
+    RETURNING id;`;
 
     const params = [
         category, title, price, address, area, exclusive_area, approval_date, purpose, total_floors, floor, direction, direction_standard, transaction_type, parking, maintenance_fee, maintenance_fee_details, power_supply, hoist, ceiling_height, permitted_business_types, access_road_condition, move_in_date, description, image_paths, youtube_url
     ];
 
     console.log('데이터베이스에 매물 정보 삽입 시도...');
-    console.log('쿼리:', query);
-    console.log('파라미터:', params);
 
     let client;
     try {
-        console.log('데이터베이스 풀에서 클라이언트 가져오는 중...');
         client = await pool.connect();
-        console.log('클라이언트 가져오기 성공.');
-
         const result = await client.query(query, params);
         console.log('DB 삽입 성공! 삽입된 매물 ID:', result.rows[0].id);
         
-        console.log('매물 목록 페이지로 리디렉션...');
         res.redirect('/listings');
     } catch (err) {
         console.error('DB 삽입 오류 발생:', err.stack);
-        // 사용자에게 좀 더 구체적인 오류 메시지를 보낼 수 있습니다.
         res.status(500).send(`매물 등록에 실패했습니다. 서버 로그를 확인해주세요. 오류: ${err.message}`);
     } finally {
         if (client) {
-            console.log('데이터베이스 클라이언트 반환.');
             client.release();
         }
         console.log('--- 매물 등록 요청 종료 ---');
