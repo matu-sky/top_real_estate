@@ -1127,3 +1127,9 @@ footer {
     background-color: #212529;
     cursor: not-allowed;
 }
+
+/* Responsive Images */
+img {
+    max-width: 100%;
+    height: auto;
+}
