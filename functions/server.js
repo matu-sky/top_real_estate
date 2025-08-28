@@ -979,18 +979,24 @@ router.post('/listings/edit/:id', upload.array('images', 10), async (req, res) =
     }
 
     const image_paths = imageUrls.join(',');
-    const { category, title, price, address, approval_date, purpose, direction, direction_standard, transaction_type, maintenance_fee_details, power_supply, hoist, ceiling_height, permitted_business_types, access_road_condition, move_in_date, description, youtube_url } = body;
-
-    // 데이터 클렌징 및 유효성 검사
+    
+    // 데이터 클렌징 및 유효성 검사 헬퍼 함수
     const parseToInt = (value) => (value === '' || value === undefined || value === null) ? null : Number.parseInt(value, 10);
     const parseFloat = (value) => (value === '' || value === undefined || value === null) ? null : Number.parseFloat(value);
 
-    const area = body.area;
-    const exclusive_area = body.exclusive_area;
+    // 폼 데이터 추출
+    const { category, title, price, address, approval_date, purpose, direction, direction_standard, transaction_type, maintenance_fee_details, permitted_business_types, access_road_condition, move_in_date, description, youtube_url } = body;
+
+    // 숫자 필드 안전하게 파싱
+    const area = parseFloat(body.area);
+    const exclusive_area = parseFloat(body.exclusive_area);
     const total_floors = parseToInt(body.total_floors);
     const floor = parseToInt(body.floor);
     const parking = parseToInt(body.parking);
     const maintenance_fee = parseToInt(body.maintenance_fee);
+    const ceiling_height = parseFloat(body.ceiling_height);
+    const power_supply = parseFloat(body.power_supply);
+    const hoist = parseFloat(body.hoist);
 
     const query = `UPDATE properties SET 
         category = $1, title = $2, price = $3, address = $4, area = $5, exclusive_area = $6, approval_date = $7, purpose = $8, total_floors = $9, floor = $10, direction = $11, direction_standard = $12, transaction_type = $13, parking = $14, maintenance_fee = $15, maintenance_fee_details = $16, power_supply = $17, hoist = $18, ceiling_height = $19, permitted_business_types = $20, access_road_condition = $21, move_in_date = $22, description = $23, image_path = $24, youtube_url = $25
