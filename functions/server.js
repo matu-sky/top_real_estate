@@ -126,7 +126,6 @@ async function loadSettings(req, res, next) {
             dbMenus = [
                 { text: '라이프스타일 제안', url: '/#lifestyle' },
                 { text: '최신 매물', url: '/#recent-listings' },
-                { text: '전체 매물', url: '/properties' },
                 { text: '커뮤니티센터', url: '/board/notice' },
                 { text: '컨설팅 상담신청', url: '/#about' },
                 { text: '오시는 길', url: '/#location' }
@@ -280,7 +279,8 @@ router.post('/login', async (req, res) => {
             } else {
                 res.send('Incorrect Username and/or Password!');
             }
-        } else {
+        }
+        else {
             res.send('Incorrect Username and/or Password!');
         }
     } catch (err) {
@@ -371,7 +371,8 @@ router.get('/admin/settings', requireLogin, async (req, res) => {
     } catch (err) {
         console.error('Error fetching user for settings page:', err);
         res.status(500).send('Error loading settings page.');
-    } finally {
+    }
+    finally {
         if (client) client.release();
     }
 });
@@ -1570,65 +1571,6 @@ router.get('/property/:id', async (req, res) => {
     }
 });
 
-// 전체 매물 보기 페이지
-router.get('/properties', async (req, res) => {
-    let client;
-    try {
-        client = await pool.connect();
-        const page = parseInt(req.query.page, 10) || 1;
-        const limit = 9; // 한 페이지에 9개씩 표시
-        const offset = (page - 1) * limit;
-        const category = req.query.category || '';
-        const searchQuery = req.query.search || '';
-
-        let whereClauses = [];
-        const params = [];
-
-        if (category) {
-            params.push(category);
-            whereClauses.push(`category = ${params.length}`);
-        }
-        if (searchQuery) {
-            params.push(`%${searchQuery}%`);
-            whereClauses.push(`(title ILIKE ${params.length} OR address ILIKE ${params.length})`);
-        }
-
-        const whereCondition = whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')}` : '';
-
-        // 매물 수 계산
-        const countQuery = `SELECT COUNT(*) FROM properties ${whereCondition}`;
-        const countResult = await client.query(countQuery, params);
-        const totalCount = parseInt(countResult.rows[0].count, 10);
-        const totalPages = Math.ceil(totalCount / limit);
-
-        // 매물 목록 조회
-        const propertiesQuery = `SELECT * FROM properties ${whereCondition} ORDER BY created_at DESC LIMIT ${params.length + 1} OFFSET ${params.length + 2}`;
-        const propertiesResult = await client.query(propertiesQuery, [...params, limit, offset]);
-        const properties = propertiesResult.rows;
-
-        // 주소 축약 로직 추가
-        properties.forEach(p => {
-            if (p.address) {
-                p.short_address = p.address.split(' ').slice(0, 3).join(' ');
-            }
-        });
-
-        res.render('properties', {
-            content: res.locals.settings,
-            properties,
-            currentPage: page,
-            totalPages,
-            currentCategory: category,
-            searchQuery
-        });
-
-    } catch (err) {
-        console.error('전체 매물 조회 오류:', err.stack);
-        res.status(500).send('매물 정보를 가져오는 데 실패했습니다.');
-    } finally {
-        if (client) client.release();
-    }
-});
 
 
 // API: 특정 매물 정보 가져오기
