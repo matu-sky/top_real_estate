@@ -108,7 +108,7 @@
                                 <td><%= posts.length - index %></td>
                                 <td class="post-title"><a href="/board/<%= board.slug %>/<%= post.id %>"><%= post.title %></a></td>
                                 <% if (fileMeta && fileMeta.url) { %>
-                                    <td><i class="fa fa-file-o file-icon"></i> <a href="/download/<%= post.id %>" title="<%= fileMeta.name %>"><%= fileMeta.name.length > 20 ? fileMeta.name.substring(0, 17) + '...' : fileMeta.name %></a></td>
+                                    <td><i class="fa fa-file-o file-icon"></i> <a href="<%= fileMeta.url %>" download="<%= fileMeta.name %>" title="<%= fileMeta.name %>"><%= fileMeta.name.length > 20 ? fileMeta.name.substring(0, 17) + '...' : fileMeta.name %></a></td>
                                     <td><%= formatBytes(fileMeta.size) %></td>
                                 <% } else { %>
                                     <td colspan="2" style="color: #999;">첨부파일 없음</td>
