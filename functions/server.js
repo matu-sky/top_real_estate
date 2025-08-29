@@ -1564,12 +1564,18 @@ router.get('/download/:postId', async (req, res) => {
         try {
             fileMeta = JSON.parse(attachmentPath);
         } catch (e) {
-            // JSON 파싱 실패 시, 일반 URL로 간주 (하위 호환성)
             return res.redirect(attachmentPath);
         }
 
-        if (fileMeta && fileMeta.url) {
-            res.redirect(fileMeta.url);
+        if (fileMeta && fileMeta.url && fileMeta.name && fileMeta.type && fileMeta.size) {
+            const response = await axios.get(fileMeta.url, { responseType: 'arraybuffer' });
+            const encodedName = encodeURIComponent(fileMeta.name);
+
+            res.setHeader('Content-Disposition', `attachment; filename*="UTF-8''${encodedName}"`);
+            res.setHeader('Content-Type', fileMeta.type);
+            res.setHeader('Content-Length', fileMeta.size);
+            
+            res.send(response.data);
         } else {
             res.status(404).send('유효한 첨부파일 정보가 없습니다.');
         }
