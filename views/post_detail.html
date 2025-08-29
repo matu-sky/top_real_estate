@@ -156,7 +156,7 @@
                                                 <span style="font-weight: bold;"><%= fileMeta.name %></span>
                                                 <span style="color: #777; margin-left: 10px;">(<%= (fileMeta.size / 1024 / 1024).toFixed(2) %> MB)</span>
                                             </div>
-                                            <a href="<%= fileMeta.url %>" download="<%= fileMeta.name %>" class="btn btn-primary" style="text-decoration: none; color: white; background-color: #007bff; padding: 10px 20px; border-radius: 4px; font-weight: bold;">다운로드</a>
+                                            <a href="/download/<%= post.id %>" class="btn btn-primary" style="text-decoration: none; color: white; background-color: #007bff; padding: 10px 20px; border-radius: 4px; font-weight: bold;">다운로드</a>
                                         </div>
                                     </div>
                                 <% } %>

@@ -1548,7 +1548,7 @@ router.post('/board/:slug/:postId/delete', requireLogin, async (req, res) => {
     }
 });
 
-// 자료실 파일 다운로드 라우트
+// 자료실 파일 다운로드 라우트 (서버 경유)
 router.get('/download/:postId', async (req, res) => {
     const { postId } = req.params;
     let client;
@@ -1564,6 +1564,7 @@ router.get('/download/:postId', async (req, res) => {
         try {
             fileMeta = JSON.parse(attachmentPath);
         } catch (e) {
+            // JSON 파싱 실패 시, 일반 URL로 간주 (하위 호환성)
             return res.redirect(attachmentPath);
         }
 
