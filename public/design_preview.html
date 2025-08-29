@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>자료실 디자인 시안</title>
+    
+    <!-- Font Awesome 아이콘 라이브러리 (아이콘 표시를 위해 필요) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    
+    <!-- 기본 스타일 (실제 사이트의 CSS와는 다를 수 있음) -->
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            margin: 0;
+            padding: 30px;
+            background-color: #f8f9fa;
+            color: #212529;
+        }
+        h1 {
+            border-bottom: 2px solid #dee2e6;
+            padding-bottom: 15px;
+            margin-bottom: 30px;
+        }
+        h3 {
+            margin-top: 40px;
+            margin-bottom: 15px;
+        }
+        .card {
+            border: 1px solid #dee2e6;
+            border-radius: .25rem;
+            background-color: #fff;
+            margin-bottom: 30px;
+            box-shadow: 0 1px 3px rgba(0,0,0,.05);
+        }
+        .card-header {
+            padding: .75rem 1.25rem;
+            margin-bottom: 0;
+            background-color: rgba(0,0,0,.03);
+            border-bottom: 1px solid rgba(0,0,0,.125);
+        }
+        .card-header h4 {
+            margin: 0;
+            font-size: 1.25rem;
+        }
+        .card-body {
+            padding: 1.25rem;
+        }
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+        .table th, .table td {
+            padding: 12px;
+            vertical-align: middle;
+            border-top: 1px solid #dee2e6;
+        }
+        .table thead th {
+            border-top: 0;
+            border-bottom: 2px solid #dee2e6;
+            vertical-align: bottom;
+            background-color: #f8f9fa;
+        }
+        .table-hover tbody tr:hover {
+            background-color: #f5f5f5;
+        }
+        a {
+            color: #007bff;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        hr {
+            margin: 30px 0;
+            border: 0;
+            border-top: 1px solid #eee;
+        }
+        .attachment-section h4 {
+            margin-top: 0;
+        }
+        .attachment-info {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 15px;
+            padding: 20px;
+            background-color: #f9f9f9;
+            border: 1px solid #eee;
+            border-radius: 5px;
+        }
+        .btn-download {
+            text-decoration: none;
+            color: white !important;
+            background-color: #007bff;
+            padding: 10px 20px;
+            border-radius: 4px;
+            font-weight: bold;
+            display: inline-block;
+            transition: background-color 0.2s;
+        }
+        .btn-download:hover {
+            background-color: #0056b3;
+            text-decoration: none;
+        }
+        .fa {
+            margin-right: 8px;
+        }
+        .file-name {
+            font-weight: bold;
+        }
+        .file-size {
+            color: #777;
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>자료실 디자인 시안</h1>
+
+    <!-- ==================== 1. 자료실 게시물 목록 ==================== -->
+    <h3>1. 자료실 게시물 목록 (표 형태)</h3>
+    <div class="card">
+        <div class="card-header">
+            <h4>자료실</h4>
+        </div>
+        <div class="card-body">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th style="width: 5%;">#</th>
+                        <th style="width: 50%;">제목</th>
+                        <th style="width: 25%;">첨부파일</th>
+                        <th style="width: 10%;">파일크기</th>
+                        <th style="width: 10%;">등록일</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- 예시 데이터 1: PDF 파일 -->
+                    <tr>
+                        <td>3</td>
+                        <td><a href="#">2025년 부동산 시장 전망 보고서</a></td>
+                        <td><i class="fa fa-file-pdf-o" style="color: #d9534f;"></i> <a href="#">market_report_2025.pdf</a></td>
+                        <td>2.5 MB</td>
+                        <td>2025-08-29</td>
+                    </tr>
+                    <!-- 예시 데이터 2: ZIP 파일 -->
+                    <tr>
+                        <td>2</td>
+                        <td><a href="#">상가 계약서 양식 모음</a></td>
+                        <td><i class="fa fa-file-archive-o" style="color: #f0ad4e;"></i> <a href="#">contract_forms.zip</a></td>
+                        <td>5.1 MB</td>
+                        <td>2025-08-28</td>
+                    </tr>
+                    <!-- 예시 데이터 3: HWP 파일 -->
+                    <tr>
+                        <td>1</td>
+                        <td><a href="#">등기부등본 발급 안내</a></td>
+                        <td><i class="fa fa-file-word-o" style="color: #337ab7;"></i> <a href="#">how_to_register.hwp</a></td>
+                        <td>850 KB</td>
+                        <td>2025-08-27</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ==================== 2. 게시물 상세 보기 ==================== -->
+    <h3>2. 게시물 상세 보기 (다운로드 섹션)</h3>
+    <div class="card">
+        <div class="card-body">
+            <div class="post-content">
+                <h3>2025년 부동산 시장 전망 보고서</h3>
+                <p style="color: #888; margin-bottom: 20px;">작성일: 2025-08-29</p>
+                <p>2025년 부동산 시장의 주요 동향과 전망에 대한 상세 보고서입니다.</p>
+                <p>자세한 내용은 첨부된 PDF 파일을 확인해주세요.</p>
+            </div>
+    
+            <hr>
+    
+            <div class="attachment-section">
+                <h4><i class="fa fa-download"></i> 첨부파일</h4>
+                <div class="attachment-info">
+                    <div>
+                        <i class="fa fa-file-pdf-o" style="font-size: 1.2em; color: #d9534f;"></i>
+                        <span class="file-name">market_report_2025.pdf</span>
+                        <span class="file-size">(2.5 MB)</span>
+                    </div>
+                    <a href="#" class="btn-download">다운로드</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>
