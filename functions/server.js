@@ -75,12 +75,22 @@ const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 // --- 파일 업로드 설정 (메모리 스토리지 사용) ---
 const storage = multer.memoryStorage();
-const upload = multer({ storage: storage });
+const upload = multer({
+    storage: storage,
+    limits: { fileSize: 10 * 1024 * 1024 } // 10MB
+});
+
+// 자료실 전용 업로더 (10MB 제한)
+const uploadArchive = multer({
+    storage: storage,
+    limits: { fileSize: 10 * 1024 * 1024 } // 10MB
+});
 
 const pgSession = require('connect-pg-simple')(session);
 
 // --- 미들웨어 설정 ---
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '11mb' }));
+app.use(express.urlencoded({ extended: true, limit: '11mb' }));
 
 // 세션 미들웨어 설정 (데이터베이스 기반)
 const store = new pgSession({
@@ -1324,7 +1334,18 @@ router.post('/board/:slug/write', requireLogin, upload.array('attachments', 10),
                 attachment_paths.push(urlData.publicUrl);
             }
 
-            if (board.board_type === 'gallery') {
+            if (board.board_type === 'archive') {
+                const file = req.files[0];
+                const publicUrl = attachment_paths[0];
+                const originalname_utf8 = Buffer.from(file.originalname, 'latin1').toString('utf8');
+                const fileMetadata = {
+                    url: publicUrl,
+                    name: originalname_utf8,
+                    size: file.size,
+                    type: file.mimetype
+                };
+                attachment_path_to_db = JSON.stringify(fileMetadata);
+            } else if (board.board_type === 'gallery') {
                 attachment_path_to_db = JSON.stringify(attachment_paths);
             } else {
                 attachment_path_to_db = attachment_paths[0];
@@ -1453,7 +1474,18 @@ router.post('/board/:slug/:postId/edit', requireLogin, upload.array('attachments
                 new_attachment_paths.push(urlData.publicUrl);
             }
 
-            if (board.board_type === 'gallery') {
+            if (board.board_type === 'archive') {
+                const file = req.files[0];
+                const publicUrl = new_attachment_paths[0];
+                const originalname_utf8 = Buffer.from(file.originalname, 'latin1').toString('utf8');
+                const fileMetadata = {
+                    url: publicUrl,
+                    name: originalname_utf8,
+                    size: file.size,
+                    type: file.mimetype
+                };
+                attachment_path_to_db = JSON.stringify(fileMetadata);
+            } else if (board.board_type === 'gallery') {
                 const existing_attachments = JSON.parse(attachment_path_to_db || '[]');
                 attachment_path_to_db = JSON.stringify([...existing_attachments, ...new_attachment_paths]);
             } else {
@@ -1511,6 +1543,40 @@ router.post('/board/:slug/:postId/delete', requireLogin, async (req, res) => {
     } catch (err) {
         console.error('DB 삭제 오류:', err);
         res.status(500).send('글 삭제에 실패했습니다.');
+    } finally {
+        if (client) client.release();
+    }
+});
+
+// 자료실 파일 다운로드 라우트
+router.get('/download/:postId', async (req, res) => {
+    const { postId } = req.params;
+    let client;
+    try {
+        client = await pool.connect();
+        const result = await client.query('SELECT attachment_path FROM posts WHERE id = $1', [postId]);
+        if (result.rows.length === 0 || !result.rows[0].attachment_path) {
+            return res.status(404).send('첨부파일을 찾을 수 없습니다.');
+        }
+
+        const attachmentPath = result.rows[0].attachment_path;
+        let fileMeta = null;
+        try {
+            fileMeta = JSON.parse(attachmentPath);
+        } catch (e) {
+            // JSON 파싱 실패 시, 일반 URL로 간주 (하위 호환성)
+            return res.redirect(attachmentPath);
+        }
+
+        if (fileMeta && fileMeta.url) {
+            res.redirect(fileMeta.url);
+        } else {
+            res.status(404).send('유효한 첨부파일 정보가 없습니다.');
+        }
+
+    } catch (err) {
+        console.error('파일 다운로드 오류:', err);
+        res.status(500).send('파일을 다운로드하는 중 오류가 발생했습니다.');
     } finally {
         if (client) client.release();
     }

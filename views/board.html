@@ -64,7 +64,75 @@
             </div>
 
             <div class="post-list">
-            <% posts.forEach(post => { %>
+            <% if (board.board_type === 'archive') { %>
+                <%
+                    const formatBytes = (bytes, decimals = 2) => {
+                        if (!bytes || bytes === 0) return '0 Bytes';
+                        const k = 1024;
+                        const dm = decimals < 0 ? 0 : decimals;
+                        const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+                        const i = Math.floor(Math.log(bytes) / Math.log(k));
+                        return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+                    }
+                %>
+                <style>
+                    .table th, .table td { vertical-align: middle; text-align: center; }
+                    .table .post-title { text-align: left; }
+                    .table .post-title a { font-weight: bold; color: #333; }
+                    .table .file-icon { font-size: 1.2em; margin-right: 8px; }
+                    .table .btn-sm-danger, .table .btn-sm-secondary { padding: 5px 10px; font-size: 12px; }
+                </style>
+                <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+                <table class="table table-hover">
+                    <thead style="background-color: #f8f9fa;">
+                        <tr>
+                            <th style="width: 5%;">#</th>
+                            <th style="width: 45%; text-align: left;">제목</th>
+                            <th style="width: 20%;">첨부파일</th>
+                            <th style="width: 10%;">파일크기</th>
+                            <th style="width: 10%;">작성일</th>
+                            <% if (user && user.loggedin) { %>
+                                <th style="width: 10%;">관리</th>
+                            <% } %>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% posts.forEach((post, index) => { %>
+                            <%
+                                let fileMeta = null;
+                                if (post.attachment_path) {
+                                    try { fileMeta = JSON.parse(post.attachment_path); } catch (e) { fileMeta = null; }
+                                }
+                            %>
+                            <tr>
+                                <td><%= posts.length - index %></td>
+                                <td class="post-title"><a href="/board/<%= board.slug %>/<%= post.id %>"><%= post.title %></a></td>
+                                <% if (fileMeta && fileMeta.url) { %>
+                                    <td><i class="fa fa-file-o file-icon"></i> <a href="/download/<%= post.id %>" title="<%= fileMeta.name %>"><%= fileMeta.name.length > 20 ? fileMeta.name.substring(0, 17) + '...' : fileMeta.name %></a></td>
+                                    <td><%= formatBytes(fileMeta.size) %></td>
+                                <% } else { %>
+                                    <td colspan="2" style="color: #999;">첨부파일 없음</td>
+                                <% } %>
+                                <td><%= new Date(post.created_at).toLocaleDateString('ko-KR') %></td>
+                                <% if (user && user.loggedin) { %>
+                                    <td>
+                                        <a href="/board/<%= board.slug %>/<%= post.id %>/edit" class="btn btn-sm-secondary" style="margin-right: 5px;">수정</a>
+                                        <form action="/board/<%= board.slug %>/<%= post.id %>/delete" method="POST" style="display: inline-block;">
+                                            <button type="submit" class="btn btn-sm-danger" onclick="return confirm('정말로 이 글을 삭제하시겠습니까?');">삭제</button>
+                                        </form>
+                                    </td>
+                                <% } %>
+                            </tr>
+                        <% }); %>
+                        <% if (posts.length === 0) { %>
+                            <tr>
+                                <td colspan="<%= (user && user.loggedin) ? 6 : 5 %>" style="text-align: center; padding: 20px;">아직 등록된 글이 없습니다.</td>
+                            </tr>
+                        <% } %>
+                    </tbody>
+                </table>
+            <% } else { %>
+                <% posts.forEach(post => { %>
                 <%
                     let thumbnailUrl = post.thumbnail_url; // 1. DB에 저장된 썸네일 우선 사용
                     let isDirectVideo = false;
@@ -132,7 +200,8 @@
                     <p>아직 등록된 글이 없습니다. 첫 번째 글을 작성해보세요!</p>
                 </div>
             <% } %>
-        </div>
+            <% } %>
+            </div>
     </main>
 
     <%- include('partials/footer.html') %>
