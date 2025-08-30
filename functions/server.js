@@ -63,16 +63,18 @@ const { createClient } = require('@supabase/supabase-js');
 
 // --- Supabase 클라이언트 초기화 ---
 const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
+const supabaseAnonKey = process.env.SUPABASE_ANON_KEY; // 클라이언트 사이드용으로 남겨둘 수 있음
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY; // 서버 사이드용
 
 // 환경 변수 누락 시 명확한 에러 메시지 출력
-if (!supabaseUrl || !supabaseAnonKey) {
-    const errorMessage = 'Supabase URL and Anon Key are required. Check your Netlify environment variables.';
+if (!supabaseUrl || !supabaseAnonKey || !supabaseServiceKey) {
+    const errorMessage = 'Supabase URL, Anon Key, and Service Key are required. Check your Netlify environment variables.';
     console.error(errorMessage);
     throw new Error(errorMessage);
 }
 
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
+// 서버-사이드 작업에는 서비스 키를 사용하여 어드민 권한으로 클라이언트 생성
+const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
 // --- 파일 업로드 설정 (메모리 스토리지 사용) ---
 const storage = multer.memoryStorage();
