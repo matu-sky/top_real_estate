@@ -1307,15 +1307,16 @@ router.post('/board/:slug/write', requireLogin, upload.array('attachments', 10),
         const board = boardResult.rows[0];
         const boardId = board.id;
 
-        let attachment_paths = [];
         if (req.files && req.files.length > 0) {
+            let attachment_keys = [];
+            let attachment_public_urls = [];
+
             for (const file of req.files) {
                 const originalname_utf8 = Buffer.from(file.originalname, 'latin1').toString('utf8');
                 const originalname_base64 = Buffer.from(originalname_utf8).toString('base64');
                 const newFileName = `${Date.now()}_${originalname_base64}`;
 
                 let bufferToUpload = file.buffer;
-                // Watermark images, but not for 'utube' board and only for image files
                 if (slug !== 'utube' && file.mimetype.startsWith('image/')) {
                     bufferToUpload = await addWatermark(file.buffer);
                 }
@@ -1327,36 +1328,33 @@ router.post('/board/:slug/write', requireLogin, upload.array('attachments', 10),
                 if (uploadError) {
                     throw new Error(`Supabase upload error: ${uploadError.message}`);
                 }
-
+                
+                attachment_keys.push(newFileName);
                 const { data: urlData } = supabase.storage.from('attachments').getPublicUrl(newFileName);
-                if (!urlData || !urlData.publicUrl) {
-                    throw new Error('Failed to get public URL from Supabase.');
+                if (urlData) {
+                    attachment_public_urls.push(urlData.publicUrl);
                 }
-                attachment_paths.push(urlData.publicUrl);
             }
 
             if (board.board_type === 'archive') {
                 const file = req.files[0];
-                const publicUrl = attachment_paths[0];
-                const originalname_utf8 = Buffer.from(file.originalname, 'latin1').toString('utf8');
+                const filePath = attachment_keys[0];
                 const fileMetadata = {
-                    url: publicUrl,
-                    name: originalname_utf8,
+                    path: filePath, // Store path instead of URL
+                    name: Buffer.from(file.originalname, 'latin1').toString('utf8'),
                     size: file.size,
                     type: file.mimetype
                 };
                 attachment_path_to_db = JSON.stringify(fileMetadata);
             } else if (board.board_type === 'gallery') {
-                attachment_path_to_db = JSON.stringify(attachment_paths);
+                attachment_path_to_db = JSON.stringify(attachment_public_urls);
             } else {
-                attachment_path_to_db = attachment_paths[0];
+                attachment_path_to_db = attachment_public_urls[0];
             }
             
-            // 파일이 업로드되면, youtube_url은 null로 처리하여 충돌 방지
             youtube_url = null;
         }
 
-        // 유튜브 URL이 있고, 파일 업로드가 없는 경우에만 썸네일 추출
         if (board.board_type === 'youtube' && youtube_url) {
             const videoId = getYouTubeVideoId(youtube_url);
             thumbnail_url = getYouTubeThumbnailUrl(videoId);
@@ -1458,7 +1456,9 @@ router.post('/board/:slug/:postId/edit', requireLogin, upload.array('attachments
 
         // Case 1: A new file is uploaded. This takes precedence over everything.
         if (req.files && req.files.length > 0) {
-            let new_attachment_paths = [];
+            let new_attachment_keys = [];
+            let new_attachment_public_urls = [];
+
             for (const file of req.files) {
                 const originalname_utf8 = Buffer.from(file.originalname, 'latin1').toString('utf8');
                 const originalname_base64 = Buffer.from(originalname_utf8).toString('base64');
@@ -1470,17 +1470,20 @@ router.post('/board/:slug/:postId/edit', requireLogin, upload.array('attachments
                 }
                 const { error: uploadError } = await supabase.storage.from('attachments').upload(newFileName, bufferToUpload, { contentType: file.mimetype });
                 if (uploadError) throw new Error(`Supabase upload error: ${uploadError.message}`);
+                
+                new_attachment_keys.push(newFileName);
                 const { data: urlData } = supabase.storage.from('attachments').getPublicUrl(newFileName);
-                if (!urlData || !urlData.publicUrl) throw new Error('Failed to get public URL.');
-                new_attachment_paths.push(urlData.publicUrl);
+                if (urlData) {
+                    new_attachment_public_urls.push(urlData.publicUrl);
+                }
             }
 
             if (board.board_type === 'archive') {
                 const file = req.files[0];
-                const publicUrl = new_attachment_paths[0];
+                const filePath = new_attachment_keys[0];
                 const originalname_utf8 = Buffer.from(file.originalname, 'latin1').toString('utf8');
                 const fileMetadata = {
-                    url: publicUrl,
+                    path: filePath, // Store path
                     name: originalname_utf8,
                     size: file.size,
                     type: file.mimetype
@@ -1488,9 +1491,9 @@ router.post('/board/:slug/:postId/edit', requireLogin, upload.array('attachments
                 attachment_path_to_db = JSON.stringify(fileMetadata);
             } else if (board.board_type === 'gallery') {
                 const existing_attachments = JSON.parse(attachment_path_to_db || '[]');
-                attachment_path_to_db = JSON.stringify([...existing_attachments, ...new_attachment_paths]);
+                attachment_path_to_db = JSON.stringify([...existing_attachments, ...new_attachment_public_urls]);
             } else {
-                attachment_path_to_db = new_attachment_paths[0];
+                attachment_path_to_db = new_attachment_public_urls[0];
             }
             
             youtube_url = null;
@@ -1553,7 +1556,7 @@ router.post('/board/:slug/:postId/delete', requireLogin, async (req, res) => {
 router.get('/download/:postId', async (req, res) => {
     const { postId } = req.params;
     let client;
-    let fileMeta = null; // catch 블록에서 접근 가능하도록 스코프 상향
+    let fileMeta = null;
     try {
         client = await pool.connect();
         const result = await client.query('SELECT attachment_path FROM posts WHERE id = $1', [postId]);
@@ -1565,12 +1568,34 @@ router.get('/download/:postId', async (req, res) => {
         try {
             fileMeta = JSON.parse(attachmentPath);
         } catch (e) {
-            // JSON 파싱 실패 시, 일반 URL로 간주 (하위 호환성)
+            // 하위 호환성: 예전 데이터는 JSON이 아닌 일반 URL일 수 있음
             return res.redirect(attachmentPath);
         }
 
-        if (fileMeta && fileMeta.url && fileMeta.name && fileMeta.type && fileMeta.size) {
-            const response = await axios.get(fileMeta.url, { responseType: 'arraybuffer' });
+        let downloadUrl = null;
+
+        // 신규 로직: path 속성이 있으면 최신 파일로 간주하고 서명된 URL 생성
+        if (fileMeta.path) {
+            const { data, error } = await supabase.storage
+                .from('attachments')
+                .createSignedUrl(fileMeta.path, 60); // 60초 동안 유효한 링크
+
+            if (error) {
+                throw new Error('Supabase에서 서명된 URL을 생성하지 못했습니다.');
+            }
+            downloadUrl = data.signedUrl;
+        } 
+        // 하위 호환성: url 속성이 있으면 예전 파일로 간주
+        else if (fileMeta.url) {
+            downloadUrl = fileMeta.url;
+        } 
+        // 둘 다 없으면 유효하지 않은 데이터
+        else {
+            return res.status(404).send('유효한 첨부파일 정보가 없습니다.');
+        }
+
+        if (downloadUrl) {
+            const response = await axios.get(downloadUrl, { responseType: 'arraybuffer' });
             const encodedName = encodeURIComponent(fileMeta.name);
 
             res.setHeader('Content-Disposition', `attachment; filename*="UTF-8''${encodedName}"`);
@@ -1579,19 +1604,20 @@ router.get('/download/:postId', async (req, res) => {
             
             res.send(response.data);
         } else {
-            res.status(404).send('유효한 첨부파일 정보가 없습니다.');
+            // 이 경우는 거의 발생하지 않지만 안전장치로 추가
+            res.status(404).send('다운로드 URL을 생성할 수 없습니다.');
         }
 
     } catch (err) {
         console.error('파일 다운로드 오류:', {
             message: err.message,
-            url: fileMeta ? fileMeta.url : 'N/A',
+            url: fileMeta ? (fileMeta.path || fileMeta.url) : 'N/A',
             stack: err.stack
         });
         const errorDetails = `
             <p>파일을 다운로드하는 중 오류가 발생했습니다.</p>
             <p><strong>오류 메시지:</strong> ${err.message}</p>
-            ${fileMeta ? `<p><strong>시도한 URL:</strong> ${fileMeta.url}</p>` : ''}
+            ${fileMeta ? `<p><strong>시도한 파일:</strong> ${fileMeta.name}</p>` : ''}
             <p>관리자에게 문의해주세요.</p>
         `;
         res.status(500).send(errorDetails);
