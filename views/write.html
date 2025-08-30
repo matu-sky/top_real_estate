@@ -42,6 +42,11 @@
                                 <label for="attachments">또는 동영상/이미지 파일 직접 업로드</label>
                                 <input type="file" id="attachments" name="attachments" accept="video/*,image/*" class="form-control-file">
                             </div>
+                        <% } else if (board.board_type === 'archive') { %>
+                            <div class="form-group">
+                                <label for="attachments">자료실 파일 첨부 (10MB 이하)</label>
+                                <input type="file" id="attachments" name="attachments">
+                            </div>
                         <% } else if (board.board_type === 'gallery') { %>
                             <div class="form-group">
                                 <label for="attachments">이미지 첨부 (여러 장 가능)</label>

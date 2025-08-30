@@ -15,6 +15,7 @@ const querystring = require('querystring');
 const bcrypt = require('bcrypt');
 const fs = require('fs');
 const util = require('util');
+const axios = require('axios');
 const readdir = util.promisify(fs.readdir);
 const { getYouTubeVideoId, getYouTubeThumbnailUrl } = require('./utils.js');
 const { generateSitemap } = require('./sitemapGenerator.js');
@@ -75,12 +76,22 @@ const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 // --- 파일 업로드 설정 (메모리 스토리지 사용) ---
 const storage = multer.memoryStorage();
-const upload = multer({ storage: storage });
+const upload = multer({
+    storage: storage,
+    limits: { fileSize: 10 * 1024 * 1024 } // 10MB
+});
+
+// 자료실 전용 업로더 (10MB 제한)
+const uploadArchive = multer({
+    storage: storage,
+    limits: { fileSize: 10 * 1024 * 1024 } // 10MB
+});
 
 const pgSession = require('connect-pg-simple')(session);
 
 // --- 미들웨어 설정 ---
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '11mb' }));
+app.use(express.urlencoded({ extended: true, limit: '11mb' }));
 
 // 세션 미들웨어 설정 (데이터베이스 기반)
 const store = new pgSession({
@@ -126,7 +137,6 @@ async function loadSettings(req, res, next) {
             dbMenus = [
                 { text: '라이프스타일 제안', url: '/#lifestyle' },
                 { text: '최신 매물', url: '/#recent-listings' },
-                { text: '전체 매물', url: '/properties' },
                 { text: '커뮤니티센터', url: '/board/notice' },
                 { text: '컨설팅 상담신청', url: '/#about' },
                 { text: '오시는 길', url: '/#location' }
@@ -280,7 +290,8 @@ router.post('/login', async (req, res) => {
             } else {
                 res.send('Incorrect Username and/or Password!');
             }
-        } else {
+        }
+        else {
             res.send('Incorrect Username and/or Password!');
         }
     } catch (err) {
@@ -371,7 +382,8 @@ router.get('/admin/settings', requireLogin, async (req, res) => {
     } catch (err) {
         console.error('Error fetching user for settings page:', err);
         res.status(500).send('Error loading settings page.');
-    } finally {
+    }
+    finally {
         if (client) client.release();
     }
 });
@@ -875,50 +887,47 @@ router.post('/listings/add', upload.array('images', 10), async (req, res) => {
     const image_paths = imageUrls.join(',');
     console.log('생성된 이미지 경로 문자열:', image_paths);
 
-    const { category, title, price, address, approval_date, purpose, direction, direction_standard, transaction_type, maintenance_fee_details, power_supply, hoist, ceiling_height, permitted_business_types, access_road_condition, move_in_date, description, youtube_url } = body;
-
-    // 데이터 클렌징 및 유효성 검사
+    // 데이터 클렌징 및 유효성 검사 헬퍼 함수
     const parseToInt = (value) => (value === '' || value === undefined || value === null) ? null : Number.parseInt(value, 10);
     const parseFloat = (value) => (value === '' || value === undefined || value === null) ? null : Number.parseFloat(value);
 
-    const area = body.area;
-    const exclusive_area = body.exclusive_area;
+    // 폼 데이터 추출
+    const { category, title, price, address, approval_date, purpose, direction, direction_standard, transaction_type, maintenance_fee_details, permitted_business_types, access_road_condition, move_in_date, description, youtube_url } = body;
+
+    // 숫자 필드 안전하게 파싱
+    const area = parseFloat(body.area);
+    const exclusive_area = parseFloat(body.exclusive_area);
     const total_floors = parseToInt(body.total_floors);
     const floor = parseToInt(body.floor);
     const parking = parseToInt(body.parking);
     const maintenance_fee = parseToInt(body.maintenance_fee);
+    const ceiling_height = parseFloat(body.ceiling_height);
+    const power_supply = parseFloat(body.power_supply);
+    const hoist = parseFloat(body.hoist);
 
     const query = `INSERT INTO properties (
         category, title, price, address, area, exclusive_area, approval_date, purpose, total_floors, floor, direction, direction_standard, transaction_type, parking, maintenance_fee, maintenance_fee_details, power_supply, hoist, ceiling_height, permitted_business_types, access_road_condition, move_in_date, description, image_path, youtube_url
     ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25)
-    RETURNING id;`; // RETURNING id 추가하여 삽입된 행의 id를 반환받음
+    RETURNING id;`;
 
     const params = [
         category, title, price, address, area, exclusive_area, approval_date, purpose, total_floors, floor, direction, direction_standard, transaction_type, parking, maintenance_fee, maintenance_fee_details, power_supply, hoist, ceiling_height, permitted_business_types, access_road_condition, move_in_date, description, image_paths, youtube_url
     ];
 
     console.log('데이터베이스에 매물 정보 삽입 시도...');
-    console.log('쿼리:', query);
-    console.log('파라미터:', params);
 
     let client;
     try {
-        console.log('데이터베이스 풀에서 클라이언트 가져오는 중...');
         client = await pool.connect();
-        console.log('클라이언트 가져오기 성공.');
-
         const result = await client.query(query, params);
         console.log('DB 삽입 성공! 삽입된 매물 ID:', result.rows[0].id);
         
-        console.log('매물 목록 페이지로 리디렉션...');
         res.redirect('/listings');
     } catch (err) {
         console.error('DB 삽입 오류 발생:', err.stack);
-        // 사용자에게 좀 더 구체적인 오류 메시지를 보낼 수 있습니다.
         res.status(500).send(`매물 등록에 실패했습니다. 서버 로그를 확인해주세요. 오류: ${err.message}`);
     } finally {
         if (client) {
-            console.log('데이터베이스 클라이언트 반환.');
             client.release();
         }
         console.log('--- 매물 등록 요청 종료 ---');
@@ -981,18 +990,24 @@ router.post('/listings/edit/:id', upload.array('images', 10), async (req, res) =
     }
 
     const image_paths = imageUrls.join(',');
-    const { category, title, price, address, approval_date, purpose, direction, direction_standard, transaction_type, maintenance_fee_details, power_supply, hoist, ceiling_height, permitted_business_types, access_road_condition, move_in_date, description, youtube_url } = body;
-
-    // 데이터 클렌징 및 유효성 검사
+    
+    // 데이터 클렌징 및 유효성 검사 헬퍼 함수
     const parseToInt = (value) => (value === '' || value === undefined || value === null) ? null : Number.parseInt(value, 10);
     const parseFloat = (value) => (value === '' || value === undefined || value === null) ? null : Number.parseFloat(value);
 
-    const area = body.area;
-    const exclusive_area = body.exclusive_area;
+    // 폼 데이터 추출
+    const { category, title, price, address, approval_date, purpose, direction, direction_standard, transaction_type, maintenance_fee_details, permitted_business_types, access_road_condition, move_in_date, description, youtube_url } = body;
+
+    // 숫자 필드 안전하게 파싱
+    const area = parseFloat(body.area);
+    const exclusive_area = parseFloat(body.exclusive_area);
     const total_floors = parseToInt(body.total_floors);
     const floor = parseToInt(body.floor);
     const parking = parseToInt(body.parking);
     const maintenance_fee = parseToInt(body.maintenance_fee);
+    const ceiling_height = parseFloat(body.ceiling_height);
+    const power_supply = parseFloat(body.power_supply);
+    const hoist = parseFloat(body.hoist);
 
     const query = `UPDATE properties SET 
         category = $1, title = $2, price = $3, address = $4, area = $5, exclusive_area = $6, approval_date = $7, purpose = $8, total_floors = $9, floor = $10, direction = $11, direction_standard = $12, transaction_type = $13, parking = $14, maintenance_fee = $15, maintenance_fee_details = $16, power_supply = $17, hoist = $18, ceiling_height = $19, permitted_business_types = $20, access_road_condition = $21, move_in_date = $22, description = $23, image_path = $24, youtube_url = $25
@@ -1123,10 +1138,23 @@ router.get('/admin/inquiries', requireLogin, async (req, res) => {
     let client;
     try {
         client = await pool.connect();
-        const result = await client.query('SELECT * FROM inquiries ORDER BY created_at DESC');
+        const page = parseInt(req.query.page, 10) || 1;
+        const limit = 15; // 페이지당 15개 항목
+        const offset = (page - 1) * limit;
+
+        // 전체 문의 수 계산
+        const totalResult = await client.query('SELECT COUNT(*) FROM inquiries');
+        const totalInquiries = parseInt(totalResult.rows[0].count, 10);
+        const totalPages = Math.ceil(totalInquiries / limit);
+
+        // 현재 페이지에 해당하는 문의 목록 가져오기
+        const result = await client.query('SELECT * FROM inquiries ORDER BY created_at DESC LIMIT $1 OFFSET $2', [limit, offset]);
+        
         res.render('admin_inquiries', { 
             inquiries: result.rows,
-            menus: res.locals.menus
+            menus: res.locals.menus,
+            currentPage: page,
+            totalPages: totalPages
         });
     } catch (err) {
         console.error('DB 조회 오류:', err.stack);
@@ -1307,7 +1335,18 @@ router.post('/board/:slug/write', requireLogin, upload.array('attachments', 10),
                 attachment_paths.push(urlData.publicUrl);
             }
 
-            if (board.board_type === 'gallery') {
+            if (board.board_type === 'archive') {
+                const file = req.files[0];
+                const publicUrl = attachment_paths[0];
+                const originalname_utf8 = Buffer.from(file.originalname, 'latin1').toString('utf8');
+                const fileMetadata = {
+                    url: publicUrl,
+                    name: originalname_utf8,
+                    size: file.size,
+                    type: file.mimetype
+                };
+                attachment_path_to_db = JSON.stringify(fileMetadata);
+            } else if (board.board_type === 'gallery') {
                 attachment_path_to_db = JSON.stringify(attachment_paths);
             } else {
                 attachment_path_to_db = attachment_paths[0];
@@ -1436,7 +1475,18 @@ router.post('/board/:slug/:postId/edit', requireLogin, upload.array('attachments
                 new_attachment_paths.push(urlData.publicUrl);
             }
 
-            if (board.board_type === 'gallery') {
+            if (board.board_type === 'archive') {
+                const file = req.files[0];
+                const publicUrl = new_attachment_paths[0];
+                const originalname_utf8 = Buffer.from(file.originalname, 'latin1').toString('utf8');
+                const fileMetadata = {
+                    url: publicUrl,
+                    name: originalname_utf8,
+                    size: file.size,
+                    type: file.mimetype
+                };
+                attachment_path_to_db = JSON.stringify(fileMetadata);
+            } else if (board.board_type === 'gallery') {
                 const existing_attachments = JSON.parse(attachment_path_to_db || '[]');
                 attachment_path_to_db = JSON.stringify([...existing_attachments, ...new_attachment_paths]);
             } else {
@@ -1494,6 +1544,57 @@ router.post('/board/:slug/:postId/delete', requireLogin, async (req, res) => {
     } catch (err) {
         console.error('DB 삭제 오류:', err);
         res.status(500).send('글 삭제에 실패했습니다.');
+    } finally {
+        if (client) client.release();
+    }
+});
+
+// 자료실 파일 다운로드 라우트 (서버 경유)
+router.get('/download/:postId', async (req, res) => {
+    const { postId } = req.params;
+    let client;
+    let fileMeta = null; // catch 블록에서 접근 가능하도록 스코프 상향
+    try {
+        client = await pool.connect();
+        const result = await client.query('SELECT attachment_path FROM posts WHERE id = $1', [postId]);
+        if (result.rows.length === 0 || !result.rows[0].attachment_path) {
+            return res.status(404).send('첨부파일을 찾을 수 없습니다.');
+        }
+
+        const attachmentPath = result.rows[0].attachment_path;
+        try {
+            fileMeta = JSON.parse(attachmentPath);
+        } catch (e) {
+            // JSON 파싱 실패 시, 일반 URL로 간주 (하위 호환성)
+            return res.redirect(attachmentPath);
+        }
+
+        if (fileMeta && fileMeta.url && fileMeta.name && fileMeta.type && fileMeta.size) {
+            const response = await axios.get(fileMeta.url, { responseType: 'arraybuffer' });
+            const encodedName = encodeURIComponent(fileMeta.name);
+
+            res.setHeader('Content-Disposition', `attachment; filename*="UTF-8''${encodedName}"`);
+            res.setHeader('Content-Type', fileMeta.type);
+            res.setHeader('Content-Length', fileMeta.size);
+            
+            res.send(response.data);
+        } else {
+            res.status(404).send('유효한 첨부파일 정보가 없습니다.');
+        }
+
+    } catch (err) {
+        console.error('파일 다운로드 오류:', {
+            message: err.message,
+            url: fileMeta ? fileMeta.url : 'N/A',
+            stack: err.stack
+        });
+        const errorDetails = `
+            <p>파일을 다운로드하는 중 오류가 발생했습니다.</p>
+            <p><strong>오류 메시지:</strong> ${err.message}</p>
+            ${fileMeta ? `<p><strong>시도한 URL:</strong> ${fileMeta.url}</p>` : ''}
+            <p>관리자에게 문의해주세요.</p>
+        `;
+        res.status(500).send(errorDetails);
     } finally {
         if (client) client.release();
     }
@@ -1557,65 +1658,6 @@ router.get('/property/:id', async (req, res) => {
     }
 });
 
-// 전체 매물 보기 페이지
-router.get('/properties', async (req, res) => {
-    let client;
-    try {
-        client = await pool.connect();
-        const page = parseInt(req.query.page, 10) || 1;
-        const limit = 9; // 한 페이지에 9개씩 표시
-        const offset = (page - 1) * limit;
-        const category = req.query.category || '';
-        const searchQuery = req.query.search || '';
-
-        let whereClauses = [];
-        const params = [];
-
-        if (category) {
-            params.push(category);
-            whereClauses.push(`category = ${params.length}`);
-        }
-        if (searchQuery) {
-            params.push(`%${searchQuery}%`);
-            whereClauses.push(`(title ILIKE ${params.length} OR address ILIKE ${params.length})`);
-        }
-
-        const whereCondition = whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')}` : '';
-
-        // 매물 수 계산
-        const countQuery = `SELECT COUNT(*) FROM properties ${whereCondition}`;
-        const countResult = await client.query(countQuery, params);
-        const totalCount = parseInt(countResult.rows[0].count, 10);
-        const totalPages = Math.ceil(totalCount / limit);
-
-        // 매물 목록 조회
-        const propertiesQuery = `SELECT * FROM properties ${whereCondition} ORDER BY created_at DESC LIMIT ${params.length + 1} OFFSET ${params.length + 2}`;
-        const propertiesResult = await client.query(propertiesQuery, [...params, limit, offset]);
-        const properties = propertiesResult.rows;
-
-        // 주소 축약 로직 추가
-        properties.forEach(p => {
-            if (p.address) {
-                p.short_address = p.address.split(' ').slice(0, 3).join(' ');
-            }
-        });
-
-        res.render('properties', {
-            content: res.locals.settings,
-            properties,
-            currentPage: page,
-            totalPages,
-            currentCategory: category,
-            searchQuery
-        });
-
-    } catch (err) {
-        console.error('전체 매물 조회 오류:', err.stack);
-        res.status(500).send('매물 정보를 가져오는 데 실패했습니다.');
-    } finally {
-        if (client) client.release();
-    }
-});
 
 
 // API: 특정 매물 정보 가져오기

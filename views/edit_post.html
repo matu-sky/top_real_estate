@@ -98,6 +98,29 @@
                             <% } %>
                         <% } %>
 
+                        <%# 자료실 게시판일 경우 %>
+                        <% if (board.board_type === 'archive') { %>
+                            <div class="form-group">
+                                <label for="attachments">새 파일 첨부 (기존 파일을 대체합니다)</label>
+                                <input type="file" id="attachments" name="attachments" class="form-control">
+                            </div>
+                            <% 
+                                let fileMeta = null;
+                                if (post.attachment_path) {
+                                    try {
+                                        fileMeta = JSON.parse(post.attachment_path);
+                                    } catch (e) {
+                                        fileMeta = null; 
+                                    }
+                                }
+                            %>
+                            <% if (fileMeta && fileMeta.url) { %>
+                                <div class="current-attachment mt-2">
+                                    <p><strong>현재 파일:</strong> <a href="<%= fileMeta.url %>" target="_blank"><%= fileMeta.name %></a> (<%= (fileMeta.size / 1024 / 1024).toFixed(2) %> MB)</p>
+                                </div>
+                            <% } %>
+                        <% } %>
+
                         <%# 일반 게시판일 경우 (단일 파일 업로드) %>
                         <% if (board.board_type === 'general') { %>
                             <div class="form-group">

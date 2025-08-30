@@ -64,7 +64,112 @@
             </div>
 
             <div class="post-list">
-            <% posts.forEach(post => { %>
+            <% if (board.board_type === 'archive') { %>
+                <%
+                    const formatBytes = (bytes, decimals = 2) => {
+                        if (!bytes || bytes === 0) return '0 Bytes';
+                        const k = 1024;
+                        const dm = decimals < 0 ? 0 : decimals;
+                        const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+                        const i = Math.floor(Math.log(bytes) / Math.log(k));
+                        return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+                    }
+
+                    const getFileIcon = (fileName) => {
+                        if (!fileName) return 'fa-file-o';
+                        const ext = fileName.split('.').pop().toLowerCase();
+                        switch (ext) {
+                            case 'hwp': return 'hwp_icon';
+                            case 'pdf': return 'fa-file-pdf-o';
+                            case 'doc':
+                            case 'docx': return 'fa-file-word-o';
+                            case 'xls':
+                            case 'xlsx': return 'fa-file-excel-o';
+                            case 'ppt':
+                            case 'pptx': return 'fa-file-powerpoint-o';
+                            case 'zip':
+                            case 'rar':
+                            case '7z': return 'fa-file-archive-o';
+                            case 'jpg':
+                            case 'jpeg':
+                            case 'png':
+                            case 'gif':
+                            case 'bmp': return 'fa-file-image-o';
+                            case 'mp4':
+                            case 'mov':
+                            case 'avi':
+                            case 'wmv': return 'fa-file-video-o';
+                            case 'txt': return 'fa-file-text-o';
+                            default: return 'fa-file-o';
+                        }
+                    }
+                %>
+                <link rel="stylesheet" href="/css/archive_board.css">
+                <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+
+                <h2 class="archive-header">다운로드 자료실</h2>
+
+                <table class="archive-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 5%;">#</th>
+                            <th style="width: 50%; text-align: left;">제목</th>
+                            <th style="width: 15%; text-align: center;">파일크기</th>
+                            <th style="width: 15%; text-align: center;">작성일</th>
+                            <% if (user && user.loggedin) { %>
+                                <th style="width: 15%; text-align: center;">관리</th>
+                            <% } %>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% posts.forEach((post, index) => { %>
+                            <%
+                                let fileMeta = null;
+                                if (post.attachment_path) {
+                                    try { fileMeta = JSON.parse(post.attachment_path); } catch (e) { fileMeta = null; }
+                                }
+                            %>
+                            <tr>
+                                <td style="text-align: center;"><%= posts.length - index %></td>
+                                <td class="post-title">
+                                    <% if (fileMeta && fileMeta.url) { %>
+                                        <a href="/download/<%= post.id %>" title="<%= fileMeta.name %>">
+                                            <% const iconClass = getFileIcon(fileMeta.name); %>
+                                            <% if (iconClass === 'hwp_icon') { %>
+                                                <img src="/images/hwp-icon.svg" class="file-icon" style="height: 1.4em; width: 1.4em; vertical-align: middle; margin-right: 8px;">
+                                            <% } else { %>
+                                                <i class="fa <%= iconClass %> file-icon"></i>
+                                            <% } %>
+                                            <%= post.title %>
+                                        </a>
+                                    <% } else { %>
+                                        <a href="/board/<%= board.slug %>/<%= post.id %>">
+                                            <i class="fa fa-file-o file-icon"></i>
+                                            <%= post.title %>
+                                        </a>
+                                    <% } %>
+                                </td>
+                                <td class="file-size" style="text-align: center;"><%= fileMeta ? formatBytes(fileMeta.size) : '-' %></td>
+                                <td class="post-date" style="text-align: center;"><%= new Date(post.created_at).toLocaleDateString('ko-KR') %></td>
+                                <% if (user && user.loggedin) { %>
+                                    <td style="text-align: center;">
+                                        <a href="/board/<%= board.slug %>/<%= post.id %>/edit" class="btn btn-sm-secondary" style="margin-right: 5px;">수정</a>
+                                        <form action="/board/<%= board.slug %>/<%= post.id %>/delete" method="POST" style="display: inline-block;">
+                                            <button type="submit" class="btn btn-sm-danger" onclick="return confirm('정말로 이 글을 삭제하시겠습니까?');">삭제</button>
+                                        </form>
+                                    </td>
+                                <% } %>
+                            </tr>
+                        <% }); %>
+                        <% if (posts.length === 0) { %>
+                            <tr>
+                                <td colspan="<%= (user && user.loggedin) ? 5 : 4 %>" style="text-align: center; padding: 20px;">아직 등록된 글이 없습니다.</td>
+                            </tr>
+                        <% } %>
+                    </tbody>
+                </table>
+            <% } else { %>
+                <% posts.forEach(post => { %>
                 <%
                     let thumbnailUrl = post.thumbnail_url; // 1. DB에 저장된 썸네일 우선 사용
                     let isDirectVideo = false;
@@ -132,7 +237,8 @@
                     <p>아직 등록된 글이 없습니다. 첫 번째 글을 작성해보세요!</p>
                 </div>
             <% } %>
-        </div>
+            <% } %>
+            </div>
     </main>
 
     <%- include('partials/footer.html') %>

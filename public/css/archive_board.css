@@ -1,0 +1,88 @@
+/* 다운로드 자료실 전용 스타일 */
+
+.archive-header {
+    font-size: 2rem;
+    font-weight: 600;
+    color: #2c3e50;
+    padding-bottom: 10px;
+    border-bottom: 3px solid #3498db;
+    margin-bottom: 2rem;
+    text-align: left;
+}
+
+.archive-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.95rem;
+}
+
+.archive-table thead th {
+    background-color: #f8f9fa;
+    color: #495057;
+    font-weight: 600;
+    padding: 15px;
+    text-align: center;
+    border-bottom: 2px solid #dee2e6;
+}
+
+.archive-table tbody td {
+    padding: 15px;
+    vertical-align: middle;
+    border-bottom: 1px solid #ecf0f1;
+    color: #34495e;
+}
+
+.archive-table tbody tr:hover {
+    background-color: #f9f9f9;
+}
+
+.archive-table .post-title {
+    text-align: left;
+    font-weight: 500;
+}
+
+.archive-table .post-title a {
+    color: #2c3e50;
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.archive-table .post-title a:hover {
+    color: #3498db;
+}
+
+.archive-table .file-info a {
+    color: #3498db;
+    text-decoration: none;
+}
+.archive-table .file-info a:hover {
+    text-decoration: underline;
+}
+
+.archive-table .file-icon {
+    font-size: 1.5em;
+    margin-right: 10px;
+    color: #95a5a6;
+    width: 25px; /* 아이콘 너비 고정 */
+    display: inline-block;
+    text-align: center;
+}
+
+.archive-table .file-icon.fa-file-pdf-o { color: #e74c3c; }
+.archive-table .file-icon.fa-file-word-o,
+.archive-table .file-icon.fa-file-text-o { color: #2980b9; }
+.archive-table .file-icon.fa-file-excel-o { color: #27ae60; }
+.archive-table .file-icon.fa-file-powerpoint-o { color: #d35400; }
+.archive-table .file-icon.fa-file-archive-o { color: #f39c12; }
+.archive-table .file-icon.fa-file-image-o { color: #8e44ad; }
+.archive-table .file-icon.fa-file-video-o { color: #c0392b; }
+
+.archive-table .file-size {
+    color: #7f8c8d;
+    font-size: 0.9em;
+}
+
+.archive-table .post-date {
+    color: #7f8c8d;
+    font-size: 0.9em;
+}

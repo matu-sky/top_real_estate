@@ -255,12 +255,22 @@
                     modalForm.action = `/listings/edit/${property.id}`;
                     modalForm.reset();
 
-                    // 카테고리에 따라 전용 필드 표시/숨기기
+                    // 카테고리에 따라 전용 필드 표시/숨기기 및 활성화/비활성화
                     const factoryFields = modalForm.querySelectorAll('.factory-field');
                     if (property.category === '공장/지산') {
-                        factoryFields.forEach(field => field.style.display = 'block');
+                        factoryFields.forEach(field => {
+                            field.style.display = 'block';
+                            // input, select 등 하위 폼 컨트롤을 찾아 활성화
+                            const control = field.querySelector('input, select, textarea');
+                            if (control) control.disabled = false;
+                        });
                     } else {
-                        factoryFields.forEach(field => field.style.display = 'none');
+                        factoryFields.forEach(field => {
+                            field.style.display = 'none';
+                            // input, select 등 하위 폼 컨트롤을 찾아 비활성화
+                            const control = field.querySelector('input, select, textarea');
+                            if (control) control.disabled = true;
+                        });
                     }
 
                     for (const key in property) {
