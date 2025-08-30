@@ -1552,6 +1552,7 @@ router.post('/board/:slug/:postId/delete', requireLogin, async (req, res) => {
 router.get('/download/:postId', async (req, res) => {
     const { postId } = req.params;
     let client;
+    let fileMeta = null; // catch 블록에서 접근 가능하도록 스코프 상향
     try {
         client = await pool.connect();
         const result = await client.query('SELECT attachment_path FROM posts WHERE id = $1', [postId]);
@@ -1560,7 +1561,6 @@ router.get('/download/:postId', async (req, res) => {
         }
 
         const attachmentPath = result.rows[0].attachment_path;
-        let fileMeta = null;
         try {
             fileMeta = JSON.parse(attachmentPath);
         } catch (e) {
@@ -1582,8 +1582,18 @@ router.get('/download/:postId', async (req, res) => {
         }
 
     } catch (err) {
-        console.error('파일 다운로드 오류:', err);
-        res.status(500).send('파일을 다운로드하는 중 오류가 발생했습니다.');
+        console.error('파일 다운로드 오류:', {
+            message: err.message,
+            url: fileMeta ? fileMeta.url : 'N/A',
+            stack: err.stack
+        });
+        const errorDetails = `
+            <p>파일을 다운로드하는 중 오류가 발생했습니다.</p>
+            <p><strong>오류 메시지:</strong> ${err.message}</p>
+            ${fileMeta ? `<p><strong>시도한 URL:</strong> ${fileMeta.url}</p>` : ''}
+            <p>관리자에게 문의해주세요.</p>
+        `;
+        res.status(500).send(errorDetails);
     } finally {
         if (client) client.release();
     }
