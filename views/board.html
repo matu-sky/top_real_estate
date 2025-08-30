@@ -79,10 +79,10 @@
                         if (!fileName) return 'fa-file-o';
                         const ext = fileName.split('.').pop().toLowerCase();
                         switch (ext) {
+                            case 'hwp': return 'hwp_icon';
                             case 'pdf': return 'fa-file-pdf-o';
                             case 'doc':
                             case 'docx': return 'fa-file-word-o';
-                            case 'hwp': return 'fa-file-word-o'; // Added HWP
                             case 'xls':
                             case 'xlsx': return 'fa-file-excel-o';
                             case 'ppt':
@@ -94,11 +94,11 @@
                             case 'jpeg':
                             case 'png':
                             case 'gif':
-                            case 'bmp': return 'fa-file-image-o'; // Added bmp
+                            case 'bmp': return 'fa-file-image-o';
                             case 'mp4':
                             case 'mov':
                             case 'avi':
-                            case 'wmv': return 'fa-file-video-o'; // Added wmv
+                            case 'wmv': return 'fa-file-video-o';
                             case 'txt': return 'fa-file-text-o';
                             default: return 'fa-file-o';
                         }
@@ -134,7 +134,12 @@
                                 <td class="post-title">
                                     <% if (fileMeta && fileMeta.url) { %>
                                         <a href="/download/<%= post.id %>" title="<%= fileMeta.name %>">
-                                            <i class="fa <%= getFileIcon(fileMeta.name) %> file-icon"></i>
+                                            <% const iconClass = getFileIcon(fileMeta.name); %>
+                                            <% if (iconClass === 'hwp_icon') { %>
+                                                <img src="/images/hwp-icon.svg" class="file-icon" style="height: 1.4em; width: 1.4em; vertical-align: middle; margin-right: 8px;">
+                                            <% } else { %>
+                                                <i class="fa <%= iconClass %> file-icon"></i>
+                                            <% } %>
                                             <%= post.title %>
                                         </a>
                                     <% } else { %>
