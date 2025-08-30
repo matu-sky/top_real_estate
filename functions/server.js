@@ -1554,11 +1554,10 @@ router.post('/board/:slug/:postId/delete', requireLogin, async (req, res) => {
     }
 });
 
-// 자료실 파일 다운로드 라우트 (서버 경유)
+// 자료실 파일 다운로드 라우트 (v2: 리디렉션 방식)
 router.get('/download/:postId', async (req, res) => {
     const { postId } = req.params;
     let client;
-    let fileMeta = null;
     try {
         client = await pool.connect();
         const result = await client.query('SELECT attachment_path FROM posts WHERE id = $1', [postId]);
@@ -1567,6 +1566,7 @@ router.get('/download/:postId', async (req, res) => {
         }
 
         const attachmentPath = result.rows[0].attachment_path;
+        let fileMeta = null;
         try {
             fileMeta = JSON.parse(attachmentPath);
         } catch (e) {
@@ -1580,50 +1580,35 @@ router.get('/download/:postId', async (req, res) => {
         if (fileMeta.path) {
             const { data, error } = await supabase.storage
                 .from('attachments')
-                .createSignedUrl(fileMeta.path, 60); // 60초 동안 유효한 링크
+                .createSignedUrl(fileMeta.path, 60, { // 60초 동안 유효한 링크
+                    download: fileMeta.name // 원본 파일 이름으로 다운로드되도록 설정
+                });
 
             if (error) {
-                throw new Error('Supabase에서 서명된 URL을 생성하지 못했습니다.');
+                throw new Error(`Supabase에서 서명된 URL을 생성하지 못했습니다: ${error.message}`);
             }
             downloadUrl = data.signedUrl;
         } 
         // 하위 호환성: url 속성이 있으면 예전 파일로 간주
         else if (fileMeta.url) {
             downloadUrl = fileMeta.url;
-        } 
+        }
         // 둘 다 없으면 유효하지 않은 데이터
         else {
             return res.status(404).send('유효한 첨부파일 정보가 없습니다.');
         }
 
         if (downloadUrl) {
-            const response = await axios.get(downloadUrl, { responseType: 'arraybuffer' });
-            const encodedName = encodeURIComponent(fileMeta.name);
-
-            res.setHeader('Content-Disposition', `attachment; filename*="UTF-8''${encodedName}"`);
-            res.setHeader('Content-Type', fileMeta.type);
-            res.setHeader('Content-Length', fileMeta.size);
-            
-            res.send(response.data);
+            res.redirect(downloadUrl);
         } else {
-            // 이 경우는 거의 발생하지 않지만 안전장치로 추가
             res.status(404).send('다운로드 URL을 생성할 수 없습니다.');
         }
 
     } catch (err) {
-        console.error('파일 다운로드 오류:', {
-            message: err.message,
-            url: fileMeta ? (fileMeta.path || fileMeta.url) : 'N/A',
-            stack: err.stack
-        });
-        const errorDetails = `
-            <p>파일을 다운로드하는 중 오류가 발생했습니다.</p>
-            <p><strong>오류 메시지:</strong> ${err.message}</p>
-            ${fileMeta ? `<p><strong>시도한 파일:</strong> ${fileMeta.name}</p>` : ''}
-            <p>관리자에게 문의해주세요.</p>
-        `;
-        res.status(500).send(errorDetails);
-    } finally {
+        console.error('파일 다운로드 오류:', err);
+        res.status(500).send(`파일 다운로드 중 오류가 발생했습니다: ${err.message}`);
+    }
+    finally {
         if (client) client.release();
     }
 });
