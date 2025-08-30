@@ -74,25 +74,47 @@
                         const i = Math.floor(Math.log(bytes) / Math.log(k));
                         return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
                     }
+
+                    const getFileIcon = (fileName) => {
+                        if (!fileName) return 'fa-file-o';
+                        const ext = fileName.split('.').pop().toLowerCase();
+                        switch (ext) {
+                            case 'pdf': return 'fa-file-pdf-o';
+                            case 'doc':
+                            case 'docx': return 'fa-file-word-o';
+                            case 'xls':
+                            case 'xlsx': return 'fa-file-excel-o';
+                            case 'ppt':
+                            case 'pptx': return 'fa-file-powerpoint-o';
+                            case 'zip':
+                            case 'rar':
+                            case '7z': return 'fa-file-archive-o';
+                            case 'jpg':
+                            case 'jpeg':
+                            case 'png':
+                            case 'gif': return 'fa-file-image-o';
+                            case 'mp4':
+                            case 'mov':
+                            case 'avi': return 'fa-file-video-o';
+                            case 'txt': return 'fa-file-text-o';
+                            default: return 'fa-file-o';
+                        }
+                    }
                 %>
-                <style>
-                    .table th, .table td { vertical-align: middle; text-align: center; }
-                    .table .post-title { text-align: left; }
-                    .table .post-title a { font-weight: bold; color: #333; }
-                    .table .file-icon { font-size: 1.2em; margin-right: 8px; }
-                    .table .btn-sm-danger, .table .btn-sm-secondary { padding: 5px 10px; font-size: 12px; }
-                </style>
+                <link rel="stylesheet" href="/css/archive_board.css">
                 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-                <table class="table table-hover">
-                    <thead style="background-color: #f8f9fa;">
+
+                <h2 class="archive-header">다운로드 자료실</h2>
+
+                <table class="archive-table">
+                    <thead>
                         <tr>
                             <th style="width: 5%;">#</th>
-                            <th style="width: 45%; text-align: left;">제목</th>
-                            <th style="width: 20%;">첨부파일</th>
-                            <th style="width: 10%;">파일크기</th>
-                            <th style="width: 10%;">작성일</th>
+                            <th style="width: 50%; text-align: left;">제목</th>
+                            <th style="width: 15%; text-align: center;">파일크기</th>
+                            <th style="width: 15%; text-align: center;">작성일</th>
                             <% if (user && user.loggedin) { %>
-                                <th style="width: 10%;">관리</th>
+                                <th style="width: 15%; text-align: center;">관리</th>
                             <% } %>
                         </tr>
                     </thead>
@@ -105,17 +127,24 @@
                                 }
                             %>
                             <tr>
-                                <td><%= posts.length - index %></td>
-                                <td class="post-title"><a href="/board/<%= board.slug %>/<%= post.id %>"><%= post.title %></a></td>
-                                <% if (fileMeta && fileMeta.url) { %>
-                                    <td><i class="fa fa-file-o file-icon"></i> <a href="/download/<%= post.id %>" title="<%= fileMeta.name %>"><%= fileMeta.name.length > 20 ? fileMeta.name.substring(0, 17) + '...' : fileMeta.name %></a></td>
-                                    <td><%= formatBytes(fileMeta.size) %></td>
-                                <% } else { %>
-                                    <td colspan="2" style="color: #999;">첨부파일 없음</td>
-                                <% } %>
-                                <td><%= new Date(post.created_at).toLocaleDateString('ko-KR') %></td>
+                                <td style="text-align: center;"><%= posts.length - index %></td>
+                                <td class="post-title">
+                                    <% if (fileMeta && fileMeta.url) { %>
+                                        <a href="/download/<%= post.id %>" title="<%= fileMeta.name %>">
+                                            <i class="fa <%= getFileIcon(fileMeta.name) %> file-icon"></i>
+                                            <%= post.title %>
+                                        </a>
+                                    <% } else { %>
+                                        <a href="/board/<%= board.slug %>/<%= post.id %>">
+                                            <i class="fa fa-file-o file-icon"></i>
+                                            <%= post.title %>
+                                        </a>
+                                    <% } %>
+                                </td>
+                                <td class="file-size" style="text-align: center;"><%= fileMeta ? formatBytes(fileMeta.size) : '-' %></td>
+                                <td class="post-date" style="text-align: center;"><%= new Date(post.created_at).toLocaleDateString('ko-KR') %></td>
                                 <% if (user && user.loggedin) { %>
-                                    <td>
+                                    <td style="text-align: center;">
                                         <a href="/board/<%= board.slug %>/<%= post.id %>/edit" class="btn btn-sm-secondary" style="margin-right: 5px;">수정</a>
                                         <form action="/board/<%= board.slug %>/<%= post.id %>/delete" method="POST" style="display: inline-block;">
                                             <button type="submit" class="btn btn-sm-danger" onclick="return confirm('정말로 이 글을 삭제하시겠습니까?');">삭제</button>
@@ -126,7 +155,7 @@
                         <% }); %>
                         <% if (posts.length === 0) { %>
                             <tr>
-                                <td colspan="<%= (user && user.loggedin) ? 6 : 5 %>" style="text-align: center; padding: 20px;">아직 등록된 글이 없습니다.</td>
+                                <td colspan="<%= (user && user.loggedin) ? 5 : 4 %>" style="text-align: center; padding: 20px;">아직 등록된 글이 없습니다.</td>
                             </tr>
                         <% } %>
                     </tbody>
