@@ -15,6 +15,7 @@ const querystring = require('querystring');
 const bcrypt = require('bcrypt');
 const fs = require('fs');
 const util = require('util');
+const axios = require('axios');
 const readdir = util.promisify(fs.readdir);
 const { getYouTubeVideoId, getYouTubeThumbnailUrl } = require('./utils.js');
 const { generateSitemap } = require('./sitemapGenerator.js');
