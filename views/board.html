@@ -132,7 +132,10 @@
                             <tr>
                                 <td style="text-align: center;"><%= posts.length - index %></td>
                                 <td class="post-title">
-                                    <% if (fileMeta && fileMeta.url) { %>
+                                    <% 
+                                        const isDownloadable = fileMeta && (fileMeta.url || fileMeta.path);
+                                    %>
+                                    <% if (isDownloadable) { %>
                                         <a href="/download/<%= post.id %>" title="<%= fileMeta.name %>">
                                             <% const iconClass = getFileIcon(fileMeta.name); %>
                                             <% if (iconClass === 'hwp_icon') { %>
