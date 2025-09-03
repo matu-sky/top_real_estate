@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://top-real-estate-netlify.netlify.app/sitemap.xml
+Sitemap: https://xn--6e0bp5jvrfa137b6tfzy4b.com/sitemap.xml
