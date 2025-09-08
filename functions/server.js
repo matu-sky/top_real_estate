@@ -333,26 +333,74 @@ router.get('/admin', (req, res) => {
 });
 
 // 홈페이지 관리 정보 업데이트 (DB 사용)
-router.post('/admin/update', requireLogin, async (req, res) => {
-    let body = {};
-    if (req.body instanceof Buffer) {
-        body = querystring.parse(req.body.toString());
-    } else {
-        body = req.body;
-    }
+const siteImageUpload = upload.fields([
+    { name: 'hero_bg_image', maxCount: 1 },
+    { name: 'lifestyle_card1_img', maxCount: 1 },
+    { name: 'lifestyle_card2_img', maxCount: 1 },
+    { name: 'lifestyle_card3_img', maxCount: 1 },
+    { name: 'consulting_bg1_image', maxCount: 1 },
+    { name: 'consulting_bg2_image', maxCount: 1 },
+]);
+
+router.post('/admin/update', requireLogin, siteImageUpload, async (req, res) => {
+    let body = req.body;
+
+    // Helper function to upload and optimize a single site asset
+    const uploadAsset = async (file, resizeOptions) => {
+        console.log(`[Site Asset] Optimizing and uploading: ${file.originalname}`)
+        const newFileName = `${path.parse(file.originalname).name}_${Date.now()}.webp`;
+
+        const optimizedBuffer = await sharp(file.buffer)
+            .resize(resizeOptions)
+            .webp({ quality: 80 })
+            .toBuffer();
+        
+        const { error } = await supabase.storage
+            .from('site-assets') // Use a separate bucket for site assets
+            .upload(newFileName, optimizedBuffer, { 
+                contentType: 'image/webp',
+                upsert: true 
+            });
+
+        if (error) {
+            throw new Error(`Failed to upload ${file.fieldname}: ${error.message}`);
+        }
+
+        const { data: { publicUrl } } = supabase.storage
+            .from('site-assets')
+            .getPublicUrl(newFileName);
+        
+        return publicUrl;
+    };
 
     let client;
     try {
         client = await pool.connect();
         await client.query('BEGIN'); // 트랜잭션 시작
 
+        // Process file uploads if they exist
+        if (req.files) {
+            for (const field in req.files) {
+                const file = req.files[field][0];
+                if (file) {
+                    let resizeOptions = { width: 1920, withoutEnlargement: true }; // Default for backgrounds
+                    if (field.startsWith('lifestyle')) {
+                        resizeOptions = { width: 800, withoutEnlargement: true }; // Smaller for cards
+                    }
+                    const newUrl = await uploadAsset(file, resizeOptions);
+                    body[field] = newUrl; // Add the new image URL to the body to be saved
+                }
+            }
+        }
+
         for (const key in body) {
-            // settings 객체에 실제로 있는 키인지 확인하여 아무 값이나 저장되는 것을 방지
-            if (Object.prototype.hasOwnProperty.call(res.locals.settings, key)) {
+            if (Object.prototype.hasOwnProperty.call(res.locals.settings, key) || key.endsWith('_img') || key.endsWith('_image')) {
                 const valueToStore = body[key];
+                // Upsert logic: Insert if not exists, update if it does.
                 await client.query(
-                    'UPDATE site_settings SET value = $1 WHERE key = $2',
-                    [valueToStore, key]
+                    `INSERT INTO site_settings (key, value) VALUES ($1, $2) 
+                     ON CONFLICT (key) DO UPDATE SET value = $2`,
+                    [key, valueToStore]
                 );
             }
         }
