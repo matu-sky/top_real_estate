@@ -197,9 +197,35 @@ router.get('/', async (req, res) => {
     let client;
     try {
         client = await pool.connect();
-        const residentialResult = await client.query("SELECT * FROM properties WHERE category = '주거용' ORDER BY created_at DESC LIMIT 1");
-        const commercialResult = await client.query("SELECT * FROM properties WHERE category = '상업용' ORDER BY created_at DESC LIMIT 1");
-        const industrialResult = await client.query("SELECT * FROM properties WHERE category = '공장/지산' ORDER BY created_at DESC LIMIT 1");
+
+        // 5개의 쿼리를 동시에 실행
+        const [
+            residentialResult,
+            commercialResult,
+            industrialResult,
+            youtubePostResult,
+            recentPostsResult
+        ] = await Promise.all([
+            client.query("SELECT * FROM properties WHERE category = '주거용' ORDER BY created_at DESC LIMIT 1"),
+            client.query("SELECT * FROM properties WHERE category = '상업용' ORDER BY created_at DESC LIMIT 1"),
+            client.query("SELECT * FROM properties WHERE category = '공장/지산' ORDER BY created_at DESC LIMIT 1"),
+            client.query(`
+                SELECT p.id, p.title, p.thumbnail_url, b.slug as board_slug
+                FROM posts p
+                JOIN boards b ON p.board_id = b.id
+                WHERE b.slug = 'utube'
+                ORDER BY p.created_at DESC
+                LIMIT 1;
+            `),
+            client.query(`
+                SELECT p.id, p.title, p.created_at, b.slug as board_slug, b.name as board_name
+                FROM posts p
+                JOIN boards b ON p.board_id = b.id
+                WHERE b.slug IN ('notice', 'rearinfo')
+                ORDER BY p.created_at DESC
+                LIMIT 5;
+            `)
+        ]);
 
         const properties = [];
         const categories = ['주거용', '상업용', '공장/지산'];
@@ -225,39 +251,22 @@ router.get('/', async (req, res) => {
             }
         }
 
-        const youtubePostResult = await client.query(`
-            SELECT p.id, p.title, p.thumbnail_url, b.slug as board_slug
-            FROM posts p
-            JOIN boards b ON p.board_id = b.id
-            WHERE b.slug = 'utube'
-            ORDER BY p.created_at DESC
-            LIMIT 1;
-        `);
         const youtubePost = youtubePostResult.rows[0];
-
-        const recentPostsResult = await client.query(`
-            SELECT p.id, p.title, p.created_at, b.slug as board_slug, b.name as board_name
-            FROM posts p
-            JOIN boards b ON p.board_id = b.id
-            WHERE b.slug IN ('notice', 'rearinfo')
-            ORDER BY p.created_at DESC
-            LIMIT 5;
-        `);
         const recentPosts = recentPostsResult.rows;
 
-        res.render('index', { 
-            content: res.locals.settings, 
-            properties, 
-            youtubePost, 
-            recentPosts 
+        res.render('index', {
+            content: res.locals.settings,
+            properties,
+            youtubePost,
+            recentPosts
         });
     } catch (err) {
         console.error('DB 조회 오류:', err.stack);
-        res.render('index', { 
-            content: res.locals.settings, 
-            properties: [], 
-            youtubePost: null, 
-            recentPosts: [] 
+        res.render('index', {
+            content: res.locals.settings,
+            properties: [],
+            youtubePost: null,
+            recentPosts: []
         });
     } finally {
         if (client) client.release();

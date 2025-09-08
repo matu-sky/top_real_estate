@@ -17,7 +17,7 @@ const generateSitemap = async () => {
     const client = await pool.connect();
     try {
         const links = [];
-        const baseUrl = 'https://top-real-estate-netlify.netlify.app'; // 실제 도메인으로 변경 필요
+        const baseUrl = 'https://top2025.netlify.app'; // 실제 도메인으로 변경 필요
 
         // 1. 고정 페이지
         links.push({ url: '/', changefreq: 'daily', priority: 1.0 });
