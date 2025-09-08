@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -16,7 +17,7 @@
                 <button type="submit" form="homepage-content-form" class="btn save">전체 변경사항 저장</button>
             </header>
 
-            <form id="homepage-content-form" action="/admin/update" method="POST">
+            <form id="homepage-content-form" action="/admin/update" method="POST" enctype="multipart/form-data">
 
                 <!-- 사이트맵 생성 -->
                 <div class="card">
@@ -35,7 +36,6 @@
                             <label for="header_logo_text">로고 텍스트</label>
                             <input type="text" id="header_logo_text" name="header_logo_text" value="<%= content.header_logo_text %>">
                         </div>
-                        <!-- 네비게이션 링크는 메뉴 관리에서 처리 -->
                     </div>
                 </div>
 
@@ -50,6 +50,13 @@
                         <div class="form-group">
                             <label for="hero_subtitle">서브 문구</label>
                             <input type="text" id="hero_subtitle" name="hero_subtitle" value="<%= content.hero_subtitle %>">
+                        </div>
+                        <div class="form-group">
+                            <label for="hero_bg_image">배경 이미지</label>
+                            <input type="file" id="hero_bg_image" name="hero_bg_image">
+                            <% if (content.hero_bg_image) { %>
+                                <p class="current-image">현재 이미지: <a href="<%= content.hero_bg_image %>" target="_blank"><%= content.hero_bg_image.split('/').pop() %></a></p>
+                            <% } %>
                         </div>
                     </div>
                 </div>
@@ -76,6 +83,13 @@
                             <label for="lifestyle_card1_desc">카드1 설명</label>
                             <input type="text" id="lifestyle_card1_desc" name="lifestyle_card1_desc" value="<%= content.lifestyle_card1_desc %>">
                         </div>
+                        <div class="form-group">
+                            <label for="lifestyle_card1_img">카드1 이미지</label>
+                            <input type="file" id="lifestyle_card1_img" name="lifestyle_card1_img">
+                            <% if (content.lifestyle_card1_img) { %>
+                                <p class="current-image">현재 이미지: <a href="<%= content.lifestyle_card1_img %>" target="_blank"><%= content.lifestyle_card1_img.split('/').pop() %></a></p>
+                            <% } %>
+                        </div>
                         <hr>
                         <h5>카드 2</h5>
                         <div class="form-group">
@@ -86,6 +100,13 @@
                             <label for="lifestyle_card2_desc">카드2 설명</label>
                             <input type="text" id="lifestyle_card2_desc" name="lifestyle_card2_desc" value="<%= content.lifestyle_card2_desc %>">
                         </div>
+                        <div class="form-group">
+                            <label for="lifestyle_card2_img">카드2 이미지</label>
+                            <input type="file" id="lifestyle_card2_img" name="lifestyle_card2_img">
+                            <% if (content.lifestyle_card2_img) { %>
+                                <p class="current-image">현재 이미지: <a href="<%= content.lifestyle_card2_img %>" target="_blank"><%= content.lifestyle_card2_img.split('/').pop() %></a></p>
+                            <% } %>
+                        </div>
                         <hr>
                         <h5>카드 3</h5>
                         <div class="form-group">
@@ -95,6 +116,13 @@
                         <div class="form-group">
                             <label for="lifestyle_card3_desc">카드3 설명</label>
                             <input type="text" id="lifestyle_card3_desc" name="lifestyle_card3_desc" value="<%= content.lifestyle_card3_desc %>">
+                        </div>
+                        <div class="form-group">
+                            <label for="lifestyle_card3_img">카드3 이미지</label>
+                            <input type="file" id="lifestyle_card3_img" name="lifestyle_card3_img">
+                            <% if (content.lifestyle_card3_img) { %>
+                                <p class="current-image">현재 이미지: <a href="<%= content.lifestyle_card3_img %>" target="_blank"><%= content.lifestyle_card3_img.split('/').pop() %></a></p>
+                            <% } %>
                         </div>
                     </div>
                 </div>
@@ -129,6 +157,20 @@
                         <div class="form-group">
                             <label for="consulting_button_text">버튼 텍스트</label>
                             <input type="text" id="consulting_button_text" name="consulting_button_text" value="<%= content.consulting_button_text %>">
+                        </div>
+                        <div class="form-group">
+                            <label for="consulting_bg1_image">배경 이미지 1 (상단)</label>
+                            <input type="file" id="consulting_bg1_image" name="consulting_bg1_image">
+                            <% if (content.consulting_bg1_image) { %>
+                                <p class="current-image">현재 이미지: <a href="<%= content.consulting_bg1_image %>" target="_blank"><%= content.consulting_bg1_image.split('/').pop() %></a></p>
+                            <% } %>
+                        </div>
+                        <div class="form-group">
+                            <label for="consulting_bg2_image">배경 이미지 2 (하단)</label>
+                            <input type="file" id="consulting_bg2_image" name="consulting_bg2_image">
+                            <% if (content.consulting_bg2_image) { %>
+                                <p class="current-image">현재 이미지: <a href="<%= content.consulting_bg2_image %>" target="_blank"><%= content.consulting_bg2_image.split('/').pop() %></a></p>
+                            <% } %>
                         </div>
                     </div>
                 </div>

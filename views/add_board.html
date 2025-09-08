@@ -18,7 +18,7 @@
             <div class="card">
                 <div class="card-header"><h4>게시판 정보 입력</h4></div>
                 <div class="card-body">
-                    <form action="/admin/board/create" method="POST">
+                    <form action="/admin/board/create" method="POST" enctype="multipart/form-data">
                     <input type="hidden" name="board_type" value="<%= boardType %>">
                     <div class="form-group">
                         <label for="board_name">게시판 이름</label>
@@ -31,6 +31,11 @@
                         <div class="form-group">
                             <label for="board_description">게시판 설명</label>
                             <textarea id="board_description" name="board_description" rows="4" placeholder="게시판에 대한 간단한 설명을 입력하세요."></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="header_image">상단 배경 이미지</label>
+                            <input type="file" id="header_image" name="header_image">
+                            <p class="form-hint">게시판 페이지 상단에 표시될 배경 이미지입니다. (선택 사항)</p>
                         </div>
                         <div class="form-actions">
                             <button type="submit" class="btn-primary">게시판 생성</button>

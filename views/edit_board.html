@@ -31,7 +31,7 @@
             <div class="card">
                 <div class="card-header"><h4>게시판 정보 수정</h4></div>
                 <div class="card-body">
-                    <form action="/admin/board/update/<%= board.id %>" method="POST">
+                    <form action="/admin/board/update/<%= board.id %>" method="POST" enctype="multipart/form-data">
                         <div class="form-group">
                             <label for="board_name">게시판 이름</label>
                             <input type="text" id="board_name" name="board_name" value="<%= board.name %>" required>
@@ -43,6 +43,16 @@
                         <div class="form-group">
                             <label for="board_description">게시판 설명</label>
                             <textarea id="board_description" name="board_description" rows="4"><%= board.description %></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="header_image">상단 배경 이미지</label>
+                            <input type="file" id="header_image" name="header_image">
+                            <% if (board.header_image_url) { %>
+                                <p class="current-image">현재 이미지: <a href="<%= board.header_image_url %>" target="_blank"><%= board.header_image_url.split('/').pop() %></a></p>
+                            <% } else { %>
+                                <p class="current-image">현재 설정된 이미지가 없습니다.</p>
+                            <% } %>
+                            <p class="form-hint">새 이미지를 업로드하면 기존 이미지를 덮어씁니다.</p>
                         </div>
                         <div class="form-group">
                             <label for="board_type">게시판 유형</label>

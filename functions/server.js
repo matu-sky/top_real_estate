@@ -333,37 +333,89 @@ router.get('/admin', (req, res) => {
 });
 
 // 홈페이지 관리 정보 업데이트 (DB 사용)
-router.post('/admin/update', requireLogin, async (req, res) => {
-    let body = {};
-    if (req.body instanceof Buffer) {
-        body = querystring.parse(req.body.toString());
-    } else {
-        body = req.body;
-    }
+const siteImageUpload = upload.fields([
+    { name: 'hero_bg_image', maxCount: 1 },
+    { name: 'lifestyle_card1_img', maxCount: 1 },
+    { name: 'lifestyle_card2_img', maxCount: 1 },
+    { name: 'lifestyle_card3_img', maxCount: 1 },
+    { name: 'consulting_bg1_image', maxCount: 1 },
+    { name: 'consulting_bg2_image', maxCount: 1 },
+]);
+
+router.post('/admin/update', requireLogin, siteImageUpload, async (req, res) => {
+    let body = req.body;
+
+    // Helper function to upload and optimize a single site asset
+    const uploadAsset = async (file, resizeOptions) => {
+        console.log(`[Site Asset] Optimizing and uploading: ${file.originalname}`)
+        const newFileName = `${path.parse(file.originalname).name}_${Date.now()}.webp`;
+
+        const optimizedBuffer = await sharp(file.buffer)
+            .resize(resizeOptions)
+            .webp({ quality: 80 })
+            .toBuffer();
+        
+        const { error } = await supabase.storage
+            .from('property-images') // Use the existing bucket
+            .upload(newFileName, optimizedBuffer, { 
+                contentType: 'image/webp',
+                upsert: true 
+            });
+
+        if (error) {
+            throw new Error(`Failed to upload ${file.fieldname}: ${error.message}`);
+        }
+
+        const { data: { publicUrl } } = supabase.storage
+            .from('property-images')
+            .getPublicUrl(newFileName);
+        
+        return publicUrl;
+    };
 
     let client;
     try {
+        // Process file uploads first
+        if (req.files) {
+            for (const field in req.files) {
+                const file = req.files[field][0];
+                if (file) {
+                    let resizeOptions = { width: 1920, withoutEnlargement: true };
+                    if (field.startsWith('lifestyle')) {
+                        resizeOptions = { width: 800, withoutEnlargement: true };
+                    }
+                    const newUrl = await uploadAsset(file, resizeOptions);
+                    body[field] = newUrl;
+                }
+            }
+        }
+    } catch (err) {
+        console.error('파일 처리 중 오류 발생:', err.stack);
+        return res.status(500).send(`이미지 파일 처리 중 오류가 발생했습니다: ${err.message}`);
+    }
+
+    try {
         client = await pool.connect();
-        await client.query('BEGIN'); // 트랜잭션 시작
+        await client.query('BEGIN');
 
         for (const key in body) {
-            // settings 객체에 실제로 있는 키인지 확인하여 아무 값이나 저장되는 것을 방지
-            if (Object.prototype.hasOwnProperty.call(res.locals.settings, key)) {
+            if (Object.prototype.hasOwnProperty.call(res.locals.settings, key) || key.endsWith('_img') || key.endsWith('_image')) {
                 const valueToStore = body[key];
                 await client.query(
-                    'UPDATE site_settings SET value = $1 WHERE key = $2',
-                    [valueToStore, key]
+                    `INSERT INTO site_settings (key, value) VALUES ($1, $2) 
+                     ON CONFLICT (key) DO UPDATE SET value = $2`,
+                    [key, valueToStore]
                 );
             }
         }
 
-        await client.query('COMMIT'); // 트랜잭션 커밋
+        await client.query('COMMIT');
         res.redirect('/admin');
 
     } catch (err) {
-        if (client) await client.query('ROLLBACK'); // 오류 발생 시 롤백
+        if (client) await client.query('ROLLBACK');
         console.error('DB 업데이트 오류:', err.stack);
-        res.status(500).send('콘텐츠 업데이트에 실패했습니다.');
+        res.status(500).send(`데이터베이스 업데이트 중 오류가 발생했습니다: ${err.message}`);
     } finally {
         if (client) client.release();
     }
@@ -516,7 +568,7 @@ router.get('/admin/board/edit/:id', requireLogin, async (req, res) => {
 });
 
 // 게시판 정보 업데이트 (v3)
-router.post('/admin/board/update/:id', requireLogin, async (req, res) => {
+router.post('/admin/board/update/:id', requireLogin, upload.single('header_image'), async (req, res) => {
     const { id } = req.params;
     let body = {};
     if (req.body instanceof Buffer) {
@@ -526,8 +578,49 @@ router.post('/admin/board/update/:id', requireLogin, async (req, res) => {
     }
 
     const { board_name, board_slug, board_description, board_type } = body;
-    const query = 'UPDATE boards SET name = $1, slug = $2, description = $3, board_type = $4 WHERE id = $5';
-    const params = [board_name, board_slug, board_description, board_type, id];
+    
+    let header_image_url;
+    if (req.file) {
+        try {
+            console.log(`[Board Header] Optimizing and uploading: ${req.file.originalname}`);
+            const newFileName = `${board_slug}_header_${Date.now()}.webp`;
+
+            const optimizedBuffer = await sharp(req.file.buffer)
+                .resize({ width: 1920, withoutEnlargement: true })
+                .webp({ quality: 80 })
+                .toBuffer();
+            
+            const { error } = await supabase.storage
+                .from('property-images')
+                .upload(newFileName, optimizedBuffer, { 
+                    contentType: 'image/webp',
+                    upsert: true 
+                });
+
+            if (error) {
+                throw new Error(`Failed to upload header image: ${error.message}`);
+            }
+
+            const { data } = supabase.storage
+                .from('property-images')
+                .getPublicUrl(newFileName);
+            header_image_url = data.publicUrl;
+        } catch (err) {
+            console.error('Header image processing error:', err.stack);
+            return res.status(500).send('헤더 이미지 처리 중 오류가 발생했습니다.');
+        }
+    }
+
+    let query;
+    const params = [board_name, board_slug, board_description, board_type];
+    if (header_image_url) {
+        query = 'UPDATE boards SET name = $1, slug = $2, description = $3, board_type = $4, header_image_url = $5 WHERE id = $6';
+        params.push(header_image_url);
+        params.push(id);
+    } else {
+        query = 'UPDATE boards SET name = $1, slug = $2, description = $3, board_type = $4 WHERE id = $5';
+        params.push(id);
+    }
 
     let client;
     try {
@@ -567,7 +660,7 @@ router.post('/admin/board/delete/:id', requireLogin, async (req, res) => {
     }n});
 
 // 새 게시판 생성
-router.post('/admin/board/create', requireLogin, async (req, res) => {
+router.post('/admin/board/create', requireLogin, upload.single('header_image'), async (req, res) => {
     let body = {};
     if (req.body instanceof Buffer) {
         body = querystring.parse(req.body.toString());
@@ -576,19 +669,48 @@ router.post('/admin/board/create', requireLogin, async (req, res) => {
     }
 
     const { board_name, board_slug, board_description, board_type } = body;
-    const query = 'INSERT INTO boards (name, slug, description, board_type) VALUES ($1, $2, $3, $4)';
-    const params = [board_name, board_slug, board_description, board_type];
+    let header_image_url = null;
 
-    let client;
     try {
-        client = await pool.connect();
-        await client.query(query, params);
-        res.redirect('/admin/board_settings');
+        if (req.file) {
+            console.log(`[Board Header] Optimizing and uploading: ${req.file.originalname}`);
+            const newFileName = `${board_slug}_header_${Date.now()}.webp`;
+
+            const optimizedBuffer = await sharp(req.file.buffer)
+                .resize({ width: 1920, withoutEnlargement: true })
+                .webp({ quality: 80 })
+                .toBuffer();
+            
+            const { error } = await supabase.storage
+                .from('property-images')
+                .upload(newFileName, optimizedBuffer, { 
+                    contentType: 'image/webp',
+                    upsert: true 
+                });
+
+            if (error) {
+                throw new Error(`Failed to upload header image: ${error.message}`);
+            }
+
+            const { data } = supabase.storage
+                .from('property-images')
+                .getPublicUrl(newFileName);
+            header_image_url = data.publicUrl;
+        }
+
+        const query = 'INSERT INTO boards (name, slug, description, board_type, header_image_url) VALUES ($1, $2, $3, $4, $5)';
+        const params = [board_name, board_slug, board_description, board_type, header_image_url];
+
+        const client = await pool.connect();
+        try {
+            await client.query(query, params);
+            res.redirect('/admin/board_settings');
+        } finally {
+            client.release();
+        }
     } catch (err) {
         console.error('DB 삽입 오류:', err.stack);
         res.status(500).send('게시판 생성에 실패했습니다.');
-    } finally {
-        if (client) client.release();
     }
 });
 
