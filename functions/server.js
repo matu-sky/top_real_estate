@@ -375,28 +375,32 @@ router.post('/admin/update', requireLogin, siteImageUpload, async (req, res) => 
 
     let client;
     try {
-        client = await pool.connect();
-        await client.query('BEGIN'); // 트랜잭션 시작
-
-        // Process file uploads if they exist
+        // Process file uploads first
         if (req.files) {
             for (const field in req.files) {
                 const file = req.files[field][0];
                 if (file) {
-                    let resizeOptions = { width: 1920, withoutEnlargement: true }; // Default for backgrounds
+                    let resizeOptions = { width: 1920, withoutEnlargement: true };
                     if (field.startsWith('lifestyle')) {
-                        resizeOptions = { width: 800, withoutEnlargement: true }; // Smaller for cards
+                        resizeOptions = { width: 800, withoutEnlargement: true };
                     }
                     const newUrl = await uploadAsset(file, resizeOptions);
-                    body[field] = newUrl; // Add the new image URL to the body to be saved
+                    body[field] = newUrl;
                 }
             }
         }
+    } catch (err) {
+        console.error('파일 처리 중 오류 발생:', err.stack);
+        return res.status(500).send(`이미지 파일 처리 중 오류가 발생했습니다: ${err.message}`);
+    }
+
+    try {
+        client = await pool.connect();
+        await client.query('BEGIN');
 
         for (const key in body) {
             if (Object.prototype.hasOwnProperty.call(res.locals.settings, key) || key.endsWith('_img') || key.endsWith('_image')) {
                 const valueToStore = body[key];
-                // Upsert logic: Insert if not exists, update if it does.
                 await client.query(
                     `INSERT INTO site_settings (key, value) VALUES ($1, $2) 
                      ON CONFLICT (key) DO UPDATE SET value = $2`,
@@ -405,13 +409,13 @@ router.post('/admin/update', requireLogin, siteImageUpload, async (req, res) => 
             }
         }
 
-        await client.query('COMMIT'); // 트랜잭션 커밋
+        await client.query('COMMIT');
         res.redirect('/admin');
 
     } catch (err) {
-        if (client) await client.query('ROLLBACK'); // 오류 발생 시 롤백
+        if (client) await client.query('ROLLBACK');
         console.error('DB 업데이트 오류:', err.stack);
-        res.status(500).send('콘텐츠 업데이트에 실패했습니다.');
+        res.status(500).send(`데이터베이스 업데이트 중 오류가 발생했습니다: ${err.message}`);
     } finally {
         if (client) client.release();
     }
