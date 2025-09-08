@@ -591,7 +591,7 @@ router.post('/admin/board/update/:id', requireLogin, upload.single('header_image
                 .toBuffer();
             
             const { error } = await supabase.storage
-                .from('site-assets')
+                .from('property-images')
                 .upload(newFileName, optimizedBuffer, { 
                     contentType: 'image/webp',
                     upsert: true 
@@ -602,7 +602,7 @@ router.post('/admin/board/update/:id', requireLogin, upload.single('header_image
             }
 
             const { data } = supabase.storage
-                .from('site-assets')
+                .from('property-images')
                 .getPublicUrl(newFileName);
             header_image_url = data.publicUrl;
         } catch (err) {
@@ -682,7 +682,7 @@ router.post('/admin/board/create', requireLogin, upload.single('header_image'), 
                 .toBuffer();
             
             const { error } = await supabase.storage
-                .from('site-assets')
+                .from('property-images')
                 .upload(newFileName, optimizedBuffer, { 
                     contentType: 'image/webp',
                     upsert: true 
@@ -693,7 +693,7 @@ router.post('/admin/board/create', requireLogin, upload.single('header_image'), 
             }
 
             const { data } = supabase.storage
-                .from('site-assets')
+                .from('property-images')
                 .getPublicUrl(newFileName);
             header_image_url = data.publicUrl;
         }
