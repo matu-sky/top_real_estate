@@ -14,10 +14,21 @@
             let headerStyle, titleStyle, descriptionStyle, subNavStyle = '';
             subNavStyle = 'margin-bottom: 0;';
 
+            // Set a default background image URL based on board type
+            let defaultBgImage;
             if (board.board_type === 'youtube') {
-                // 유튜브 게시판: 상단 여백 제거 및 특정 스타일 적용
+                defaultBgImage = 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?q=80&w=2071&auto=format&fit=crop';
+            } else {
+                defaultBgImage = 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?q=80&w=2070&auto=format&fit=crop';
+            }
+
+            // Use the board's specific header image if it exists, otherwise use the default
+            const bgImageUrl = board.header_image_url || defaultBgImage;
+
+            // Define styles based on board type
+            if (board.board_type === 'youtube') {
                 headerStyle = `
-                    background-image: linear-gradient(rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.7)), url('https://images.unsplash.com/photo-1504711434969-e33886168f5c?q=80&w=2071&auto=format&fit=crop');
+                    background-image: linear-gradient(rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.7)), url('${bgImageUrl}');
                     background-size: cover;
                     background-position: center;
                     padding: 4rem 2rem;
@@ -27,9 +38,8 @@
                 titleStyle = `color: #111111; text-shadow: none;`;
                 descriptionStyle = `color: #333333; text-shadow: none;`;
             } else {
-                // 다른 모든 게시판: 기존 스타일
                 headerStyle = `
-                    background-image: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url('https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?q=80&w=2070&auto=format&fit=crop');
+                    background-image: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url('${bgImageUrl}');
                     background-size: cover;
                     background-position: center;
                     padding: 4rem 2rem;
