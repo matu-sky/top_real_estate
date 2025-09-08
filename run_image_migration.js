@@ -1,5 +1,3 @@
-
-
 // run_image_migration.js
 
 // 1. 환경 설정
@@ -30,7 +28,7 @@ async function migrateImages() {
         console.log('기존 이미지에 대한 최적화 작업을 시작합니다...');
 
         // 이미지가 있는 모든 매물 정보를 가져옵니다.
-        const { rows: properties } = await client.query('SELECT id, image_path FROM properties WHERE image_path IS NOT NULL AND image_path != \'\''');
+        const { rows: properties } = await client.query(`SELECT id, image_path FROM properties WHERE image_path IS NOT NULL AND image_path != ''`);
         console.log(`${properties.length}개의 매물에서 이미지를 발견했습니다.`);
 
         for (const property of properties) {
@@ -123,4 +121,3 @@ async function migrateImages() {
 
 // 마이그레이션 스크립트 실행
 migrateImages();
-
