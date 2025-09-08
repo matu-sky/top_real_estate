@@ -874,14 +874,29 @@ router.post('/listings/add', upload.array('images', 10), async (req, res) => {
     const imageUrls = [];
     if (req.files) {
         for (const file of req.files) {
+            // 이미지가 아닌 파일(예: 동영상)은 최적화에서 제외
+            if (!file.mimetype.startsWith('image')) continue;
+
             const originalname_utf8 = Buffer.from(file.originalname, 'latin1').toString('utf8');
-            const newFileName = `${Date.now()}_${encodeURIComponent(originalname_utf8)}`;
-            console.log('[server.js] Calling addWatermark...');
-            const watermarkedBuffer = await addWatermark(file.buffer);
+            const baseName = path.basename(originalname_utf8, path.extname(originalname_utf8));
+            const newFileName = `${baseName}_${Date.now()}.webp`;
+
+            console.log(`[server.js] Optimizing and watermarking: ${originalname_utf8}`);
+
+            // 1. 이미지 리사이즈 및 WebP 변환
+            const optimizedBuffer = await sharp(file.buffer)
+                .resize({ width: 1200, withoutEnlargement: true }) // 가로 1200px로 리사이즈 (작은 이미지는 확대 안함)
+                .webp({ quality: 80 }) // 80% 품질의 WebP로 변환
+                .toBuffer();
+
+            // 2. 최적화된 이미지에 워터마크 적용
+            const finalBuffer = await addWatermark(optimizedBuffer);
+
+            // 3. 최종 결과물을 Supabase에 업로드
             const { data, error } = await supabase.storage
                 .from('property-images')
-                .upload(newFileName, watermarkedBuffer, {
-                    contentType: file.mimetype,
+                .upload(newFileName, finalBuffer, {
+                    contentType: 'image/webp',
                 });
 
             if (error) {
@@ -979,13 +994,29 @@ router.post('/listings/edit/:id', upload.array('images', 10), async (req, res) =
 
     if (req.files) {
         for (const file of req.files) {
-            const newFileName = `${Date.now()}_${file.originalname}`;
-            console.log('[server.js] Calling addWatermark...');
-            const watermarkedBuffer = await addWatermark(file.buffer);
+            // 이미지가 아닌 파일(예: 동영상)은 최적화에서 제외
+            if (!file.mimetype.startsWith('image')) continue;
+
+            const originalname_utf8 = Buffer.from(file.originalname, 'latin1').toString('utf8');
+            const baseName = path.basename(originalname_utf8, path.extname(originalname_utf8));
+            const newFileName = `${baseName}_${Date.now()}.webp`;
+
+            console.log(`[server.js] Optimizing and watermarking: ${originalname_utf8}`);
+
+            // 1. 이미지 리사이즈 및 WebP 변환
+            const optimizedBuffer = await sharp(file.buffer)
+                .resize({ width: 1200, withoutEnlargement: true }) // 가로 1200px로 리사이즈 (작은 이미지는 확대 안함)
+                .webp({ quality: 80 }) // 80% 품질의 WebP로 변환
+                .toBuffer();
+
+            // 2. 최적화된 이미지에 워터마크 적용
+            const finalBuffer = await addWatermark(optimizedBuffer);
+
+            // 3. 최종 결과물을 Supabase에 업로드
             const { data, error } = await supabase.storage
                 .from('property-images')
-                .upload(newFileName, watermarkedBuffer, {
-                    contentType: file.mimetype,
+                .upload(newFileName, finalBuffer, {
+                    contentType: 'image/webp',
                 });
 
             if (error) {
