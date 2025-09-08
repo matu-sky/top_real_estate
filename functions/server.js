@@ -356,7 +356,7 @@ router.post('/admin/update', requireLogin, siteImageUpload, async (req, res) => 
             .toBuffer();
         
         const { error } = await supabase.storage
-            .from('site-assets') // Use a separate bucket for site assets
+            .from('property-images') // Use the existing bucket
             .upload(newFileName, optimizedBuffer, { 
                 contentType: 'image/webp',
                 upsert: true 
@@ -367,7 +367,7 @@ router.post('/admin/update', requireLogin, siteImageUpload, async (req, res) => 
         }
 
         const { data: { publicUrl } } = supabase.storage
-            .from('site-assets')
+            .from('property-images')
             .getPublicUrl(newFileName);
         
         return publicUrl;
