@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://xn--6e0bp5jvrfa137b6tfzy4b.com/sitemap.xml
+Sitemap: https://top2025.netlify.app/sitemap.xml
