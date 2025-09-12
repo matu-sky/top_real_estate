@@ -176,7 +176,43 @@ const router = express.Router();
 // 모든 요청에 대해 설정 로드 미들웨어 적용
 router.use(loadSettings);
 
+// sitemap.xml 라우트 (자동 생성 기능 추가)
+router.get('/sitemap.xml', async (req, res) => {
+    const sitemapPath = path.join('/tmp', 'sitemap.xml');
 
+    try {
+        // 1. 사이트맵 파일이 존재하는지 확인
+        await fs.promises.access(sitemapPath);
+        // 파일이 존재하면 바로 읽어서 전송
+        const data = await fs.promises.readFile(sitemapPath);
+        res.header('Content-Type', 'application/xml');
+        res.send(data);
+    } catch (error) {
+        // 2. 파일이 존재하지 않으면 (ENOENT 오류) 새로 생성
+        if (error.code === 'ENOENT') {
+            console.log('Sitemap not found. Generating a new one...');
+            try {
+                const result = await generateSitemap();
+                if (result.success) {
+                    // 생성된 파일을 읽어서 전송
+                    const data = await fs.promises.readFile(result.path);
+                    res.header('Content-Type', 'application/xml');
+                    res.send(data);
+                } else {
+                    console.error('Error generating sitemap:', result.error);
+                    res.status(500).send('Error generating sitemap.');
+                }
+            } catch (generationError) {
+                console.error('An unexpected error occurred during sitemap generation:', generationError);
+                res.status(500).send('An unexpected error occurred during sitemap generation.');
+            }
+        } else {
+            // 3. 그 외의 오류 (파일 접근 권한 등)
+            console.error('Error accessing sitemap file:', error);
+            res.status(500).send('Error accessing sitemap file.');
+        }
+    }
+});
 
 // 메인 페이지
 router.get('/', async (req, res) => {

@@ -53,7 +53,7 @@ const generateSitemap = async () => {
             data.toString()
         );
 
-                const sitemapPath = path.join(__dirname, '..', 'public', 'sitemap.xml');
+        const sitemapPath = path.join('/tmp', 'sitemap.xml');
         await fs.writeFile(sitemapPath, xml);
 
         console.log('Sitemap generated successfully!');
