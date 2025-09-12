@@ -176,41 +176,15 @@ const router = express.Router();
 // 모든 요청에 대해 설정 로드 미들웨어 적용
 router.use(loadSettings);
 
-// sitemap.xml 라우트 (자동 생성 기능 추가)
+// sitemap.xml 라우트 (동적 생성)
 router.get('/sitemap.xml', async (req, res) => {
-    const sitemapPath = path.join('/tmp', 'sitemap.xml');
-
     try {
-        // 1. 사이트맵 파일이 존재하는지 확인
-        await fs.promises.access(sitemapPath);
-        // 파일이 존재하면 바로 읽어서 전송
-        const data = await fs.promises.readFile(sitemapPath);
+        const xml = await generateSitemap();
         res.header('Content-Type', 'application/xml');
-        res.send(data);
+        res.send(xml);
     } catch (error) {
-        // 2. 파일이 존재하지 않으면 (ENOENT 오류) 새로 생성
-        if (error.code === 'ENOENT') {
-            console.log('Sitemap not found. Generating a new one...');
-            try {
-                const result = await generateSitemap();
-                if (result.success) {
-                    // 생성된 파일을 읽어서 전송
-                    const data = await fs.promises.readFile(result.path);
-                    res.header('Content-Type', 'application/xml');
-                    res.send(data);
-                } else {
-                    console.error('Error generating sitemap:', result.error);
-                    res.status(500).send('Error generating sitemap.');
-                }
-            } catch (generationError) {
-                console.error('An unexpected error occurred during sitemap generation:', generationError);
-                res.status(500).send('An unexpected error occurred during sitemap generation.');
-            }
-        } else {
-            // 3. 그 외의 오류 (파일 접근 권한 등)
-            console.error('Error accessing sitemap file:', error);
-            res.status(500).send('Error accessing sitemap file.');
-        }
+        console.error('Sitemap generation failed:', error);
+        res.status(500).send('Error generating sitemap.');
     }
 });
 
@@ -509,19 +483,7 @@ router.post('/admin/settings', requireLogin, async (req, res) => {
     }
 });
 
-// 사이트맵 생성 라우트
-router.get('/admin/generate-sitemap', requireLogin, async (req, res) => {
-    try {
-        const result = await generateSitemap();
-        if (result.success) {
-            res.send(`Sitemap generated successfully at ${result.path}. <a href="/sitemap.xml">View Sitemap</a>`);
-        } else {
-            res.status(500).send(`Error generating sitemap: ${result.error.message}`);
-        }
-    } catch (error) {
-        res.status(500).send(`An unexpected error occurred: ${error.message}`);
-    }
-});
+
 
 // 대시보드 페이지
 router.get('/dashboard', async (req, res) => {

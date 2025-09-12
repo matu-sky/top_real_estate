@@ -1,8 +1,6 @@
 const { SitemapStream, streamToPromise } = require('sitemap');
 const { Readable } = require('stream');
 const { Pool } = require('pg');
-const fs = require('fs').promises;
-const path = require('path');
 
 const pool = new Pool({
     host: process.env.PG_HOST,
@@ -53,24 +51,14 @@ const generateSitemap = async () => {
             data.toString()
         );
 
-        const sitemapPath = path.join('/tmp', 'sitemap.xml');
-        await fs.writeFile(sitemapPath, xml);
-
-        console.log('Sitemap generated successfully!');
-        return { success: true, path: sitemapPath };
+        return xml;
 
     } catch (error) {
         console.error('Error generating sitemap:', error);
-        return { success: false, error };
+        throw error;
     } finally {
         client.release();
     }
 };
-
-// 로컬에서 직접 실행하여 사이트맵을 생성할 수 있도록 함
-if (require.main === module) {
-    require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
-    generateSitemap().then(() => pool.end());
-}
 
 module.exports = { generateSitemap };
