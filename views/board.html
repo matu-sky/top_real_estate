@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="ko">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><%= board.name %> | 탑 부동산</title>
-    <link rel="stylesheet" href="/css/style.css">
-</head>
+<%- include('partials/head.html', { 
+    originalUrl: '/board/' + board.slug,
+    pageTitle: board.name + ' | 탑부동산',
+    pageDescription: board.description,
+    ogImage: board.header_image_url,
+    ogUrl: 'https://top2025.netlify.app/board/' + board.slug,
+    canonicalUrl: 'https://top2025.netlify.app/board/' + board.slug
+}) %>
 <body>
     <%- include('partials/header.html') %>
 

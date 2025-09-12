@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="ko">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><%= post.title %> | <%= board.name %></title>
-    <link rel="stylesheet" href="/css/style.css">
-</head>
+<%- include('partials/head.html', { 
+    originalUrl: '/board/' + board.slug + '/' + post.id,
+    pageTitle: post.title + ' | ' + board.name,
+    pageDescription: post.content ? post.content.replace(/<[^>]*>?/gm, '').substring(0, 150) : '',
+    ogImage: post.thumbnail_url || (post.attachment_path && board.board_type === 'gallery' ? JSON.parse(post.attachment_path)[0] : ''),
+    ogUrl: 'https://top2025.netlify.app/board/' + board.slug + '/' + post.id,
+    canonicalUrl: 'https://top2025.netlify.app/board/' + board.slug + '/' + post.id
+}) %>
 <body>
     <%- include('partials/header.html') %>
 

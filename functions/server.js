@@ -280,7 +280,8 @@ router.get('/', async (req, res) => {
             content: res.locals.settings,
             properties,
             youtubePost,
-            recentPosts
+            recentPosts,
+            originalUrl: req.originalUrl
         });
     } catch (err) {
         console.error('DB 조회 오류:', err.stack);
@@ -943,7 +944,7 @@ router.get('/page/:slug', async (req, res) => {
         if (page.content) {
             page.content = page.content.replace(/&lt;/g, '<').replace(/&gt;/g, '>');
         }
-        res.render('page', { content: res.locals.settings, page });
+        res.render('page', { content: res.locals.settings, page, originalUrl: req.originalUrl });
     } catch (err) {
         console.error('DB 조회 오류:', err.stack);
         res.status(500).send('페이지를 가져오는 데 실패했습니다.');
@@ -1437,7 +1438,8 @@ router.get('/board/:slug', async (req, res) => {
             board, 
             posts, 
             user: req.session, 
-            content: res.locals.settings 
+            content: res.locals.settings, 
+            originalUrl: req.originalUrl
         });
     } catch (err) {
         console.error('게시판 페이지 오류:', err);
@@ -1581,7 +1583,8 @@ router.get('/board/:slug/:postId', async (req, res) => {
             board,
             post,
             user: req.session,
-            content: res.locals.settings
+            content: res.locals.settings,
+            originalUrl: req.originalUrl
         });
 
     } catch (err) {
@@ -1842,7 +1845,8 @@ router.get('/property/:id', async (req, res) => {
                 relatedProperties, 
                 content: res.locals.settings,
                 currentPage: page,
-                totalPages
+                totalPages,
+                originalUrl: req.originalUrl
             });
         } else {
             res.status(404).send("매물을 찾을 수 없습니다.");

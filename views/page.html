@@ -1,11 +1,12 @@
 <!DOCTYPE html>
 <html lang="ko">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><%= page.title %> | 탑 부동산</title>
-    <link rel="stylesheet" href="/css/style.css">
-</head>
+<%- include('partials/head.html', { 
+    originalUrl: '/page/' + page.slug,
+    pageTitle: page.title + ' | 탑부동산',
+    pageDescription: page.content ? page.content.replace(/<[^>]*>?/gm, '').substring(0, 150) : '',
+    ogUrl: 'https://top2025.netlify.app/page/' + page.slug,
+    canonicalUrl: 'https://top2025.netlify.app/page/' + page.slug
+}) %>
 <body>
     <%- include('partials/header.html') %>
 

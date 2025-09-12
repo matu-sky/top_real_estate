@@ -1,0 +1,36 @@
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <%
+    const defaultTitle = (content && content.header_logo_text ? content.header_logo_text : '탑부동산') + ' | 주거에서 비즈니스까지, 최고의 선택';
+    const defaultDescription = content && content.hero_subtitle ? content.hero_subtitle : '군포, 의왕, 안양 최고의 부동산 솔루션. 주거용, 상업용, 공장/지산 매물을 지금 확인하세요.';
+    const defaultKeywords = '군포 부동산, 의왕 부동산, 안양 부동산, 공장, 지식산업센터, 아파트, 상가, 탑부동산';
+    const defaultOgImage = content && content.hero_bg_image ? content.hero_bg_image : '/images/default_og_image.jpg';
+    const baseUrl = 'https://top2025.netlify.app';
+    const currentUrl = baseUrl + (locals.originalUrl || '/');
+    %>
+
+    <title><%= locals.pageTitle || defaultTitle %></title>
+    <meta name="description" content="<%= locals.pageDescription || defaultDescription %>">
+    <meta name="keywords" content="<%= locals.pageKeywords || defaultKeywords %>">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="<%= locals.ogUrl || currentUrl %>">
+    <meta property="og:title" content="<%= locals.ogTitle || locals.pageTitle || defaultTitle %>">
+    <meta property="og:description" content="<%= locals.ogDescription || locals.pageDescription || defaultDescription %>">
+    <meta property="og:image" content="<%= locals.ogImage || defaultOgImage %>">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="<%= locals.ogUrl || currentUrl %>">
+    <meta property="twitter:title" content="<%= locals.ogTitle || locals.pageTitle || defaultTitle %>">
+    <meta property="twitter:description" content="<%= locals.ogDescription || locals.pageDescription || defaultDescription %>">
+    <meta property="twitter:image" content="<%= locals.ogImage || defaultOgImage %>">
+
+    <link rel="canonical" href="<%= locals.canonicalUrl || currentUrl %>">
+    
+    <meta name="google-site-verification" content="ubyUH8cauiwG8l2N_348L5yaQxSnLF_2XluTQBv_h_w" />
+    <link rel="stylesheet" href="/css/style.css">
+</head>
